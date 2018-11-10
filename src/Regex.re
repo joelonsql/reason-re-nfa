@@ -266,29 +266,54 @@ exception Parse_error(string);
 module Parse = {
   exception Fail;
 
-  let rec re_many = f =>
-    fun
-    | [] => raise(Fail)
-    | [x] => x
-    | [x, ...rest] => f(x, re_many(f, rest));
+  /** ratom ::= .
+                <character>
+                ( ralt )           */
 
-  let rec re_parse = (s: list(char), ps) =>
-    switch (s, ps) {
-    | ([], _)
-    | ([')', ..._], _) => (re_many(seq, List.rev(ps)), s)
-    | (['.', ...rest], _) => re_parse(rest, [any, ...ps])
-    | (['(', ...rest], _) =>
-      switch (re_parse(rest, [])) {
-      | (r, [')', ...rest]) => re_parse(rest, [r, ...ps])
-      | _ => failwith("Parse failure")
+  let rec re_parse_atom: list(char) => option((regex(_), list(char))) =
+    fun
+    | ['(', ...rest] =>
+      switch (re_parse_alt(rest)) {
+      | (r, [')', ...rest]) => Some((r, rest))
+      | _ => raise(Fail)
       }
-    | (['|', ...rest], [p, ...ps]) =>
-      let (other, rest) = re_parse(rest, []);
-      re_parse(rest, [alt(p, other), ...ps]);
-    | (['*', ...rest], [p, ...ps]) => re_parse(rest, [star(p), ...ps])
-    | (['?', ...rest], [p, ...ps]) => re_parse(rest, [opt(p), ...ps])
-    | (['+', ...rest], [p, ...ps]) => re_parse(rest, [plus(p), ...ps])
-    | ([c, ...rest], _) => re_parse(rest, [chr(c), ...ps])
+    | []
+    | [')' | '|' | '*' | '?' | '+', ..._] => None
+    | ['.', ...rest] => Some((any, rest))
+    | [h, ...rest] => Some((chr(h), rest))
+  /** rsuffixed ::= ratom
+                    atom *
+                    atom +
+                    atom ?         */
+
+  and re_parse_suffixed: list(char) => option((regex(_), list(char))) =
+    s =>
+      switch (re_parse_atom(s)) {
+      | None => None
+      | Some((r, ['*', ...rest])) => Some((star(r), rest))
+      | Some((r, ['+', ...rest])) => Some((plus(r), rest))
+      | Some((r, ['?', ...rest])) => Some((opt(r), rest))
+      | Some((r, rest)) => Some((r, rest))
+      }
+  /** rseq ::= <empty>
+               rsuffixed rseq      */
+
+  and re_parse_seq = (s: list(char)) =>
+    switch (re_parse_suffixed(s)) {
+    | None => (eps, s)
+    | Some((r, rest)) =>
+      let (r', s') = re_parse_seq(rest);
+      (seq(r, r'), s');
+    }
+  /** ralt ::= rseq
+               rseq | ralt         */
+
+  and re_parse_alt = (s: list(char)) =>
+    switch (re_parse_seq(s)) {
+    | (r, ['|', ...rest]) =>
+      let (r', s') = re_parse_alt(rest);
+      (alt(r, r'), s');
+    | (r, rest) => (r, rest)
     };
 
   let explode = s => {
@@ -302,8 +327,10 @@ module Parse = {
   };
 
   let parse = s =>
-    try (fst(re_parse(explode(s), []))) {
-    | Fail => raise(Parse_error(s))
+    switch (re_parse_alt(explode(s))) {
+    | (r, []) => r
+    | exception Fail => raise(Parse_error(s))
+    | (r, [_, ..._]) => raise(Parse_error(s))
     };
 };
 
