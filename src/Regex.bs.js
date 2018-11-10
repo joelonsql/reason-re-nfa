@@ -8,7 +8,6 @@ import * as Block from "../node_modules/bs-platform/lib/es6/block.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Int32 from "../node_modules/bs-platform/lib/es6/int32.js";
 import * as Caml_obj from "../node_modules/bs-platform/lib/es6/caml_obj.js";
-import * as Pervasives from "../node_modules/bs-platform/lib/es6/pervasives.js";
 import * as Caml_string from "../node_modules/bs-platform/lib/es6/caml_string.js";
 import * as Caml_exceptions from "../node_modules/bs-platform/lib/es6/caml_exceptions.js";
 import * as Nfa$ReasonReNfa from "./Nfa.bs.js";
@@ -386,147 +385,140 @@ var Parse_error = Caml_exceptions.create("Regex-ReasonReNfa.Parse_error");
 
 var Fail = Caml_exceptions.create("Regex-ReasonReNfa.Parse.Fail");
 
-function re_many(f, param) {
+function re_parse_atom(param) {
   if (param) {
-    var rest = param[1];
-    var x = param[0];
-    if (rest) {
-      return Curry._2(f, x, re_many(f, rest));
+    var h = param[0];
+    var exit = 0;
+    var switcher = h - 63 | 0;
+    if (switcher > 61 || switcher < 0) {
+      switch (switcher) {
+        case -23 : 
+            var match = re_parse_alt(param[1]);
+            var match$1 = match[1];
+            if (match$1) {
+              if (match$1[0] !== 41) {
+                throw Fail;
+              } else {
+                return /* tuple */[
+                        match[0],
+                        match$1[1]
+                      ];
+              }
+            } else {
+              throw Fail;
+            }
+        case -22 : 
+        case -21 : 
+        case -20 : 
+            return undefined;
+        case -19 : 
+        case -18 : 
+            exit = 1;
+            break;
+        case -17 : 
+            return /* tuple */[
+                    any,
+                    param[1]
+                  ];
+        default:
+          exit = 1;
+      }
+    } else if (switcher > 60 || switcher < 1) {
+      return undefined;
     } else {
-      return x;
+      exit = 1;
     }
+    if (exit === 1) {
+      return /* tuple */[
+              chr(h),
+              param[1]
+            ];
+    }
+    
+  }
+  
+}
+
+function re_parse_suffixed(s) {
+  var match = re_parse_atom(s);
+  if (match !== undefined) {
+    var match$1 = match;
+    var rest = match$1[1];
+    var r = match$1[0];
+    if (rest) {
+      var switcher = rest[0] - 42 | 0;
+      if (switcher === 0 || switcher === 1) {
+        if (switcher !== 0) {
+          return /* tuple */[
+                  /* Seq */Block.__(2, [
+                      r,
+                      /* Star */Block.__(3, [r])
+                    ]),
+                  rest[1]
+                ];
+        } else {
+          return /* tuple */[
+                  /* Star */Block.__(3, [r]),
+                  rest[1]
+                ];
+        }
+      } else if (switcher !== 21) {
+        return /* tuple */[
+                r,
+                rest
+              ];
+      } else {
+        return /* tuple */[
+                alt(r, /* Eps */1),
+                rest[1]
+              ];
+      }
+    } else {
+      return /* tuple */[
+              r,
+              rest
+            ];
+    }
+  }
+  
+}
+
+function re_parse_seq(s) {
+  var match = re_parse_suffixed(s);
+  if (match !== undefined) {
+    var match$1 = match;
+    var match$2 = re_parse_seq(match$1[1]);
+    return /* tuple */[
+            /* Seq */Block.__(2, [
+                match$1[0],
+                match$2[0]
+              ]),
+            match$2[1]
+          ];
   } else {
-    throw Fail;
+    return /* tuple */[
+            /* Eps */1,
+            s
+          ];
   }
 }
 
-function re_parse(_s, _ps) {
-  while(true) {
-    var ps = _ps;
-    var s = _s;
-    if (s) {
-      var c = s[0];
-      var exit = 0;
-      if (c >= 64) {
-        if (c !== 124 || !ps) {
-          exit = 1;
-        } else {
-          var match = re_parse(s[1], /* [] */0);
-          _ps = /* :: */[
-            alt(ps[0], match[0]),
-            ps[1]
+function re_parse_alt(s) {
+  var match = re_parse_seq(s);
+  var rest = match[1];
+  var r = match[0];
+  if (rest && rest[0] === 124) {
+    var match$1 = re_parse_alt(rest[1]);
+    return /* tuple */[
+            alt(r, match$1[0]),
+            match$1[1]
           ];
-          _s = match[1];
-          continue ;
-        }
-      } else if (c >= 40) {
-        switch (c - 40 | 0) {
-          case 0 : 
-              var match$1 = re_parse(s[1], /* [] */0);
-              var match$2 = match$1[1];
-              if (match$2 && match$2[0] === 41) {
-                _ps = /* :: */[
-                  match$1[0],
-                  ps
-                ];
-                _s = match$2[1];
-                continue ;
-              } else {
-                return Pervasives.failwith("Parse failure");
-              }
-          case 1 : 
-              return /* tuple */[
-                      re_many(seq, List.rev(ps)),
-                      s
-                    ];
-          case 2 : 
-              if (ps) {
-                _ps = /* :: */[
-                  /* Star */Block.__(3, [ps[0]]),
-                  ps[1]
-                ];
-                _s = s[1];
-                continue ;
-              } else {
-                exit = 1;
-              }
-              break;
-          case 3 : 
-              if (ps) {
-                var p = ps[0];
-                _ps = /* :: */[
-                  /* Seq */Block.__(2, [
-                      p,
-                      /* Star */Block.__(3, [p])
-                    ]),
-                  ps[1]
-                ];
-                _s = s[1];
-                continue ;
-              } else {
-                exit = 1;
-              }
-              break;
-          case 6 : 
-              _ps = /* :: */[
-                any,
-                ps
-              ];
-              _s = s[1];
-              continue ;
-          case 4 : 
-          case 5 : 
-          case 7 : 
-          case 8 : 
-          case 9 : 
-          case 10 : 
-          case 11 : 
-          case 12 : 
-          case 13 : 
-          case 14 : 
-          case 15 : 
-          case 16 : 
-          case 17 : 
-          case 18 : 
-          case 19 : 
-          case 20 : 
-          case 21 : 
-          case 22 : 
-              exit = 1;
-              break;
-          case 23 : 
-              if (ps) {
-                _ps = /* :: */[
-                  alt(ps[0], /* Eps */1),
-                  ps[1]
-                ];
-                _s = s[1];
-                continue ;
-              } else {
-                exit = 1;
-              }
-              break;
-          
-        }
-      } else {
-        exit = 1;
-      }
-      if (exit === 1) {
-        _ps = /* :: */[
-          chr(c),
-          ps
-        ];
-        _s = s[1];
-        continue ;
-      }
-      
-    } else {
-      return /* tuple */[
-              re_many(seq, List.rev(ps)),
-              s
-            ];
-    }
-  };
+  } else {
+    return /* tuple */[
+            r,
+            rest
+          ];
+  }
 }
 
 function explode(s) {
@@ -549,8 +541,11 @@ function explode(s) {
 }
 
 function parse(s) {
+  var exit = 0;
+  var val;
   try {
-    return re_parse(explode(s), /* [] */0)[0];
+    val = re_parse_alt(explode(s));
+    exit = 1;
   }
   catch (exn){
     if (exn === Fail) {
@@ -562,6 +557,17 @@ function parse(s) {
       throw exn;
     }
   }
+  if (exit === 1) {
+    if (val[1]) {
+      throw [
+            Parse_error,
+            s
+          ];
+    } else {
+      return val[0];
+    }
+  }
+  
 }
 
 var empty = /* Empty */0;
