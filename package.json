@@ -1,0 +1,22 @@
+{
+  "name": "reason-re-nfa",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "bsb -make-world",
+    "start": "bsb -make-world -w",
+    "clean": "bsb -clean-world"
+  },
+  "keywords": [
+    "BuckleScript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^4.0.7"
+  },
+  "dependencies": {
+    "d3": "^5.7.0",
+    "d3-graphviz": "^2.6.0",
+    "viz": "0.0.1"
+  }
+}
