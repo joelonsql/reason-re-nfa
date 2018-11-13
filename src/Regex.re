@@ -240,7 +240,12 @@ let compile = r => {
 
 /** Various basic and derived regex combinators */
 
-let seq = (l, r) => Seq(l, r);
+let seq = (l, r) =>
+  switch (l, r) {
+  | (Eps, s)
+  | (s, Eps) => s
+  | (l, r) => Seq(l, r)
+  };
 let alt = (l, r) =>
   switch (l, r) {
   | (Char(c1), Char(c2)) => Char(C.union(c1, c2))

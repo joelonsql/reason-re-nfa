@@ -339,10 +339,23 @@ function compile(r) {
 }
 
 function seq(l, r) {
-  return /* Seq */Block.__(2, [
-            l,
-            r
-          ]);
+  var exit = 0;
+  if (typeof l === "number" && l !== 0) {
+    return r;
+  } else {
+    exit = 1;
+  }
+  if (exit === 1) {
+    if (typeof r === "number" && r !== 0) {
+      return l;
+    } else {
+      return /* Seq */Block.__(2, [
+                l,
+                r
+              ]);
+    }
+  }
+  
 }
 
 function alt(l, r) {
@@ -361,10 +374,7 @@ function star(r) {
 }
 
 function plus(t) {
-  return /* Seq */Block.__(2, [
-            t,
-            /* Star */Block.__(3, [t])
-          ]);
+  return seq(t, /* Star */Block.__(3, [t]));
 }
 
 function chr(c) {
@@ -471,10 +481,7 @@ function re_parse_suffixed(s) {
       if (switcher === 0 || switcher === 1) {
         if (switcher !== 0) {
           return /* tuple */[
-                  /* Seq */Block.__(2, [
-                      r,
-                      /* Star */Block.__(3, [r])
-                    ]),
+                  seq(r, /* Star */Block.__(3, [r])),
                   rest[1]
                 ];
         } else {
@@ -510,10 +517,7 @@ function re_parse_seq(s) {
     var match$1 = match;
     var match$2 = re_parse_seq(match$1[1]);
     return /* tuple */[
-            /* Seq */Block.__(2, [
-                match$1[0],
-                match$2[0]
-              ]),
+            seq(match$1[0], match$2[0]),
             match$2[1]
           ];
   } else {
