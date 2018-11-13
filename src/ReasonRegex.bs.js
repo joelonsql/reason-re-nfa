@@ -19,8 +19,11 @@ function regexp2dot(regexp) {
                 ]), Nfa_dot$ReasonReNfa.format_digraph, digraph);
 }
 
+var regexp2parseTree = Regex$ReasonReNfa.regexp2parseTree;
+
 export {
   regexp2dot ,
+  regexp2parseTree ,
   
 }
 /* Format Not a pure module */

@@ -7,6 +7,7 @@ import * as List from "../node_modules/bs-platform/lib/es6/list.js";
 import * as Block from "../node_modules/bs-platform/lib/es6/block.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Int32 from "../node_modules/bs-platform/lib/es6/int32.js";
+import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
 import * as Caml_obj from "../node_modules/bs-platform/lib/es6/caml_obj.js";
 import * as Caml_string from "../node_modules/bs-platform/lib/es6/caml_string.js";
 import * as Caml_exceptions from "../node_modules/bs-platform/lib/es6/caml_exceptions.js";
@@ -24,6 +25,11 @@ var Letter = /* module */[/* compare */compare];
 var S = $$Set.Make(Letter);
 
 var $less$plus$great = S[/* union */6];
+
+var LetterSet = /* module */[
+  /* S */S,
+  /* <+> */$less$plus$great
+];
 
 function compare$1(param, param$1) {
   return Caml_obj.caml_compare(/* tuple */[
@@ -57,6 +63,14 @@ function $less$star$great(l, r) {
                             }));
               }));
 }
+
+var Letter2Set = /* module */[
+  /* Pair */Pair,
+  /* S */S$1,
+  /* <+> */$less$plus$great$1,
+  /* >>= */$great$great$eq,
+  /* <*> */$less$star$great
+];
 
 function l(_param) {
   while(true) {
@@ -178,25 +192,25 @@ function add_transition2(c, i, tm) {
   return Curry._3(CharSetMap[/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], i, ss), tm);
 }
 
+function add_transition(i1, c2, i2, sm) {
+  var tm;
+  try {
+    tm = Curry._2(StateMap[/* find */21], i1, sm);
+  }
+  catch (exn){
+    if (exn === Caml_builtin_exceptions.not_found) {
+      tm = CharSetMap[/* empty */0];
+    } else {
+      throw exn;
+    }
+  }
+  return Curry._3(StateMap[/* add */3], i1, add_transition2(c2, i2, tm), sm);
+}
+
 function transition_map_of_factor_set(fs) {
   return Curry._3(S$1[/* fold */13], (function (param, sm) {
                 var match = param[1];
-                var i1 = param[0][1];
-                var c2 = match[0];
-                var i2 = match[1];
-                var sm$1 = sm;
-                var tm;
-                try {
-                  tm = Curry._2(StateMap[/* find */21], i1, sm$1);
-                }
-                catch (exn){
-                  if (exn === Caml_builtin_exceptions.not_found) {
-                    tm = CharSetMap[/* empty */0];
-                  } else {
-                    throw exn;
-                  }
-                }
-                return Curry._3(StateMap[/* add */3], i1, add_transition2(c2, i2, tm), sm$1);
+                return add_transition(param[0][1], match[0], match[1], sm);
               }), fs, StateMap[/* empty */0]);
 }
 
@@ -280,6 +294,25 @@ function annotate(param) {
   }
 }
 
+function flatten_transitions(cm) {
+  return Curry._3(CharSetMap[/* fold */10], (function (cs, ss, cm) {
+                return Curry._3(C[/* fold */13], (function (c, cm) {
+                              var entry;
+                              try {
+                                entry = Curry._2(Nfa$ReasonReNfa.CharMap[/* find */21], c, cm);
+                              }
+                              catch (exn){
+                                if (exn === Caml_builtin_exceptions.not_found) {
+                                  entry = Nfa$ReasonReNfa.StateSet[/* empty */0];
+                                } else {
+                                  throw exn;
+                                }
+                              }
+                              return Curry._3(Nfa$ReasonReNfa.CharMap[/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* union */6], ss, entry), cm);
+                            }), cs, cm);
+              }), cm, Nfa$ReasonReNfa.CharMap[/* empty */0]);
+}
+
 function compile(r) {
   var r$1 = annotate(r);
   var finals = l(r$1) ? Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], start_state, positions(d(r$1))) : positions(d(r$1));
@@ -288,23 +321,7 @@ function compile(r) {
   var joint_transitions = Curry._3(StateMap[/* add */3], start_state, initial_transitions, transitions);
   var next = function (s) {
     try {
-      var cm = Curry._2(StateMap[/* find */21], s, joint_transitions);
-      return Curry._3(CharSetMap[/* fold */10], (function (cs, ss, cm) {
-                    return Curry._3(C[/* fold */13], (function (c, cm) {
-                                  var entry;
-                                  try {
-                                    entry = Curry._2(Nfa$ReasonReNfa.CharMap[/* find */21], c, cm);
-                                  }
-                                  catch (exn){
-                                    if (exn === Caml_builtin_exceptions.not_found) {
-                                      entry = Nfa$ReasonReNfa.StateSet[/* empty */0];
-                                    } else {
-                                      throw exn;
-                                    }
-                                  }
-                                  return Curry._3(Nfa$ReasonReNfa.CharMap[/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* union */6], ss, entry), cm);
-                                }), cs, cm);
-                  }), cm, Nfa$ReasonReNfa.CharMap[/* empty */0]);
+      return flatten_transitions(Curry._2(StateMap[/* find */21], s, joint_transitions));
     }
     catch (exn){
       if (exn === Caml_builtin_exceptions.not_found) {
@@ -379,7 +396,11 @@ function range(l, h) {
   return /* Char */Block.__(0, [range_(l, h)]);
 }
 
-var any = range(Char.chr(0), Char.chr(255));
+var h = Char.chr(255);
+
+var l$1 = Char.chr(0);
+
+var any = /* Char */Block.__(0, [range_(l$1, h)]);
 
 var Parse_error = Caml_exceptions.create("Regex-ReasonReNfa.Parse_error");
 
@@ -430,7 +451,7 @@ function re_parse_atom(param) {
     }
     if (exit === 1) {
       return /* tuple */[
-              chr(h),
+              /* Char */Block.__(0, [Curry._1(C[/* singleton */4], h)]),
               param[1]
             ];
     }
@@ -570,24 +591,114 @@ function parse(s) {
   
 }
 
-var empty = /* Empty */0;
+var CharSet = $$Set.Make([Char.compare]);
+
+function regexp2parseTree(regexp) {
+  var re = parse(regexp);
+  var unparse = function (r) {
+    if (typeof r === "number") {
+      if (r === 0) {
+        return /* Leaf */Block.__(2, [
+                  "Empty",
+                  ""
+                ]);
+      } else {
+        return /* Leaf */Block.__(2, [
+                  "Eps",
+                  ""
+                ]);
+      }
+    } else {
+      switch (r.tag | 0) {
+        case 0 : 
+            var s = r[0];
+            var match = Curry._1(CharSet[/* cardinal */18], s);
+            return /* Leaf */Block.__(2, [
+                      "Char",
+                      match === 0 || match === 1 ? (
+                          match !== 0 ? $$String.make(1, Curry._1(CharSet[/* choose */22], s)) : "{}"
+                        ) : (
+                          match !== 256 ? "{" + ($$String.concat(" ", List.map((function (param) {
+                                          return $$String.make(1, param);
+                                        }), Curry._1(CharSet[/* elements */19], s))) + "}") : "."
+                        )
+                    ]);
+        case 1 : 
+            return /* Two */Block.__(1, [
+                      "Alt",
+                      unparse(r[0]),
+                      unparse(r[1])
+                    ]);
+        case 2 : 
+            return /* Two */Block.__(1, [
+                      "Seq",
+                      unparse(r[0]),
+                      unparse(r[1])
+                    ]);
+        case 3 : 
+            return /* One */Block.__(0, [
+                      "Star",
+                      unparse(r[0])
+                    ]);
+        
+      }
+    }
+  };
+  return unparse(re);
+}
+
+var Parse = /* module */[
+  /* Fail */Fail,
+  /* re_parse_atom */re_parse_atom,
+  /* re_parse_suffixed */re_parse_suffixed,
+  /* re_parse_seq */re_parse_seq,
+  /* re_parse_alt */re_parse_alt,
+  /* explode */explode,
+  /* parse */parse,
+  /* CharSet */CharSet,
+  /* regexp2parseTree */regexp2parseTree
+];
 
 var eps = /* Eps */1;
 
+var empty = /* Empty */0;
+
 export {
-  empty ,
-  eps ,
-  any ,
-  range ,
-  chr ,
+  C ,
+  Letter ,
+  LetterSet ,
+  Letter2Set ,
+  l ,
+  p ,
+  d ,
+  f_ ,
+  StateMap ,
+  CharSetMap ,
+  add_transition2 ,
+  add_transition ,
+  transition_map_of_factor_set ,
+  positions ,
+  transition_map_of_letter_set ,
+  fresh_state ,
+  start_state ,
+  annotate ,
+  flatten_transitions ,
+  compile ,
   seq ,
   alt ,
-  opt ,
   star ,
   plus ,
-  parse ,
-  compile ,
+  eps ,
+  chr ,
+  opt ,
+  empty ,
+  range_ ,
+  range ,
+  any ,
   Parse_error ,
+  Parse ,
+  parse ,
+  regexp2parseTree ,
   
 }
 /* C Not a pure module */

@@ -43,6 +43,11 @@ type regex('c) =
   | Seq(regex('c), regex('c)): regex('c)
   | Star(regex('c)): regex('c);
 
+type tree('a) =
+  | One('a, tree('a))
+  | Two('a, tree('a), tree('a))
+  | Leaf('a, 'a);
+
 /** Λ(r) is {ε} ∩ L(r); we represent it as a bool */
 
 let rec l =
@@ -330,8 +335,34 @@ module Parse = {
     switch (re_parse_alt(explode(s))) {
     | (r, []) => r
     | exception Fail => raise(Parse_error(s))
-    | (r, [_, ..._]) => raise(Parse_error(s))
+    | (_, [_, ..._]) => raise(Parse_error(s))
     };
+
+
+  module CharSet = Set.Make(Char);
+
+  let regexp2parseTree = (regexp) => {
+    let re = parse(regexp);
+    let rec unparse = r => switch(r) {
+      | Empty => Leaf("Empty","")
+      | Eps => Leaf("Eps","")
+      | Star(s) => One("Star", unparse(s))
+      | Seq(l, r) => Two("Seq", unparse(l), unparse(r))
+      | Alt(l, r) => Two("Alt", unparse(l), unparse(r))
+      | Char(s) => Leaf("Char", switch (CharSet.cardinal(s)) {
+        | 0 => "{}"
+        | 1 => String.make(1, CharSet.choose(s))
+        | 256 => "."
+        | _ =>
+          "{"
+          ++ String.concat(" ", List.map(String.make(1), CharSet.elements(s)))
+          ++ "}"
+      })
+    };
+    unparse(re);
+  };
+
 };
 
 let parse = Parse.parse;
+let regexp2parseTree = Parse.regexp2parseTree;
