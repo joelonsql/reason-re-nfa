@@ -21,3 +21,7 @@ let firsts = (regexp) => {
 let lasts = (regexp) => {
     Regex.lasts(regexp);
 }
+
+let letterpairs = (regexp) => {
+    Regex.letterpairs(regexp);
+}

@@ -665,6 +665,20 @@ function lasts(regexp) {
               }), d(annotate(parse(regexp))), "");
 }
 
+function letterpairs(regexp) {
+  return Curry._3(S$1[/* fold */13], (function (param, lastChars) {
+                var c2 = param[1][0];
+                var c1 = param[0][0];
+                var match = Curry._1(CharSet[/* cardinal */18], c1);
+                var match$1 = Curry._1(CharSet[/* cardinal */18], c2);
+                return lastChars + (" (" + ((
+                            match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c1))
+                          ) + (" " + ((
+                                match$1 !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c2))
+                              ) + ")"))));
+              }), f_(annotate(parse(regexp))), "");
+}
+
 var Parse = /* module */[
   /* Fail */Fail,
   /* re_parse_atom */re_parse_atom,
@@ -676,7 +690,8 @@ var Parse = /* module */[
   /* CharSet */CharSet,
   /* regexp2parseTree */regexp2parseTree,
   /* firsts */firsts,
-  /* lasts */lasts
+  /* lasts */lasts,
+  /* letterpairs */letterpairs
 ];
 
 var eps = /* Eps */1;
@@ -721,6 +736,7 @@ export {
   regexp2parseTree ,
   firsts ,
   lasts ,
+  letterpairs ,
   
 }
 /* C Not a pure module */

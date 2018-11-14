@@ -391,9 +391,25 @@ module Parse = {
       "",
     );
 
+  let letterpairs = (regexp) =>
+    Letter2Set.S.fold(
+      (((c1, _), (c2, _)), lastChars) => {
+        lastChars ++ " (" ++ switch (CharSet.cardinal(c1)) {
+            | 1 => String.make(1, CharSet.choose(c1))
+            | _ => "."
+        } ++ " " ++ switch (CharSet.cardinal(c2)) {
+            | 1 => String.make(1, CharSet.choose(c2))
+            | _ => "."
+        } ++ ")"
+      },
+      f_(annotate(parse(regexp))),
+      "",
+    );
+
 };
 
 let parse = Parse.parse;
 let regexp2parseTree = Parse.regexp2parseTree;
 let firsts = Parse.firsts;
 let lasts = Parse.lasts;
+let letterpairs = Parse.letterpairs;

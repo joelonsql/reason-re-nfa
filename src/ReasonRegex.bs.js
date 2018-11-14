@@ -29,12 +29,15 @@ var firsts = Regex$ReasonReNfa.firsts;
 
 var lasts = Regex$ReasonReNfa.lasts;
 
+var letterpairs = Regex$ReasonReNfa.letterpairs;
+
 export {
   regexp2dot ,
   regexp2parseTree ,
   nullability ,
   firsts ,
   lasts ,
+  letterpairs ,
   
 }
 /* Format Not a pure module */

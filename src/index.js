@@ -10,6 +10,7 @@ function(event){
             document.getElementById("nullability").innerHTML = "";
             document.getElementById("firsts").innerHTML = "";
             document.getElementById("lasts").innerHTML = "";
+            document.getElementById("letterpairs").innerHTML = "";
             return;
         }
         try {
@@ -20,6 +21,7 @@ function(event){
                 "<b>false</b> (regex rejects the empty string)";
             document.getElementById("firsts").innerHTML = ReasonRegex.firsts(regexinput);
             document.getElementById("lasts").innerHTML = ReasonRegex.lasts(regexinput);
+            document.getElementById("letterpairs").innerHTML = ReasonRegex.letterpairs(regexinput);
             let parseTree = ReasonRegex.regexp2parseTree(regexinput);
             function createTreantNodeStructure(parseTree) {
                 let node = {
