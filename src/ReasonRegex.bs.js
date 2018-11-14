@@ -6,38 +6,28 @@ import * as Format from "../node_modules/bs-platform/lib/es6/format.js";
 import * as Regex$ReasonReNfa from "./Regex.bs.js";
 import * as Nfa_dot$ReasonReNfa from "./Nfa_dot.bs.js";
 
-function regexp2dot(regexp) {
-  var re = Regex$ReasonReNfa.parse(regexp);
-  var nfa = Regex$ReasonReNfa.compile(re);
-  var digraph = Nfa_dot$ReasonReNfa.digraph_of_nfa(nfa);
-  return Curry._2(Format.asprintf(/* Format */[
-                  /* Alpha */Block.__(15, [/* Formatting_lit */Block.__(17, [
-                          /* Flush_newline */4,
-                          /* End_of_format */0
-                        ])]),
-                  "%a@."
-                ]), Nfa_dot$ReasonReNfa.format_digraph, digraph);
+function analyze(regexp) {
+  Regex$ReasonReNfa.counter[0] = 1;
+  var parsed_regex = Regex$ReasonReNfa.parse(regexp);
+  var compiled_regex = Regex$ReasonReNfa.compile(parsed_regex);
+  return /* tuple */[
+          Curry._2(Format.asprintf(/* Format */[
+                    /* Alpha */Block.__(15, [/* Formatting_lit */Block.__(17, [
+                            /* Flush_newline */4,
+                            /* End_of_format */0
+                          ])]),
+                    "%a@."
+                  ]), Nfa_dot$ReasonReNfa.format_digraph, Nfa_dot$ReasonReNfa.digraph_of_nfa(compiled_regex)),
+          Regex$ReasonReNfa.regexp2parseTree(parsed_regex),
+          compiled_regex[/* nullable */3],
+          compiled_regex[/* firsts */4],
+          compiled_regex[/* lasts */5],
+          compiled_regex[/* pairs */6]
+        ];
 }
-
-var regexp2parseTree = Regex$ReasonReNfa.regexp2parseTree;
-
-function nullability(regexp) {
-  return Regex$ReasonReNfa.l(Regex$ReasonReNfa.annotate(Regex$ReasonReNfa.parse(regexp)));
-}
-
-var firsts = Regex$ReasonReNfa.firsts;
-
-var lasts = Regex$ReasonReNfa.lasts;
-
-var letterpairs = Regex$ReasonReNfa.letterpairs;
 
 export {
-  regexp2dot ,
-  regexp2parseTree ,
-  nullability ,
-  firsts ,
-  lasts ,
-  letterpairs ,
+  analyze ,
   
 }
 /* Format Not a pure module */

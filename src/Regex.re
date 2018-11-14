@@ -18,7 +18,19 @@ module Letter = {
 /** Sets of single letters */
 module LetterSet = {
   module S = Set.Make(Letter);
+  module CharSet = Set.Make(Char);
   let (<+>) = S.union;
+  let to_string = (s) =>
+    S.fold(
+      ((c, i), firstChars) => {
+        firstChars ++ " " ++ switch (CharSet.cardinal(c)) {
+            | 1 => String.make(1, CharSet.choose(c))
+            | _ => "."
+        } ++ "<sub>" ++ Int32.to_string(i) ++ "</sub>"
+      },
+      s,
+      "",
+    );
 };
 
 /** Sets of letter pairs */
@@ -29,10 +41,26 @@ module Letter2Set = {
       Pervasives.compare((w, x), (y, z));
   };
   module S = Set.Make(Pair);
+  module CharSet = Set.Make(Char);
   let (<+>) = S.union;
   let (>>=) = (m, k) => LetterSet.S.fold((x, s) => k(x) <+> s, m, S.empty);
   let (<*>): (LetterSet.S.t, LetterSet.S.t) => S.t =
     (l, r) => l >>= (x => r >>= (y => S.singleton((x, y))));
+  let to_string = (s) =>
+    S.fold(
+      (((c1, i1), (c2, i2)), lastChars) => {
+        lastChars ++ " (" ++ switch (CharSet.cardinal(c1)) {
+            | 1 => String.make(1, CharSet.choose(c1))
+            | _ => "."
+        } ++ "<sub>" ++ Int32.to_string(i1) ++ "</sub> " ++ switch (CharSet.cardinal(c2)) {
+            | 1 => String.make(1, CharSet.choose(c2))
+            | _ => "."
+        } ++ "<sub>" ++ Int32.to_string(i2) ++ "</sub>)"
+      },
+      s,
+      "",
+    );
+
 };
 
 type regex('c) =
@@ -163,8 +191,9 @@ let transition_map_of_letter_set: LetterSet.S.t => CharSetMap.t(StateSet.t) =
 
 type t = regex(C.t);
 
+let counter = ref(0l);
+
 let fresh_state = {
-  let counter = ref(0l);
   let incr32 = r => r := Int32.succ(r^);
   () => {
     let c = counter^;
@@ -210,22 +239,26 @@ let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
 let compile = r => {
   /*** Give every character set in 'r' a unique identifier */
   let r = annotate(r);
+  let nullable = l(r);
+  let firsts = p(r);
+  let lasts = d(r);
+  let pairs = f_(r);
 
   /*** The final states are the set of 'last' characters in r,
        (+ the start state if r accepts the empty string) */
   let finals =
-    if (l(r)) {
-      StateSet.add(start_state, positions(d(r)));
+    if (nullable) {
+      StateSet.add(start_state, positions(lasts));
     } else {
-      positions(d(r));
+      positions(lasts);
     };
 
   /*** Transitions arise from factor (pairs of character sets with a
        transition between them) ... */
-  let transitions = transition_map_of_factor_set(f_(r));
+  let transitions = transition_map_of_factor_set(pairs);
 
   /*** ... and from the start state to the initial character sets. */
-  let initial_transitions = transition_map_of_letter_set(p(r));
+  let initial_transitions = transition_map_of_letter_set(firsts);
   let joint_transitions =
     StateMap.add(start_state, initial_transitions, transitions);
 
@@ -235,7 +268,10 @@ let compile = r => {
     | Not_found => CharMap.empty
     };
 
-  {start: start_state, finals, next};
+  {start: start_state, finals, next, nullable,
+  firsts: LetterSet.to_string(firsts),
+  lasts: LetterSet.to_string(lasts),
+  pairs: Letter2Set.to_string(pairs)};
 };
 
 /** Various basic and derived regex combinators */
@@ -346,8 +382,7 @@ module Parse = {
 
   module CharSet = Set.Make(Char);
 
-  let regexp2parseTree = (regexp) => {
-    let re = parse(regexp);
+  let regexp2parseTree = (parsed_regex) => {
     let rec unparse = r => switch(r) {
       | Empty => Leaf("Empty")
       | Eps => Leaf("Eps")
@@ -358,58 +393,13 @@ module Parse = {
         | 0 => "{}"
         | 1 => String.make(1, CharSet.choose(s))
         | 256 => "."
-        | _ =>
-          "{"
-          ++ String.concat(" ", List.map(String.make(1), CharSet.elements(s)))
-          ++ "}"
+        | _ => "{" ++ String.concat(" ", List.map(String.make(1), CharSet.elements(s))) ++ "}"
       }))
     };
-    unparse(re);
+    unparse(parsed_regex);
   };
-
-  let firsts = (regexp) =>
-    LetterSet.S.fold(
-      ((c, _), firstChars) => {
-        firstChars ++ " " ++ switch (CharSet.cardinal(c)) {
-            | 1 => String.make(1, CharSet.choose(c))
-            | _ => "."
-        }
-      },
-      p(annotate(parse(regexp))),
-      "",
-    );
-
-  let lasts = (regexp) =>
-    LetterSet.S.fold(
-      ((c, _), lastChars) => {
-        lastChars ++ " " ++ switch (CharSet.cardinal(c)) {
-            | 1 => String.make(1, CharSet.choose(c))
-            | _ => "."
-        }
-      },
-      d(annotate(parse(regexp))),
-      "",
-    );
-
-  let letterpairs = (regexp) =>
-    Letter2Set.S.fold(
-      (((c1, _), (c2, _)), lastChars) => {
-        lastChars ++ " (" ++ switch (CharSet.cardinal(c1)) {
-            | 1 => String.make(1, CharSet.choose(c1))
-            | _ => "."
-        } ++ " " ++ switch (CharSet.cardinal(c2)) {
-            | 1 => String.make(1, CharSet.choose(c2))
-            | _ => "."
-        } ++ ")"
-      },
-      f_(annotate(parse(regexp))),
-      "",
-    );
 
 };
 
 let parse = Parse.parse;
 let regexp2parseTree = Parse.regexp2parseTree;
-let firsts = Parse.firsts;
-let lasts = Parse.lasts;
-let letterpairs = Parse.letterpairs;

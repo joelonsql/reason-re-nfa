@@ -24,11 +24,25 @@ var Letter = /* module */[/* compare */compare];
 
 var S = $$Set.Make(Letter);
 
+var CharSet = $$Set.Make([Char.compare]);
+
 var $less$plus$great = S[/* union */6];
+
+function to_string(s) {
+  return Curry._3(S[/* fold */13], (function (param, firstChars) {
+                var c = param[0];
+                var match = Curry._1(CharSet[/* cardinal */18], c);
+                return firstChars + (" " + ((
+                            match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c))
+                          ) + ("<sub>" + (Int32.to_string(param[1]) + "</sub>"))));
+              }), s, "");
+}
 
 var LetterSet = /* module */[
   /* S */S,
-  /* <+> */$less$plus$great
+  /* CharSet */CharSet,
+  /* <+> */$less$plus$great,
+  /* to_string */to_string
 ];
 
 function compare$1(param, param$1) {
@@ -44,6 +58,8 @@ function compare$1(param, param$1) {
 var Pair = /* module */[/* compare */compare$1];
 
 var S$1 = $$Set.Make(Pair);
+
+var CharSet$1 = $$Set.Make([Char.compare]);
 
 var $less$plus$great$1 = S$1[/* union */6];
 
@@ -64,12 +80,30 @@ function $less$star$great(l, r) {
               }));
 }
 
+function to_string$1(s) {
+  return Curry._3(S$1[/* fold */13], (function (param, lastChars) {
+                var match = param[1];
+                var c2 = match[0];
+                var match$1 = param[0];
+                var c1 = match$1[0];
+                var match$2 = Curry._1(CharSet$1[/* cardinal */18], c1);
+                var match$3 = Curry._1(CharSet$1[/* cardinal */18], c2);
+                return lastChars + (" (" + ((
+                            match$2 !== 1 ? "." : $$String.make(1, Curry._1(CharSet$1[/* choose */22], c1))
+                          ) + ("<sub>" + (Int32.to_string(match$1[1]) + ("</sub> " + ((
+                                    match$3 !== 1 ? "." : $$String.make(1, Curry._1(CharSet$1[/* choose */22], c2))
+                                  ) + ("<sub>" + (Int32.to_string(match[1]) + "</sub>)"))))))));
+              }), s, "");
+}
+
 var Letter2Set = /* module */[
   /* Pair */Pair,
   /* S */S$1,
+  /* CharSet */CharSet$1,
   /* <+> */$less$plus$great$1,
   /* >>= */$great$great$eq,
-  /* <*> */$less$star$great
+  /* <*> */$less$star$great,
+  /* to_string */to_string$1
 ];
 
 function l(_param) {
@@ -315,9 +349,13 @@ function flatten_transitions(cm) {
 
 function compile(r) {
   var r$1 = annotate(r);
-  var finals = l(r$1) ? Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], start_state, positions(d(r$1))) : positions(d(r$1));
-  var transitions = transition_map_of_factor_set(f_(r$1));
-  var initial_transitions = transition_map_of_letter_set(p(r$1));
+  var nullable = l(r$1);
+  var firsts = p(r$1);
+  var lasts = d(r$1);
+  var pairs = f_(r$1);
+  var finals = nullable ? Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], start_state, positions(lasts)) : positions(lasts);
+  var transitions = transition_map_of_factor_set(pairs);
+  var initial_transitions = transition_map_of_letter_set(firsts);
   var joint_transitions = Curry._3(StateMap[/* add */3], start_state, initial_transitions, transitions);
   var next = function (s) {
     try {
@@ -334,7 +372,11 @@ function compile(r) {
   return /* record */[
           /* start */start_state,
           /* finals */finals,
-          /* next */next
+          /* next */next,
+          /* nullable */nullable,
+          /* firsts */to_string(firsts),
+          /* lasts */to_string(lasts),
+          /* pairs */to_string$1(pairs)
         ];
 }
 
@@ -595,10 +637,9 @@ function parse(s) {
   
 }
 
-var CharSet = $$Set.Make([Char.compare]);
+var CharSet$2 = $$Set.Make([Char.compare]);
 
-function regexp2parseTree(regexp) {
-  var re = parse(regexp);
+function regexp2parseTree(parsed_regex) {
   var unparse = function (r) {
     if (typeof r === "number") {
       if (r === 0) {
@@ -610,15 +651,15 @@ function regexp2parseTree(regexp) {
       switch (r.tag | 0) {
         case 0 : 
             var s = r[0];
-            var match = Curry._1(CharSet[/* cardinal */18], s);
+            var match = Curry._1(CharSet$2[/* cardinal */18], s);
             return /* One */Block.__(0, [
                       "Char",
                       /* Leaf */Block.__(2, [match === 0 || match === 1 ? (
-                              match !== 0 ? $$String.make(1, Curry._1(CharSet[/* choose */22], s)) : "{}"
+                              match !== 0 ? $$String.make(1, Curry._1(CharSet$2[/* choose */22], s)) : "{}"
                             ) : (
                               match !== 256 ? "{" + ($$String.concat(" ", List.map((function (param) {
                                               return $$String.make(1, param);
-                                            }), Curry._1(CharSet[/* elements */19], s))) + "}") : "."
+                                            }), Curry._1(CharSet$2[/* elements */19], s))) + "}") : "."
                             )])
                     ]);
         case 1 : 
@@ -642,41 +683,7 @@ function regexp2parseTree(regexp) {
       }
     }
   };
-  return unparse(re);
-}
-
-function firsts(regexp) {
-  return Curry._3(S[/* fold */13], (function (param, firstChars) {
-                var c = param[0];
-                var match = Curry._1(CharSet[/* cardinal */18], c);
-                return firstChars + (" " + (
-                          match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c))
-                        ));
-              }), p(annotate(parse(regexp))), "");
-}
-
-function lasts(regexp) {
-  return Curry._3(S[/* fold */13], (function (param, lastChars) {
-                var c = param[0];
-                var match = Curry._1(CharSet[/* cardinal */18], c);
-                return lastChars + (" " + (
-                          match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c))
-                        ));
-              }), d(annotate(parse(regexp))), "");
-}
-
-function letterpairs(regexp) {
-  return Curry._3(S$1[/* fold */13], (function (param, lastChars) {
-                var c2 = param[1][0];
-                var c1 = param[0][0];
-                var match = Curry._1(CharSet[/* cardinal */18], c1);
-                var match$1 = Curry._1(CharSet[/* cardinal */18], c2);
-                return lastChars + (" (" + ((
-                            match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c1))
-                          ) + (" " + ((
-                                match$1 !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c2))
-                              ) + ")"))));
-              }), f_(annotate(parse(regexp))), "");
+  return unparse(parsed_regex);
 }
 
 var Parse = /* module */[
@@ -687,11 +694,8 @@ var Parse = /* module */[
   /* re_parse_alt */re_parse_alt,
   /* explode */explode,
   /* parse */parse,
-  /* CharSet */CharSet,
-  /* regexp2parseTree */regexp2parseTree,
-  /* firsts */firsts,
-  /* lasts */lasts,
-  /* letterpairs */letterpairs
+  /* CharSet */CharSet$2,
+  /* regexp2parseTree */regexp2parseTree
 ];
 
 var eps = /* Eps */1;
@@ -714,6 +718,7 @@ export {
   transition_map_of_factor_set ,
   positions ,
   transition_map_of_letter_set ,
+  counter ,
   fresh_state ,
   start_state ,
   annotate ,
@@ -734,9 +739,6 @@ export {
   Parse ,
   parse ,
   regexp2parseTree ,
-  firsts ,
-  lasts ,
-  letterpairs ,
   
 }
 /* C Not a pure module */

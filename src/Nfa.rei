@@ -11,6 +11,10 @@ type nfa = {
   /** the transition function, that maps a state and a character to a
       set of states */
   next: state => transitions,
+  nullable: bool,
+  firsts: string,
+  lasts: string,
+  pairs: string
 };
 
 /** [accept nfa l] is [true] iff the nfa [nfa] accepts the

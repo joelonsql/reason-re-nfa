@@ -13,16 +13,16 @@ function(event){
             document.getElementById("letterpairs").innerHTML = "";
             return;
         }
+        let re = ReasonRegex.analyze(regexinput);
         try {
-            d3.select("#graph").graphviz().renderDot(ReasonRegex.regexp2dot(regexinput));
+            d3.select("#graph").graphviz().renderDot(re[0]);
             document.getElementById("regexp-input").style.backgroundColor = "";
-            document.getElementById("nullability").innerHTML = ReasonRegex.nullability(regexinput) ?
+            document.getElementById("nullability").innerHTML = re[2] ?
                 "<b>true</b> (regex accepts the empty string)" :
                 "<b>false</b> (regex rejects the empty string)";
-            document.getElementById("firsts").innerHTML = ReasonRegex.firsts(regexinput);
-            document.getElementById("lasts").innerHTML = ReasonRegex.lasts(regexinput);
-            document.getElementById("letterpairs").innerHTML = ReasonRegex.letterpairs(regexinput);
-            let parseTree = ReasonRegex.regexp2parseTree(regexinput);
+            document.getElementById("firsts").innerHTML = re[3];
+            document.getElementById("lasts").innerHTML = re[4];
+            document.getElementById("letterpairs").innerHTML = re[5];
             function createTreantNodeStructure(parseTree) {
                 let node = {
                     text: { name: parseTree[0] }
@@ -43,7 +43,7 @@ function(event){
                         collapsable: true
                     }
                 },
-                nodeStructure: createTreantNodeStructure(parseTree)
+                nodeStructure: createTreantNodeStructure(re[1])
             };
             new Treant(simple_chart_config);
         } catch (e) {
