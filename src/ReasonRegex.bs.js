@@ -21,9 +21,20 @@ function regexp2dot(regexp) {
 
 var regexp2parseTree = Regex$ReasonReNfa.regexp2parseTree;
 
+function nullability(regexp) {
+  return Regex$ReasonReNfa.l(Regex$ReasonReNfa.annotate(Regex$ReasonReNfa.parse(regexp)));
+}
+
+var firsts = Regex$ReasonReNfa.firsts;
+
+var lasts = Regex$ReasonReNfa.lasts;
+
 export {
   regexp2dot ,
   regexp2parseTree ,
+  nullability ,
+  firsts ,
+  lasts ,
   
 }
 /* Format Not a pure module */

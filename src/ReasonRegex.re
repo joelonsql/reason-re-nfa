@@ -9,3 +9,15 @@ let regexp2parseTree = (regexp) => {
     Regex.regexp2parseTree(regexp);
 };
 
+let nullability = (regexp) => {
+    let re = Regex.annotate(Regex.parse(regexp));
+    Regex.l(re);
+}
+
+let firsts = (regexp) => {
+    Regex.firsts(regexp);
+}
+
+let lasts = (regexp) => {
+    Regex.lasts(regexp);
+}

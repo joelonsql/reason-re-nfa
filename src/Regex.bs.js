@@ -645,6 +645,26 @@ function regexp2parseTree(regexp) {
   return unparse(re);
 }
 
+function firsts(regexp) {
+  return Curry._3(S[/* fold */13], (function (param, firstChars) {
+                var c = param[0];
+                var match = Curry._1(CharSet[/* cardinal */18], c);
+                return firstChars + (" " + (
+                          match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c))
+                        ));
+              }), p(annotate(parse(regexp))), "");
+}
+
+function lasts(regexp) {
+  return Curry._3(S[/* fold */13], (function (param, lastChars) {
+                var c = param[0];
+                var match = Curry._1(CharSet[/* cardinal */18], c);
+                return lastChars + (" " + (
+                          match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c))
+                        ));
+              }), d(annotate(parse(regexp))), "");
+}
+
 var Parse = /* module */[
   /* Fail */Fail,
   /* re_parse_atom */re_parse_atom,
@@ -654,7 +674,9 @@ var Parse = /* module */[
   /* explode */explode,
   /* parse */parse,
   /* CharSet */CharSet,
-  /* regexp2parseTree */regexp2parseTree
+  /* regexp2parseTree */regexp2parseTree,
+  /* firsts */firsts,
+  /* lasts */lasts
 ];
 
 var eps = /* Eps */1;
@@ -697,6 +719,8 @@ export {
   Parse ,
   parse ,
   regexp2parseTree ,
+  firsts ,
+  lasts ,
   
 }
 /* C Not a pure module */

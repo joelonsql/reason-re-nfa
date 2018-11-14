@@ -7,11 +7,19 @@ function(event){
         if (regexinput.length == 0) {
             document.getElementById("graph").innerHTML = "";
             document.getElementById("parseTree").innerHTML = "";
+            document.getElementById("nullability").innerHTML = "";
+            document.getElementById("firsts").innerHTML = "";
+            document.getElementById("lasts").innerHTML = "";
             return;
         }
         try {
             d3.select("#graph").graphviz().renderDot(ReasonRegex.regexp2dot(regexinput));
             document.getElementById("regexp-input").style.backgroundColor = "";
+            document.getElementById("nullability").innerHTML = ReasonRegex.nullability(regexinput) ?
+                "<b>true</b> (regex accepts the empty string)" :
+                "<b>false</b> (regex rejects the empty string)";
+            document.getElementById("firsts").innerHTML = ReasonRegex.firsts(regexinput);
+            document.getElementById("lasts").innerHTML = ReasonRegex.lasts(regexinput);
             let parseTree = ReasonRegex.regexp2parseTree(regexinput);
             function createTreantNodeStructure(parseTree) {
                 let node = {

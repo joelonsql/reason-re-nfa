@@ -367,7 +367,33 @@ module Parse = {
     unparse(re);
   };
 
+  let firsts = (regexp) =>
+    LetterSet.S.fold(
+      ((c, _), firstChars) => {
+        firstChars ++ " " ++ switch (CharSet.cardinal(c)) {
+            | 1 => String.make(1, CharSet.choose(c))
+            | _ => "."
+        }
+      },
+      p(annotate(parse(regexp))),
+      "",
+    );
+
+  let lasts = (regexp) =>
+    LetterSet.S.fold(
+      ((c, _), lastChars) => {
+        lastChars ++ " " ++ switch (CharSet.cardinal(c)) {
+            | 1 => String.make(1, CharSet.choose(c))
+            | _ => "."
+        }
+      },
+      d(annotate(parse(regexp))),
+      "",
+    );
+
 };
 
 let parse = Parse.parse;
 let regexp2parseTree = Parse.regexp2parseTree;
+let firsts = Parse.firsts;
+let lasts = Parse.lasts;
