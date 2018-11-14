@@ -602,30 +602,24 @@ function regexp2parseTree(regexp) {
   var unparse = function (r) {
     if (typeof r === "number") {
       if (r === 0) {
-        return /* Leaf */Block.__(2, [
-                  "Empty",
-                  ""
-                ]);
+        return /* Leaf */Block.__(2, ["Empty"]);
       } else {
-        return /* Leaf */Block.__(2, [
-                  "Eps",
-                  ""
-                ]);
+        return /* Leaf */Block.__(2, ["Eps"]);
       }
     } else {
       switch (r.tag | 0) {
         case 0 : 
             var s = r[0];
             var match = Curry._1(CharSet[/* cardinal */18], s);
-            return /* Leaf */Block.__(2, [
+            return /* One */Block.__(0, [
                       "Char",
-                      match === 0 || match === 1 ? (
-                          match !== 0 ? $$String.make(1, Curry._1(CharSet[/* choose */22], s)) : "{}"
-                        ) : (
-                          match !== 256 ? "{" + ($$String.concat(" ", List.map((function (param) {
-                                          return $$String.make(1, param);
-                                        }), Curry._1(CharSet[/* elements */19], s))) + "}") : "."
-                        )
+                      /* Leaf */Block.__(2, [match === 0 || match === 1 ? (
+                              match !== 0 ? $$String.make(1, Curry._1(CharSet[/* choose */22], s)) : "{}"
+                            ) : (
+                              match !== 256 ? "{" + ($$String.concat(" ", List.map((function (param) {
+                                              return $$String.make(1, param);
+                                            }), Curry._1(CharSet[/* elements */19], s))) + "}") : "."
+                            )])
                     ]);
         case 1 : 
             return /* Two */Block.__(1, [

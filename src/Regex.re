@@ -46,7 +46,7 @@ type regex('c) =
 type tree('a) =
   | One('a, tree('a))
   | Two('a, tree('a), tree('a))
-  | Leaf('a, 'a);
+  | Leaf('a);
 
 /** Λ(r) is {ε} ∩ L(r); we represent it as a bool */
 
@@ -349,12 +349,12 @@ module Parse = {
   let regexp2parseTree = (regexp) => {
     let re = parse(regexp);
     let rec unparse = r => switch(r) {
-      | Empty => Leaf("Empty","")
-      | Eps => Leaf("Eps","")
+      | Empty => Leaf("Empty")
+      | Eps => Leaf("Eps")
       | Star(s) => One("Star", unparse(s))
       | Seq(l, r) => Two("Seq", unparse(l), unparse(r))
       | Alt(l, r) => Two("Alt", unparse(l), unparse(r))
-      | Char(s) => Leaf("Char", switch (CharSet.cardinal(s)) {
+      | Char(s) => One("Char", Leaf(switch (CharSet.cardinal(s)) {
         | 0 => "{}"
         | 1 => String.make(1, CharSet.choose(s))
         | 256 => "."
@@ -362,7 +362,7 @@ module Parse = {
           "{"
           ++ String.concat(" ", List.map(String.make(1), CharSet.elements(s)))
           ++ "}"
-      })
+      }))
     };
     unparse(re);
   };

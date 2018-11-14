@@ -17,17 +17,12 @@ function(event){
                 let node = {
                     text: { name: parseTree[0] }
                 };
-                if (parseTree[1].constructor === Array) {
+                if (parseTree[1]) {
                     let children = [];
-                    children.push(createTreantNodeStructure(parseTree[1]));
-                    if (parseTree[2]) {
-                        children.push(createTreantNodeStructure(parseTree[2]));
+                    for (let i=1; i<parseTree.length; i++) {
+                        children.push(createTreantNodeStructure(parseTree[i]));
                     }
                     node.children = children;
-                } else {
-                    node.children = [
-                        {text: { name: parseTree[1] }}
-                    ];
                 }
                 return node;
             }
