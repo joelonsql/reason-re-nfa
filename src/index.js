@@ -7,6 +7,7 @@ function(event){
         if (regexinput.length == 0) {
             document.getElementById("graph").innerHTML = "";
             document.getElementById("parseTree").innerHTML = "";
+            document.getElementById("annotated").innerHTML = "";
             document.getElementById("nullability").innerHTML = "";
             document.getElementById("firsts").innerHTML = "";
             document.getElementById("lasts").innerHTML = "";
@@ -17,12 +18,11 @@ function(event){
         try {
             d3.select("#graph").graphviz().renderDot(re[0]);
             document.getElementById("regexp-input").style.backgroundColor = "";
-            document.getElementById("nullability").innerHTML = re[2] ?
-                "<b>true</b> (regex accepts the empty string)" :
-                "<b>false</b> (regex rejects the empty string)";
+            document.getElementById("nullability").innerHTML = re[2] ? "true" : "false";
             document.getElementById("firsts").innerHTML = re[3];
             document.getElementById("lasts").innerHTML = re[4];
             document.getElementById("letterpairs").innerHTML = re[5];
+            document.getElementById("annotated").innerHTML = re[6];
             function createTreantNodeStructure(parseTree) {
                 let node = {
                     text: { name: parseTree[0] }

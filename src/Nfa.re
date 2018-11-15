@@ -11,10 +11,11 @@ type nfa = {
   /** the transition function, that maps a state and a character to a
       set of states */
   next: state => transitions,
+  annotated: string,
   nullable: bool,
   firsts: string,
   lasts: string,
-  pairs: string
+  factors: string
 };
 
 let find_states = (sym, nfa, m) =>

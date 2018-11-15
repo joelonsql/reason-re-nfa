@@ -14,7 +14,29 @@ import * as Caml_exceptions from "../node_modules/bs-platform/lib/es6/caml_excep
 import * as Nfa$ReasonReNfa from "./Nfa.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
-var C = $$Set.Make([Char.compare]);
+var S = $$Set.Make([Char.compare]);
+
+function to_string(s) {
+  var match = Curry._1(S[/* cardinal */18], s);
+  if (match === 0 || match === 1) {
+    if (match !== 0) {
+      return $$String.make(1, Curry._1(S[/* choose */22], s));
+    } else {
+      return "{}";
+    }
+  } else if (match !== 256) {
+    return "{" + ($$String.concat(" ", List.map((function (param) {
+                        return $$String.make(1, param);
+                      }), Curry._1(S[/* elements */19], s))) + "}");
+  } else {
+    return ".";
+  }
+}
+
+var CharSet = /* module */[
+  /* S */S,
+  /* to_string */to_string
+];
 
 function compare(param, param$1) {
   return Caml_obj.caml_compare(param[1], param$1[1]);
@@ -22,27 +44,20 @@ function compare(param, param$1) {
 
 var Letter = /* module */[/* compare */compare];
 
-var S = $$Set.Make(Letter);
+var S$1 = $$Set.Make(Letter);
 
-var CharSet = $$Set.Make([Char.compare]);
+var $less$plus$great = S$1[/* union */6];
 
-var $less$plus$great = S[/* union */6];
-
-function to_string(s) {
-  return Curry._3(S[/* fold */13], (function (param, firstChars) {
-                var c = param[0];
-                var match = Curry._1(CharSet[/* cardinal */18], c);
-                return firstChars + (" " + ((
-                            match !== 1 ? "." : $$String.make(1, Curry._1(CharSet[/* choose */22], c))
-                          ) + ("<sub>" + (Int32.to_string(param[1]) + "</sub>"))));
+function to_string$1(s) {
+  return Curry._3(S$1[/* fold */13], (function (param, firstChars) {
+                return firstChars + (to_string(param[0]) + ("<sub>" + (Int32.to_string(param[1]) + "</sub> ")));
               }), s, "");
 }
 
 var LetterSet = /* module */[
-  /* S */S,
-  /* CharSet */CharSet,
+  /* S */S$1,
   /* <+> */$less$plus$great,
-  /* to_string */to_string
+  /* to_string */to_string$1
 ];
 
 function compare$1(param, param$1) {
@@ -57,22 +72,20 @@ function compare$1(param, param$1) {
 
 var Pair = /* module */[/* compare */compare$1];
 
-var S$1 = $$Set.Make(Pair);
+var S$2 = $$Set.Make(Pair);
 
-var CharSet$1 = $$Set.Make([Char.compare]);
-
-var $less$plus$great$1 = S$1[/* union */6];
+var $less$plus$great$1 = S$2[/* union */6];
 
 function $great$great$eq(m, k) {
-  return Curry._3(S[/* fold */13], (function (x, s) {
+  return Curry._3(S$1[/* fold */13], (function (x, s) {
                 return Curry._2($less$plus$great$1, Curry._1(k, x), s);
-              }), m, S$1[/* empty */0]);
+              }), m, S$2[/* empty */0]);
 }
 
 function $less$star$great(l, r) {
   return $great$great$eq(l, (function (x) {
                 return $great$great$eq(r, (function (y) {
-                              return Curry._1(S$1[/* singleton */4], /* tuple */[
+                              return Curry._1(S$2[/* singleton */4], /* tuple */[
                                           x,
                                           y
                                         ]);
@@ -80,30 +93,21 @@ function $less$star$great(l, r) {
               }));
 }
 
-function to_string$1(s) {
-  return Curry._3(S$1[/* fold */13], (function (param, lastChars) {
+function to_string$2(s) {
+  return Curry._3(S$2[/* fold */13], (function (param, lastChars) {
                 var match = param[1];
-                var c2 = match[0];
                 var match$1 = param[0];
-                var c1 = match$1[0];
-                var match$2 = Curry._1(CharSet$1[/* cardinal */18], c1);
-                var match$3 = Curry._1(CharSet$1[/* cardinal */18], c2);
-                return lastChars + (" (" + ((
-                            match$2 !== 1 ? "." : $$String.make(1, Curry._1(CharSet$1[/* choose */22], c1))
-                          ) + ("<sub>" + (Int32.to_string(match$1[1]) + ("</sub> " + ((
-                                    match$3 !== 1 ? "." : $$String.make(1, Curry._1(CharSet$1[/* choose */22], c2))
-                                  ) + ("<sub>" + (Int32.to_string(match[1]) + "</sub>)"))))))));
+                return lastChars + (to_string(match$1[0]) + ("<sub>" + (Int32.to_string(match$1[1]) + ("</sub>" + (to_string(match[0]) + ("<sub>" + (Int32.to_string(match[1]) + "</sub> ")))))));
               }), s, "");
 }
 
 var Letter2Set = /* module */[
   /* Pair */Pair,
-  /* S */S$1,
-  /* CharSet */CharSet$1,
+  /* S */S$2,
   /* <+> */$less$plus$great$1,
   /* >>= */$great$great$eq,
   /* <*> */$less$star$great,
-  /* to_string */to_string$1
+  /* to_string */to_string$2
 ];
 
 function l(_param) {
@@ -145,16 +149,16 @@ function p(_param) {
   while(true) {
     var param = _param;
     if (typeof param === "number") {
-      return S[/* empty */0];
+      return S$1[/* empty */0];
     } else {
       switch (param.tag | 0) {
         case 0 : 
-            return Curry._1(S[/* singleton */4], param[0]);
+            return Curry._1(S$1[/* singleton */4], param[0]);
         case 1 : 
             return Curry._2($less$plus$great, p(param[0]), p(param[1]));
         case 2 : 
             var e = param[0];
-            return Curry._2($less$plus$great, p(e), l(e) ? p(param[1]) : S[/* empty */0]);
+            return Curry._2($less$plus$great, p(e), l(e) ? p(param[1]) : S$1[/* empty */0]);
         case 3 : 
             _param = param[0];
             continue ;
@@ -168,16 +172,16 @@ function d(_param) {
   while(true) {
     var param = _param;
     if (typeof param === "number") {
-      return S[/* empty */0];
+      return S$1[/* empty */0];
     } else {
       switch (param.tag | 0) {
         case 0 : 
-            return Curry._1(S[/* singleton */4], param[0]);
+            return Curry._1(S$1[/* singleton */4], param[0]);
         case 1 : 
             return Curry._2($less$plus$great, d(param[0]), d(param[1]));
         case 2 : 
             var e = param[1];
-            return Curry._2($less$plus$great, l(e) ? d(param[0]) : S[/* empty */0], d(e));
+            return Curry._2($less$plus$great, l(e) ? d(param[0]) : S$1[/* empty */0], d(e));
         case 3 : 
             _param = param[0];
             continue ;
@@ -189,7 +193,7 @@ function d(_param) {
 
 function f_(param) {
   if (typeof param === "number") {
-    return S$1[/* empty */0];
+    return S$2[/* empty */0];
   } else {
     switch (param.tag | 0) {
       case 1 : 
@@ -202,14 +206,14 @@ function f_(param) {
           var e$1 = param[0];
           return Curry._2($less$plus$great$1, f_(e$1), $less$star$great(d(e$1), p(e$1)));
       default:
-        return S$1[/* empty */0];
+        return S$2[/* empty */0];
     }
   }
 }
 
 var StateMap = $$Map.Make([Int32.compare]);
 
-var CharSetMap = $$Map.Make([C[9]]);
+var CharSetMap = $$Map.Make([S[9]]);
 
 function add_transition2(c, i, tm) {
   var ss;
@@ -242,7 +246,7 @@ function add_transition(i1, c2, i2, sm) {
 }
 
 function transition_map_of_factor_set(fs) {
-  return Curry._3(S$1[/* fold */13], (function (param, sm) {
+  return Curry._3(S$2[/* fold */13], (function (param, sm) {
                 var match = param[1];
                 return add_transition(param[0][1], match[0], match[1], sm);
               }), fs, StateMap[/* empty */0]);
@@ -251,11 +255,11 @@ function transition_map_of_factor_set(fs) {
 function positions(s) {
   return Curry._1(Nfa$ReasonReNfa.StateSet[/* of_list */25], List.map((function (prim) {
                     return prim[1];
-                  }), Curry._1(S[/* elements */19], s)));
+                  }), Curry._1(S$1[/* elements */19], s)));
 }
 
 function transition_map_of_letter_set(s) {
-  return Curry._3(S[/* fold */13], (function (param, tm) {
+  return Curry._3(S$1[/* fold */13], (function (param, tm) {
                 var i = param[1];
                 var c = param[0];
                 var entry;
@@ -328,9 +332,37 @@ function annotate(param) {
   }
 }
 
+function string_of_annotated(_r) {
+  while(true) {
+    var r = _r;
+    var exit = 0;
+    if (typeof r === "number") {
+      return "";
+    } else {
+      switch (r.tag | 0) {
+        case 0 : 
+            var x = r[0];
+            return to_string(x[0]) + ("<sub>" + (Int32.to_string(x[1]) + "</sub> "));
+        case 1 : 
+        case 2 : 
+            exit = 1;
+            break;
+        case 3 : 
+            _r = r[0];
+            continue ;
+        
+      }
+    }
+    if (exit === 1) {
+      return string_of_annotated(r[0]) + string_of_annotated(r[1]);
+    }
+    
+  };
+}
+
 function flatten_transitions(cm) {
   return Curry._3(CharSetMap[/* fold */10], (function (cs, ss, cm) {
-                return Curry._3(C[/* fold */13], (function (c, cm) {
+                return Curry._3(S[/* fold */13], (function (c, cm) {
                               var entry;
                               try {
                                 entry = Curry._2(Nfa$ReasonReNfa.CharMap[/* find */21], c, cm);
@@ -348,13 +380,13 @@ function flatten_transitions(cm) {
 }
 
 function compile(r) {
-  var r$1 = annotate(r);
-  var nullable = l(r$1);
-  var firsts = p(r$1);
-  var lasts = d(r$1);
-  var pairs = f_(r$1);
+  var annotated = annotate(r);
+  var nullable = l(annotated);
+  var firsts = p(annotated);
+  var lasts = d(annotated);
+  var factors = f_(annotated);
   var finals = nullable ? Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], start_state, positions(lasts)) : positions(lasts);
-  var transitions = transition_map_of_factor_set(pairs);
+  var transitions = transition_map_of_factor_set(factors);
   var initial_transitions = transition_map_of_letter_set(firsts);
   var joint_transitions = Curry._3(StateMap[/* add */3], start_state, initial_transitions, transitions);
   var next = function (s) {
@@ -373,10 +405,11 @@ function compile(r) {
           /* start */start_state,
           /* finals */finals,
           /* next */next,
+          /* annotated */string_of_annotated(annotated),
           /* nullable */nullable,
-          /* firsts */to_string(firsts),
-          /* lasts */to_string(lasts),
-          /* pairs */to_string$1(pairs)
+          /* firsts */to_string$1(firsts),
+          /* lasts */to_string$1(lasts),
+          /* factors */to_string$2(factors)
         ];
 }
 
@@ -407,7 +440,7 @@ function alt(l, r) {
               r
             ]);
   } else {
-    return /* Char */Block.__(0, [Curry._2(C[/* union */6], l[0], r[0])]);
+    return /* Char */Block.__(0, [Curry._2(S[/* union */6], l[0], r[0])]);
   }
 }
 
@@ -420,7 +453,7 @@ function plus(t) {
 }
 
 function chr(c) {
-  return /* Char */Block.__(0, [Curry._1(C[/* singleton */4], c)]);
+  return /* Char */Block.__(0, [Curry._1(S[/* singleton */4], c)]);
 }
 
 function opt(t) {
@@ -430,14 +463,14 @@ function opt(t) {
 function range_(l, h) {
   var _i = l;
   var h$1 = h;
-  var _acc = C[/* empty */0];
+  var _acc = S[/* empty */0];
   while(true) {
     var acc = _acc;
     var i = _i;
     if (i === h$1) {
-      return Curry._2(C[/* add */3], Char.chr(i), acc);
+      return Curry._2(S[/* add */3], Char.chr(i), acc);
     } else {
-      _acc = Curry._2(C[/* add */3], Char.chr(i), acc);
+      _acc = Curry._2(S[/* add */3], Char.chr(i), acc);
       _i = i + 1 | 0;
       continue ;
     }
@@ -503,7 +536,7 @@ function re_parse_atom(param) {
     }
     if (exit === 1) {
       return /* tuple */[
-              /* Char */Block.__(0, [Curry._1(C[/* singleton */4], h)]),
+              chr(h),
               param[1]
             ];
     }
@@ -637,8 +670,6 @@ function parse(s) {
   
 }
 
-var CharSet$2 = $$Set.Make([Char.compare]);
-
 function regexp2parseTree(parsed_regex) {
   var unparse = function (r) {
     if (typeof r === "number") {
@@ -651,15 +682,15 @@ function regexp2parseTree(parsed_regex) {
       switch (r.tag | 0) {
         case 0 : 
             var s = r[0];
-            var match = Curry._1(CharSet$2[/* cardinal */18], s);
+            var match = Curry._1(S[/* cardinal */18], s);
             return /* One */Block.__(0, [
                       "Char",
                       /* Leaf */Block.__(2, [match === 0 || match === 1 ? (
-                              match !== 0 ? $$String.make(1, Curry._1(CharSet$2[/* choose */22], s)) : "{}"
+                              match !== 0 ? $$String.make(1, Curry._1(S[/* choose */22], s)) : "{}"
                             ) : (
                               match !== 256 ? "{" + ($$String.concat(" ", List.map((function (param) {
                                               return $$String.make(1, param);
-                                            }), Curry._1(CharSet$2[/* elements */19], s))) + "}") : "."
+                                            }), Curry._1(S[/* elements */19], s))) + "}") : "."
                             )])
                     ]);
         case 1 : 
@@ -694,7 +725,6 @@ var Parse = /* module */[
   /* re_parse_alt */re_parse_alt,
   /* explode */explode,
   /* parse */parse,
-  /* CharSet */CharSet$2,
   /* regexp2parseTree */regexp2parseTree
 ];
 
@@ -703,7 +733,7 @@ var eps = /* Eps */1;
 var empty = /* Empty */0;
 
 export {
-  C ,
+  CharSet ,
   Letter ,
   LetterSet ,
   Letter2Set ,
@@ -722,6 +752,7 @@ export {
   fresh_state ,
   start_state ,
   annotate ,
+  string_of_annotated ,
   flatten_transitions ,
   compile ,
   seq ,
@@ -741,4 +772,4 @@ export {
   regexp2parseTree ,
   
 }
-/* C Not a pure module */
+/* S Not a pure module */

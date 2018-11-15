@@ -19,10 +19,11 @@ function analyze(regexp) {
                     "%a@."
                   ]), Nfa_dot$ReasonReNfa.format_digraph, Nfa_dot$ReasonReNfa.digraph_of_nfa(compiled_regex)),
           Regex$ReasonReNfa.regexp2parseTree(parsed_regex),
-          compiled_regex[/* nullable */3],
-          compiled_regex[/* firsts */4],
-          compiled_regex[/* lasts */5],
-          compiled_regex[/* pairs */6]
+          compiled_regex[/* nullable */4],
+          compiled_regex[/* firsts */5],
+          compiled_regex[/* lasts */6],
+          compiled_regex[/* factors */7],
+          compiled_regex[/* annotated */3]
         ];
 }
 

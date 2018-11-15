@@ -8,6 +8,7 @@ let analyze = (regexp) => {
         compiled_regex.nullable,
         compiled_regex.firsts,
         compiled_regex.lasts,
-        compiled_regex.pairs
+        compiled_regex.factors,
+        compiled_regex.annotated
     );
 };
