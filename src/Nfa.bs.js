@@ -3,39 +3,63 @@
 import * as $$Map from "../node_modules/bs-platform/lib/es6/map.js";
 import * as $$Set from "../node_modules/bs-platform/lib/es6/set.js";
 import * as Char from "../node_modules/bs-platform/lib/es6/char.js";
+import * as List from "../node_modules/bs-platform/lib/es6/list.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Int32 from "../node_modules/bs-platform/lib/es6/int32.js";
+import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
-var StateSet = $$Set.Make([Int32.compare]);
+var S = $$Set.Make([Int32.compare]);
 
-var CharMap = $$Map.Make([Char.compare]);
+function to_string(ss) {
+  return "{" + ($$String.concat(" ", List.map(Int32.to_string, Curry._1(S[/* elements */19], ss))) + "}");
+}
+
+var StateSet = /* module */[
+  /* S */S,
+  /* to_string */to_string
+];
+
+var M = $$Map.Make([Char.compare]);
+
+function to_string$1(cm) {
+  return Curry._3(M[/* fold */10], (function (c, ss, str) {
+                return str + (" " + ($$String.make(1, c) + (":" + to_string(ss))));
+              }), cm, "");
+}
+
+var CharMapStateSet = /* module */[
+  /* M */M,
+  /* to_string */to_string$1
+];
 
 function find_states(sym, nfa, m) {
   try {
-    return Curry._2(CharMap[/* find */21], sym, Curry._1(nfa[/* next */2], m));
+    return Curry._2(M[/* find */21], sym, Curry._1(nfa[/* next */2], m));
   }
   catch (exn){
     if (exn === Caml_builtin_exceptions.not_found) {
-      return StateSet[/* empty */0];
+      return S[/* empty */0];
     } else {
       throw exn;
     }
   }
 }
 
+function flat_map(f, ss) {
+  return Curry._3(S[/* fold */13], (function (s) {
+                return Curry._1(S[/* union */6], Curry._1(f, s));
+              }), ss, S[/* empty */0]);
+}
+
 function nextss(curs, sym, nfa) {
-  var f = function (param) {
-    return find_states(sym, nfa, param);
-  };
-  var ss = curs;
-  return Curry._3(StateSet[/* fold */13], (function (s) {
-                return Curry._1(StateSet[/* union */6], Curry._1(f, s));
-              }), ss, StateSet[/* empty */0]);
+  return flat_map((function (param) {
+                return find_states(sym, nfa, param);
+              }), curs);
 }
 
 function accept(nfa, inp) {
-  var _cur = Curry._1(StateSet[/* singleton */4], nfa[/* start */0]);
+  var _cur = Curry._1(S[/* singleton */4], nfa[/* start */0]);
   var _param = inp;
   while(true) {
     var param = _param;
@@ -45,15 +69,18 @@ function accept(nfa, inp) {
       _cur = nextss(cur, param[0], nfa);
       continue ;
     } else {
-      return !Curry._1(StateSet[/* is_empty */1], Curry._2(StateSet[/* inter */7], cur, nfa[/* finals */1]));
+      return !Curry._1(S[/* is_empty */1], Curry._2(S[/* inter */7], cur, nfa[/* finals */1]));
     }
   };
 }
 
 export {
   StateSet ,
-  CharMap ,
+  CharMapStateSet ,
+  find_states ,
+  flat_map ,
+  nextss ,
   accept ,
   
 }
-/* StateSet Not a pure module */
+/* S Not a pure module */

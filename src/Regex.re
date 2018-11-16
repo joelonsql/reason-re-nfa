@@ -8,12 +8,12 @@ open Nfa;
  */
 module CharSet = {
   module S = Set.Make(Char);
-  let to_string = (s) =>
-    switch (S.cardinal(s)) {
+  let to_string = (cs) =>
+    switch (S.cardinal(cs)) {
       | 0 => "{}"
-      | 1 => String.make(1, S.choose(s))
+      | 1 => String.make(1, S.choose(cs))
       | 256 => "."
-      | _ => "{" ++ String.concat(" ", List.map(String.make(1), S.elements(s))) ++ "}"
+      | _ => "{" ++ String.concat(" ", List.map(String.make(1), S.elements(cs))) ++ "}"
     };
 };
 
@@ -28,13 +28,13 @@ module Letter = {
 module LetterSet = {
   module S = Set.Make(Letter);
   let (<+>) = S.union;
-  let to_string = (s) =>
+  let to_string = (ls) =>
     S.fold(
-      ((c, i), firstChars) => {
-        firstChars ++ CharSet.to_string(c) ++ "<sub>" ++ Int32.to_string(i) ++ "</sub> "
+      ((c, i), str) => {
+        str ++ CharSet.to_string(c) ++ "<sub>" ++ Int32.to_string(i) ++ "</sub> "
       },
-      s,
-      "",
+      ls,
+      ""
     );
 };
 
@@ -50,13 +50,13 @@ module Letter2Set = {
   let (>>=) = (m, k) => LetterSet.S.fold((x, s) => k(x) <+> s, m, S.empty);
   let (<*>): (LetterSet.S.t, LetterSet.S.t) => S.t =
     (l, r) => l >>= (x => r >>= (y => S.singleton((x, y))));
-  let to_string = (s) =>
+  let to_string = (l2s) =>
     S.fold(
-      (((c1, i1), (c2, i2)), lastChars) => {
-        lastChars ++ CharSet.to_string(c1) ++ "<sub>" ++ Int32.to_string(i1) ++ "</sub>"
-                  ++ CharSet.to_string(c2) ++ "<sub>" ++ Int32.to_string(i2) ++ "</sub> "
+      (((c1, i1), (c2, i2)), str) => {
+        str ++ CharSet.to_string(c1) ++ "<sub>" ++ Int32.to_string(i1) ++ "</sub>"
+            ++ CharSet.to_string(c2) ++ "<sub>" ++ Int32.to_string(i2) ++ "</sub> "
       },
-      s,
+      l2s,
       "",
     );
 
@@ -148,10 +148,10 @@ module CharSetMap = Map.Make(CharSet.S);
 let add_transition2 = (c, i, tm) => {
   let ss =
     switch (CharSetMap.find(c, tm)) {
-    | exception Not_found => StateSet.empty
+    | exception Not_found => StateSet.S.empty
     | ss => ss
     };
-  CharSetMap.add(c, StateSet.add(i, ss), tm);
+  CharSetMap.add(c, StateSet.S.add(i, ss), tm);
 };
 
 let add_transition = (i1, c2, i2, sm) => {
@@ -170,17 +170,17 @@ let transition_map_of_factor_set = fs =>
     StateMap.empty,
   );
 
-let positions: LetterSet.S.t => StateSet.t =
-  s => StateSet.of_list(List.map(snd, LetterSet.S.elements(s)));
+let positions: LetterSet.S.t => StateSet.S.t =
+  s => StateSet.S.of_list(List.map(snd, LetterSet.S.elements(s)));
 
-let transition_map_of_letter_set: LetterSet.S.t => CharSetMap.t(StateSet.t) =
+let transition_map_of_letter_set: LetterSet.S.t => CharSetMap.t(StateSet.S.t) =
   s =>
     LetterSet.S.fold(
       ((c, i), tm) => {
         let entry =
           switch (CharSetMap.find(c, tm)) {
-          | exception Not_found => StateSet.singleton(i)
-          | s => StateSet.add(i, s)
+          | exception Not_found => StateSet.S.singleton(i)
+          | s => StateSet.S.add(i, s)
           };
         CharSetMap.add(c, entry, tm);
       },
@@ -228,24 +228,24 @@ let rec string_of_annotated = (r) =>
     };
   };
 
-let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
+let flatten_transitions: CharSetMap.t(StateSet.S.t) => CharMapStateSet.M.t(StateSet.S.t) =
   cm =>
     CharSetMap.fold(
       (cs, ss, cm) =>
         CharSet.S.fold(
           (c, cm) => {
             let entry =
-              switch (CharMap.find(c, cm)) {
-              | exception Not_found => StateSet.empty
+              switch (CharMapStateSet.M.find(c, cm)) {
+              | exception Not_found => StateSet.S.empty
               | ss => ss
               };
-            CharMap.add(c, StateSet.union(ss, entry), cm);
+            CharMapStateSet.M.add(c, StateSet.S.union(ss, entry), cm);
           },
           cs,
           cm,
         ),
       cm,
-      CharMap.empty,
+      CharMapStateSet.M.empty,
     );
 
 let compile = r => {
@@ -260,7 +260,7 @@ let compile = r => {
        (+ the start state if r accepts the empty string) */
   let finals =
     if (nullable) {
-      StateSet.add(start_state, positions(lasts));
+      StateSet.S.add(start_state, positions(lasts));
     } else {
       positions(lasts);
     };
@@ -277,7 +277,7 @@ let compile = r => {
   /*** The 'next' function is built from the transition sets. */
   let next = s =>
     try (flatten_transitions(StateMap.find(s, joint_transitions))) {
-    | Not_found => CharMap.empty
+    | Not_found => CharMapStateSet.M.empty
     };
 
   {start: start_state, finals, next,

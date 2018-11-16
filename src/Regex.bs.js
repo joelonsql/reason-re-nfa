@@ -16,18 +16,18 @@ import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/ca
 
 var S = $$Set.Make([Char.compare]);
 
-function to_string(s) {
-  var match = Curry._1(S[/* cardinal */18], s);
+function to_string(cs) {
+  var match = Curry._1(S[/* cardinal */18], cs);
   if (match === 0 || match === 1) {
     if (match !== 0) {
-      return $$String.make(1, Curry._1(S[/* choose */22], s));
+      return $$String.make(1, Curry._1(S[/* choose */22], cs));
     } else {
       return "{}";
     }
   } else if (match !== 256) {
     return "{" + ($$String.concat(" ", List.map((function (param) {
                         return $$String.make(1, param);
-                      }), Curry._1(S[/* elements */19], s))) + "}");
+                      }), Curry._1(S[/* elements */19], cs))) + "}");
   } else {
     return ".";
   }
@@ -48,10 +48,10 @@ var S$1 = $$Set.Make(Letter);
 
 var $less$plus$great = S$1[/* union */6];
 
-function to_string$1(s) {
-  return Curry._3(S$1[/* fold */13], (function (param, firstChars) {
-                return firstChars + (to_string(param[0]) + ("<sub>" + (Int32.to_string(param[1]) + "</sub> ")));
-              }), s, "");
+function to_string$1(ls) {
+  return Curry._3(S$1[/* fold */13], (function (param, str) {
+                return str + (to_string(param[0]) + ("<sub>" + (Int32.to_string(param[1]) + "</sub> ")));
+              }), ls, "");
 }
 
 var LetterSet = /* module */[
@@ -93,12 +93,12 @@ function $less$star$great(l, r) {
               }));
 }
 
-function to_string$2(s) {
-  return Curry._3(S$2[/* fold */13], (function (param, lastChars) {
+function to_string$2(l2s) {
+  return Curry._3(S$2[/* fold */13], (function (param, str) {
                 var match = param[1];
                 var match$1 = param[0];
-                return lastChars + (to_string(match$1[0]) + ("<sub>" + (Int32.to_string(match$1[1]) + ("</sub>" + (to_string(match[0]) + ("<sub>" + (Int32.to_string(match[1]) + "</sub> ")))))));
-              }), s, "");
+                return str + (to_string(match$1[0]) + ("<sub>" + (Int32.to_string(match$1[1]) + ("</sub>" + (to_string(match[0]) + ("<sub>" + (Int32.to_string(match[1]) + "</sub> ")))))));
+              }), l2s, "");
 }
 
 var Letter2Set = /* module */[
@@ -222,12 +222,12 @@ function add_transition2(c, i, tm) {
   }
   catch (exn){
     if (exn === Caml_builtin_exceptions.not_found) {
-      ss = Nfa$ReasonReNfa.StateSet[/* empty */0];
+      ss = Nfa$ReasonReNfa.StateSet[/* S */0][/* empty */0];
     } else {
       throw exn;
     }
   }
-  return Curry._3(CharSetMap[/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], i, ss), tm);
+  return Curry._3(CharSetMap[/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* add */3], i, ss), tm);
 }
 
 function add_transition(i1, c2, i2, sm) {
@@ -253,7 +253,7 @@ function transition_map_of_factor_set(fs) {
 }
 
 function positions(s) {
-  return Curry._1(Nfa$ReasonReNfa.StateSet[/* of_list */25], List.map((function (prim) {
+  return Curry._1(Nfa$ReasonReNfa.StateSet[/* S */0][/* of_list */25], List.map((function (prim) {
                     return prim[1];
                   }), Curry._1(S$1[/* elements */19], s)));
 }
@@ -271,13 +271,13 @@ function transition_map_of_letter_set(s) {
                 }
                 catch (exn){
                   if (exn === Caml_builtin_exceptions.not_found) {
-                    entry = Curry._1(Nfa$ReasonReNfa.StateSet[/* singleton */4], i);
+                    entry = Curry._1(Nfa$ReasonReNfa.StateSet[/* S */0][/* singleton */4], i);
                   } else {
                     throw exn;
                   }
                 }
                 if (exit === 1) {
-                  entry = Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], i, s);
+                  entry = Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* add */3], i, s);
                 }
                 return Curry._3(CharSetMap[/* add */3], c, entry, tm);
               }), s, CharSetMap[/* empty */0]);
@@ -365,18 +365,18 @@ function flatten_transitions(cm) {
                 return Curry._3(S[/* fold */13], (function (c, cm) {
                               var entry;
                               try {
-                                entry = Curry._2(Nfa$ReasonReNfa.CharMap[/* find */21], c, cm);
+                                entry = Curry._2(Nfa$ReasonReNfa.CharMapStateSet[/* M */0][/* find */21], c, cm);
                               }
                               catch (exn){
                                 if (exn === Caml_builtin_exceptions.not_found) {
-                                  entry = Nfa$ReasonReNfa.StateSet[/* empty */0];
+                                  entry = Nfa$ReasonReNfa.StateSet[/* S */0][/* empty */0];
                                 } else {
                                   throw exn;
                                 }
                               }
-                              return Curry._3(Nfa$ReasonReNfa.CharMap[/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* union */6], ss, entry), cm);
+                              return Curry._3(Nfa$ReasonReNfa.CharMapStateSet[/* M */0][/* add */3], c, Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* union */6], ss, entry), cm);
                             }), cs, cm);
-              }), cm, Nfa$ReasonReNfa.CharMap[/* empty */0]);
+              }), cm, Nfa$ReasonReNfa.CharMapStateSet[/* M */0][/* empty */0]);
 }
 
 function compile(r) {
@@ -385,7 +385,7 @@ function compile(r) {
   var firsts = p(annotated);
   var lasts = d(annotated);
   var factors = f_(annotated);
-  var finals = nullable ? Curry._2(Nfa$ReasonReNfa.StateSet[/* add */3], start_state, positions(lasts)) : positions(lasts);
+  var finals = nullable ? Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* add */3], start_state, positions(lasts)) : positions(lasts);
   var transitions = transition_map_of_factor_set(factors);
   var initial_transitions = transition_map_of_letter_set(firsts);
   var joint_transitions = Curry._3(StateMap[/* add */3], start_state, initial_transitions, transitions);
@@ -395,7 +395,7 @@ function compile(r) {
     }
     catch (exn){
       if (exn === Caml_builtin_exceptions.not_found) {
-        return Nfa$ReasonReNfa.CharMap[/* empty */0];
+        return Nfa$ReasonReNfa.CharMapStateSet[/* M */0][/* empty */0];
       } else {
         throw exn;
       }

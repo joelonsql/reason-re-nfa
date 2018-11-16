@@ -1,13 +1,26 @@
 type state = int32;
-module StateSet = Set.Make(Int32);
-module CharMap = Map.Make(Char);
-type transitions = CharMap.t(StateSet.t);
+module StateSet = {
+  module S = Set.Make(Int32);
+  let to_string = (ss) =>
+    "{" ++ String.concat(" ", List.map(Int32.to_string, S.elements(ss))) ++ "}";
+};
+
+module CharMapStateSet = {
+  module M = Map.Make(Char);
+  let to_string = (cm) =>
+    M.fold(
+      fun (c,ss,str) => {str ++ " " ++ String.make(1,c) ++ ":" ++ StateSet.to_string(ss)},
+      cm,
+      ""
+    );
+};
+type transitions = CharMapStateSet.M.t(StateSet.S.t);
 
 type nfa = {
   /** the start state */
   start: state,
   /** the final (or "accept") states */
-  finals: StateSet.t,
+  finals: StateSet.S.t,
   /** the transition function, that maps a state and a character to a
       set of states */
   next: state => transitions,
@@ -19,12 +32,12 @@ type nfa = {
 };
 
 let find_states = (sym, nfa, m) =>
-  try (CharMap.find(sym, nfa.next(m))) {
-  | Not_found => StateSet.empty
+  try (CharMapStateSet.M.find(sym, nfa.next(m))) {
+  | Not_found => StateSet.S.empty
   };
 
 let flat_map = (f, ss) =>
-  StateSet.fold(s => StateSet.union(f(s)), ss, StateSet.empty);
+  StateSet.S.fold(s => StateSet.S.union(f(s)), ss, StateSet.S.empty);
 let nextss = (curs, sym, nfa) => flat_map(find_states(sym, nfa), curs);
 
 /** A simple NFA interpreter. */
@@ -37,7 +50,7 @@ let accept = (nfa, inp) => {
        states */
   let rec step = cur =>
     fun
-    | [] => StateSet.(!is_empty(inter(cur, nfa.finals)))
+    | [] => StateSet.S.(!is_empty(inter(cur, nfa.finals)))
     | [c, ...cs] => step(nextss(cur, c, nfa), cs);
-  step(StateSet.singleton(nfa.start), inp);
+  step(StateSet.S.singleton(nfa.start), inp);
 };

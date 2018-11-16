@@ -119,7 +119,7 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t =
         incr(counter);
         let node = Digraph.Node.make(~id=name);
         let shape =
-          if (Nfa.StateSet.mem(n, nfa.Nfa.finals)) {
+          if (Nfa.StateSet.S.mem(n, nfa.Nfa.finals)) {
             "doublecircle";
           } else {
             "circle";
@@ -142,9 +142,9 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t =
          'seen lists' to ensure each node and edge is only visited once */
       if (!Hashtbl.mem(states, state)) {
         Hashtbl.add(states, state, make_node(state));
-        Nfa.CharMap.iter(
+        Nfa.CharMapStateSet.M.iter(
           (c, targets) =>
-            Nfa.StateSet.iter(
+            Nfa.StateSet.S.iter(
               target => {
                 add_edge(state, c, target);
                 step(target);

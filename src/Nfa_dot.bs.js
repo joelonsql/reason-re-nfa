@@ -415,7 +415,7 @@ function digraph_of_nfa(nfa) {
     var name = String(counter[0]);
     counter[0] = counter[0] + 1 | 0;
     var node = Curry._1(Digraph_000[/* make */0], name);
-    var shape = Curry._2(Nfa$ReasonReNfa.StateSet[/* mem */2], n, nfa[/* finals */1]) ? "doublecircle" : "circle";
+    var shape = Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* mem */2], n, nfa[/* finals */1]) ? "doublecircle" : "circle";
     return Curry._2(Digraph_000[/* with_attrs */1], node, /* :: */[
                 /* tuple */[
                   "shape",
@@ -455,8 +455,8 @@ function digraph_of_nfa(nfa) {
       return 0;
     } else {
       Hashtbl.add(states, state, make_node(state));
-      return Curry._2(Nfa$ReasonReNfa.CharMap[/* iter */9], (function (c, targets) {
-                    return Curry._2(Nfa$ReasonReNfa.StateSet[/* iter */12], (function (target) {
+      return Curry._2(Nfa$ReasonReNfa.CharMapStateSet[/* M */0][/* iter */9], (function (c, targets) {
+                    return Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* iter */12], (function (target) {
                                   add_edge(state, c, target);
                                   return step(target);
                                 }), targets);
