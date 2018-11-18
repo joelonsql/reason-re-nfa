@@ -7,7 +7,6 @@ import * as Regex$ReasonReNfa from "./Regex.bs.js";
 import * as Nfa_dot$ReasonReNfa from "./Nfa_dot.bs.js";
 
 function analyze(regexp) {
-  Regex$ReasonReNfa.counter[0] = 1;
   var parsed_regex = Regex$ReasonReNfa.parse(regexp);
   var compiled_regex = Regex$ReasonReNfa.compile(parsed_regex);
   return /* tuple */[

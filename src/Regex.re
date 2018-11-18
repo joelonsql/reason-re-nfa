@@ -190,30 +190,30 @@ let transition_map_of_letter_set: LetterSet.S.t => CharSetMap.t(StateSet.S.t) =
 
 type t = regex(CharSet.S.t);
 
-let counter = ref(0l);
-
-let fresh_state = {
-  let incr32 = r => r := Int32.succ(r^);
-  () => {
-    let c = counter^;
-    incr32(counter);
-    c;
-  };
-};
-
-let start_state = fresh_state();
-
-let rec annotate: 'a. regex('a) => regex(('a, int32)) =
-  fun
-  | Empty => Empty
-  | Eps => Eps
-  | Char(c) => {
-      let p = (c, fresh_state());
-      Char(p);
-    }
-  | Alt(e, f) => Alt(annotate(e), annotate(f))
-  | Seq(e, f) => Seq(annotate(e), annotate(f))
-  | Star(e) => Star(annotate(e));
+let rec annotate: 'a. (int32, regex('a)) => (int32, regex(('a, int32))) =
+  count =>
+    fun
+    | Empty => (count, Empty)
+    | Eps => (count, Eps)
+    | Char(c) => {
+        let count = Int32.succ(count);
+        let p = (c, count);
+        (count, Char(p));
+      }
+    | Alt(e, f) => {
+        let (count', e') = annotate(count, e);
+        let (count'', f') = annotate(count', f);
+        (count'', Alt(e', f'));
+      }
+    | Seq(e, f) => {
+        let (count', e') = annotate(count, e);
+        let (count'', f') = annotate(count', f);
+        (count'', Seq(e', f'));
+      }
+    | Star(e) => {
+        let (count', e') = annotate(count, e);
+        (count', Star(e'));
+      };
 
 let rec string_of_annotated = (r) =>
   switch (r) {
@@ -250,7 +250,9 @@ let flatten_transitions: CharSetMap.t(StateSet.S.t) => CharMapStateSet.M.t(State
 
 let compile = r => {
   /*** Give every character set in 'r' a unique identifier */
-  let annotated = annotate(r);
+  let start_state = Int32.zero;
+  let (_, annotated) = annotate(start_state, r);
+
   let nullable = l(annotated);
   let firsts = p(annotated);
   let lasts = d(annotated);

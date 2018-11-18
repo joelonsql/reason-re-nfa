@@ -1,5 +1,4 @@
 let analyze = (regexp) => {
-    Regex.counter := 1l;
     let parsed_regex = Regex.parse(regexp);
     let compiled_regex = Regex.compile(parsed_regex);
     (

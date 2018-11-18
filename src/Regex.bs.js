@@ -283,50 +283,58 @@ function transition_map_of_letter_set(s) {
               }), s, CharSetMap[/* empty */0]);
 }
 
-var counter = /* record */[/* contents */0];
-
-function incr32(r) {
-  r[0] = Int32.succ(r[0]);
-  return /* () */0;
-}
-
-function fresh_state(param) {
-  var c = counter[0];
-  incr32(counter);
-  return c;
-}
-
-var start_state = fresh_state(/* () */0);
-
-function annotate(param) {
+function annotate(count, param) {
   if (typeof param === "number") {
     if (param === 0) {
-      return /* Empty */0;
+      return /* tuple */[
+              count,
+              /* Empty */0
+            ];
     } else {
-      return /* Eps */1;
+      return /* tuple */[
+              count,
+              /* Eps */1
+            ];
     }
   } else {
     switch (param.tag | 0) {
       case 0 : 
+          var count$1 = Int32.succ(count);
           var p_000 = param[0];
-          var p_001 = fresh_state(/* () */0);
           var p = /* tuple */[
             p_000,
-            p_001
+            count$1
           ];
-          return /* Char */Block.__(0, [p]);
+          return /* tuple */[
+                  count$1,
+                  /* Char */Block.__(0, [p])
+                ];
       case 1 : 
-          return /* Alt */Block.__(1, [
-                    annotate(param[0]),
-                    annotate(param[1])
-                  ]);
+          var match = annotate(count, param[0]);
+          var match$1 = annotate(match[0], param[1]);
+          return /* tuple */[
+                  match$1[0],
+                  /* Alt */Block.__(1, [
+                      match[1],
+                      match$1[1]
+                    ])
+                ];
       case 2 : 
-          return /* Seq */Block.__(2, [
-                    annotate(param[0]),
-                    annotate(param[1])
-                  ]);
+          var match$2 = annotate(count, param[0]);
+          var match$3 = annotate(match$2[0], param[1]);
+          return /* tuple */[
+                  match$3[0],
+                  /* Seq */Block.__(2, [
+                      match$2[1],
+                      match$3[1]
+                    ])
+                ];
       case 3 : 
-          return /* Star */Block.__(3, [annotate(param[0])]);
+          var match$4 = annotate(count, param[0]);
+          return /* tuple */[
+                  match$4[0],
+                  /* Star */Block.__(3, [match$4[1]])
+                ];
       
     }
   }
@@ -380,15 +388,16 @@ function flatten_transitions(cm) {
 }
 
 function compile(r) {
-  var annotated = annotate(r);
+  var match = annotate(Int32.zero, r);
+  var annotated = match[1];
   var nullable = l(annotated);
   var firsts = p(annotated);
   var lasts = d(annotated);
   var factors = f_(annotated);
-  var finals = nullable ? Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* add */3], start_state, positions(lasts)) : positions(lasts);
+  var finals = nullable ? Curry._2(Nfa$ReasonReNfa.StateSet[/* S */0][/* add */3], Int32.zero, positions(lasts)) : positions(lasts);
   var transitions = transition_map_of_factor_set(factors);
   var initial_transitions = transition_map_of_letter_set(firsts);
-  var joint_transitions = Curry._3(StateMap[/* add */3], start_state, initial_transitions, transitions);
+  var joint_transitions = Curry._3(StateMap[/* add */3], Int32.zero, initial_transitions, transitions);
   var next = function (s) {
     try {
       return flatten_transitions(Curry._2(StateMap[/* find */21], s, joint_transitions));
@@ -402,7 +411,7 @@ function compile(r) {
     }
   };
   return /* record */[
-          /* start */start_state,
+          /* start */Int32.zero,
           /* finals */finals,
           /* next */next,
           /* annotated */string_of_annotated(annotated),
@@ -748,9 +757,6 @@ export {
   transition_map_of_factor_set ,
   positions ,
   transition_map_of_letter_set ,
-  counter ,
-  fresh_state ,
-  start_state ,
   annotate ,
   string_of_annotated ,
   flatten_transitions ,
