@@ -3,12 +3,14 @@
 import * as Block from "../node_modules/bs-platform/lib/es6/block.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Format from "../node_modules/bs-platform/lib/es6/format.js";
-import * as Regex$ReasonReNfa from "./Regex.bs.js";
 import * as Nfa_dot$ReasonReNfa from "./Nfa_dot.bs.js";
+import * as Glushkov$ReasonReNfa from "./Glushkov.bs.js";
+import * as RegexParser$ReasonReNfa from "./RegexParser.bs.js";
+import * as RegexParseTree$ReasonReNfa from "./RegexParseTree.bs.js";
 
 function analyze(regexp) {
-  var parsed_regex = Regex$ReasonReNfa.parse(regexp);
-  var compiled_regex = Regex$ReasonReNfa.compile(parsed_regex);
+  var parsed = RegexParser$ReasonReNfa.parse(regexp);
+  var compiled = Glushkov$ReasonReNfa.compile(parsed);
   return /* tuple */[
           Curry._2(Format.asprintf(/* Format */[
                     /* Alpha */Block.__(15, [/* Formatting_lit */Block.__(17, [
@@ -16,13 +18,16 @@ function analyze(regexp) {
                             /* End_of_format */0
                           ])]),
                     "%a@."
-                  ]), Nfa_dot$ReasonReNfa.format_digraph, Nfa_dot$ReasonReNfa.digraph_of_nfa(compiled_regex)),
-          Regex$ReasonReNfa.regexp2parseTree(parsed_regex),
-          compiled_regex[/* nullable */4],
-          compiled_regex[/* firsts */5],
-          compiled_regex[/* lasts */6],
-          compiled_regex[/* factors */7],
-          compiled_regex[/* annotated */3]
+                  ]), Nfa_dot$ReasonReNfa.format_digraph, Nfa_dot$ReasonReNfa.digraph_of_nfa(compiled[/* nfa */0])),
+          RegexParseTree$ReasonReNfa.of_regex(parsed),
+          compiled[/* nullable */2],
+          compiled[/* firsts */3],
+          compiled[/* lasts */4],
+          compiled[/* factors */5],
+          compiled[/* annotated */1],
+          compiled[/* factor_transitions */6],
+          compiled[/* initial_transitions */7],
+          compiled[/* joint_transitions */8]
         ];
 }
 

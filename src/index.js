@@ -12,6 +12,9 @@ function(event){
             document.getElementById("firsts").innerHTML = "";
             document.getElementById("lasts").innerHTML = "";
             document.getElementById("letterpairs").innerHTML = "";
+            document.getElementById("factor_transitions").innerHTML = "";
+            document.getElementById("initial_transitions").innerHTML = "";
+            document.getElementById("joint_transitions").innerHTML = "";
             return;
         }
         let re = ReasonRegex.analyze(regexinput);
@@ -23,6 +26,9 @@ function(event){
             document.getElementById("lasts").innerHTML = re[4];
             document.getElementById("letterpairs").innerHTML = re[5];
             document.getElementById("annotated").innerHTML = re[6];
+            document.getElementById("factor_transitions").innerHTML = re[7];
+            document.getElementById("initial_transitions").innerHTML = re[8];
+            document.getElementById("joint_transitions").innerHTML = re[9];
             function createTreantNodeStructure(parseTree) {
                 let node = {
                     text: { name: parseTree[0] }

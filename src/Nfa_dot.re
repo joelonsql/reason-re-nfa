@@ -6,107 +6,10 @@
    The code here supports a slightly restricted subset without
    subgraphs, multi-node edges, or "ports". */
 
-module Digraph: {
-  type t;
-
-  module Node: {
-    type t;
-    let make: (~id: string) => t;
-    let with_attrs: (t, list((string, string))) => t;
-  };
-
-  let empty: t;
-  let with_name: (t, string) => t;
-  let with_node: (t, Node.t) => t;
-  let with_edge:
-    (t, ~attrs: list((string, string))=?, (Node.t, Node.t)) => t;
-  let with_attrs: (t, list((string, string))) => t;
-  let format: (Format.formatter, t) => unit;
-} = {
-  type id = string;
-  type attr = (id, id);
-
-  let format_attrs = formatter =>
-    fun
-    | [] => ()
-    | attrs => {
-        Format.fprintf(formatter, "[@ @[");
-        List.iter(
-          ((k, v)) => Format.fprintf(formatter, "%S@ =@ %S;", k, v),
-          attrs,
-        );
-        Format.fprintf(formatter, "]@]");
-      };
-
-  module Node = {
-    type t = (id, list(attr));
-
-    let make = (~id) => (id, []);
-    let with_attrs = ((id, attrs), attrs') => (id, attrs @ attrs');
-    let format = (formatter, (id, attrs)) =>
-      Format.fprintf(formatter, "%a@ %S", format_attrs, attrs, id);
-    let id = ((id, _)) => id;
-  };
-  type stmt =
-    | Node(Node.t)
-    | Edge(Node.t, Node.t, list(attr))
-    | Attr(id, id);
-  type t = (option(id), list(stmt));
-
-  let empty = (None, []);
-  let with_attrs = ((id, stmts), attrs) => (
-    id,
-    stmts @ List.map(((k, v)) => Attr(k, v), attrs),
-  );
-  let with_node = ((id, stmts), node) => (id, stmts @ [Node(node)]);
-  let with_edge = ((id, stmts), ~attrs=?, (n1, n2)) =>
-    switch (attrs) {
-    | None => (id, stmts @ [Edge(n1, n2, [])])
-    | Some(attrs) => (id, stmts @ [Edge(n1, n2, attrs)])
-    };
-  let with_name = ((_, s), n) => (Some(n), s);
-
-  let format_stmt = formatter =>
-    fun
-    | Node(node) =>
-      Format.fprintf(formatter, "node@ @[%a@]", Node.format, node)
-    | Edge(n1, n2, attrs) =>
-      Format.fprintf(
-        formatter,
-        "@[@[%S@ ->@ %S@]@ %a@]",
-        Node.id(n1),
-        Node.id(n2),
-        format_attrs,
-        attrs,
-      )
-    | Attr(k, v) => Format.fprintf(formatter, "@[%S@ =@ %S@];", k, v);
-
-  let format = (formatter, (id, stmts)) => {
-    let pr = fmt => Format.fprintf(formatter, fmt);
-    switch (id) {
-    | None => pr("@[digraph {@\n")
-    | Some(id) => pr("@]digraph %S{@[", id)
-    };
-    List.iter(pr("@ @ @[%a@]@\n", format_stmt), stmts);
-    pr("}@]");
-  };
-};
-
 type digraph = Digraph.t;
 let format_digraph = Digraph.format;
 
-module CharSet = Set.Make(Char);
-
-let edge_name = s =>
-  switch (CharSet.cardinal(s)) {
-  | 0 => "{}"
-  | 1 => String.make(1, CharSet.choose(s))
-  | 256 => "."
-  | _ =>
-    "{"
-    ++ String.concat(" ", List.map(String.make(1), CharSet.elements(s)))
-    ++ "}"
-  };
+let edge_name = CharSet.to_string;
 
 let digraph_of_nfa: Nfa.nfa => Digraph.t =
   nfa => {
@@ -119,7 +22,7 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t =
         incr(counter);
         let node = Digraph.Node.make(~id=name);
         let shape =
-          if (Nfa.StateSet.S.mem(n, nfa.Nfa.finals)) {
+          if (StateSet.S.mem(n, nfa.Nfa.finals)) {
             "doublecircle";
           } else {
             "circle";
@@ -132,8 +35,8 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t =
       Hashtbl.replace(edges, (source, target)) @@
       (
         switch (Hashtbl.find(edges, (source, target))) {
-        | exception Not_found => CharSet.singleton(c)
-        | set => CharSet.add(c, set)
+        | exception Not_found => CharSet.S.singleton(c)
+        | set => CharSet.S.add(c, set)
         }
       );
 
@@ -142,9 +45,9 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t =
          'seen lists' to ensure each node and edge is only visited once */
       if (!Hashtbl.mem(states, state)) {
         Hashtbl.add(states, state, make_node(state));
-        Nfa.CharMapStateSet.M.iter(
+        CharMapStateSet.M.iter(
           (c, targets) =>
-            Nfa.StateSet.S.iter(
+            StateSet.S.iter(
               target => {
                 add_edge(state, c, target);
                 step(target);
@@ -191,3 +94,10 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t =
       dg,
     );
   };
+
+let test = () => {
+  let parsed = RegexParser.parse("a(b|c)d");
+  let compiled = Glushkov.compile(parsed);
+  let dot = Format.asprintf("%a@.", format_digraph, digraph_of_nfa(compiled.nfa));
+  print_endline(dot);
+}

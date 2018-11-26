@@ -1,19 +1,5 @@
 type state = int32;
-module StateSet = {
-  module S = Set.Make(Int32);
-  let to_string = (ss) =>
-    "{" ++ String.concat(" ", List.map(Int32.to_string, S.elements(ss))) ++ "}";
-};
 
-module CharMapStateSet = {
-  module M = Map.Make(Char);
-  let to_string = (cm) =>
-    M.fold(
-      fun (c,ss,str) => {str ++ " " ++ String.make(1,c) ++ ":" ++ StateSet.to_string(ss)},
-      cm,
-      ""
-    );
-};
 type transitions = CharMapStateSet.M.t(StateSet.S.t);
 
 type nfa = {
@@ -23,12 +9,7 @@ type nfa = {
   finals: StateSet.S.t,
   /** the transition function, that maps a state and a character to a
       set of states */
-  next: state => transitions,
-  annotated: string,
-  nullable: bool,
-  firsts: string,
-  lasts: string,
-  factors: string
+  next: state => transitions
 };
 
 let find_states = (sym, nfa, m) =>

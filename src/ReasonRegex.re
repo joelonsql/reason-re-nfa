@@ -1,13 +1,16 @@
 let analyze = (regexp) => {
-    let parsed_regex = Regex.parse(regexp);
-    let compiled_regex = Regex.compile(parsed_regex);
-    (
-        Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(compiled_regex)),
-        Regex.regexp2parseTree(parsed_regex),
-        compiled_regex.nullable,
-        compiled_regex.firsts,
-        compiled_regex.lasts,
-        compiled_regex.factors,
-        compiled_regex.annotated
-    );
+  let parsed = RegexParser.parse(regexp);
+  let compiled = Glushkov.compile(parsed);
+  (
+    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(compiled.nfa)),
+    RegexParseTree.of_regex(parsed),
+    compiled.nullable,
+    compiled.firsts,
+    compiled.lasts,
+    compiled.factors,
+    compiled.annotated,
+    compiled.factor_transitions,
+    compiled.initial_transitions,
+    compiled.joint_transitions
+  );
 };
