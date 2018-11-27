@@ -15,7 +15,7 @@ type t = {
   lasts: string,
   factors: string,
   factor_transitions: array(array(string)),
-  initial_transitions: string,
+  initial_transitions: array(array(string)),
   joint_transitions: array(array(string))
 };
 
@@ -190,7 +190,7 @@ let compile: regex('c) => t = (r) => {
     lasts: LetterSet.to_string(lasts),
     factors: Letter2Set.to_string(factors),
     factor_transitions: StateMapCharSetMapStateSet.to_matrix(factor_transitions),
-    initial_transitions: CharSetMapStateSet.to_string(initial_transitions),
+    initial_transitions: StateMapCharSetMapStateSet.(to_matrix(M.singleton(start, initial_transitions))),
     joint_transitions: StateMapCharSetMapStateSet.to_matrix(joint_transitions)
   };
 };
@@ -208,5 +208,4 @@ let test = () => {
   assert(glushkov.firsts == "a<sub>1</sub> {b c}<sub>2</sub>");
   assert(glushkov.lasts == "a<sub>1</sub> e<sub>4</sub>");
   assert(glushkov.factors == "{b c}<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>");
-  assert(glushkov.initial_transitions == "{a:{1},{b c}:{2}}");
 };

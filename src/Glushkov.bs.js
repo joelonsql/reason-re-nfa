@@ -234,7 +234,7 @@ function compile(r) {
           /* lasts */LetterSet$ReasonReNfa.to_string(lasts),
           /* factors */Letter2Set$ReasonReNfa.to_string(factors),
           /* factor_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(factor_transitions),
-          /* initial_transitions */CharSetMapStateSet$ReasonReNfa.to_string(initial_transitions),
+          /* initial_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.M[/* singleton */4], Int32.zero, initial_transitions)),
           /* joint_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(joint_transitions)
         ];
 }
@@ -314,24 +314,14 @@ function test(param) {
           ]
         ];
   }
-  if (glushkov[/* factors */5] !== "{b c}<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            210,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* initial_transitions */7] === "{a:{1},{b c}:{2}}") {
+  if (glushkov[/* factors */5] === "{b c}<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>") {
     return 0;
   } else {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            211,
+            210,
             2
           ]
         ];

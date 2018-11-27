@@ -42,7 +42,7 @@ function(event){
       document.getElementById("letterpairs").innerHTML = re[5];
       document.getElementById("annotated").innerHTML = re[6];
       document.getElementById("factor_transitions").innerHTML = matrix_to_table(re[7]);
-      document.getElementById("initial_transitions").innerHTML = re[8];
+      document.getElementById("initial_transitions").innerHTML = matrix_to_table(re[8]);
       document.getElementById("joint_transitions").innerHTML = matrix_to_table(re[9]);
       function createTreantNodeStructure(parseTree) {
         let node = {
