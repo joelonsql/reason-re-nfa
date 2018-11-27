@@ -24,9 +24,8 @@ let rec re_parse_atom: list(char) => option((regex(_), list(char))) =
                   atom +
                   atom ?         */
 
-and re_parse_suffixed: list(char) => option((regex(_), list(char))) =
-  s =>
-    switch (re_parse_atom(s)) {
+and re_parse_suffixed: list(char) => option((regex(_), list(char))) = (char_list) =>
+    switch (re_parse_atom(char_list)) {
     | None => None
     | Some((r, ['*', ...rest])) => Some((star(r), rest))
     | Some((r, ['+', ...rest])) => Some((plus(r), rest))
@@ -36,37 +35,37 @@ and re_parse_suffixed: list(char) => option((regex(_), list(char))) =
 /** rseq ::= <empty>
               rsuffixed rseq      */
 
-and re_parse_seq = (s: list(char)) =>
-  switch (re_parse_suffixed(s)) {
-  | None => (eps, s)
+and re_parse_seq = (char_list: list(char)) =>
+  switch (re_parse_suffixed(char_list)) {
+  | None => (eps, char_list)
   | Some((r, rest)) =>
-    let (r', s') = re_parse_seq(rest);
-    (seq(r, r'), s');
+    let (r', char_list') = re_parse_seq(rest);
+    (seq(r, r'), char_list');
   }
 /** ralt ::= rseq
               rseq | ralt         */
 
-and re_parse_alt = (s: list(char)) =>
-  switch (re_parse_seq(s)) {
+and re_parse_alt = (char_list: list(char)) =>
+  switch (re_parse_seq(char_list)) {
   | (r, ['|', ...rest]) =>
-    let (r', s') = re_parse_alt(rest);
-    (alt(r, r'), s');
+    let (r', char_list') = re_parse_alt(rest);
+    (alt(r, r'), char_list');
   | (r, rest) => (r, rest)
   };
 
-let explode = s => {
+let explode = (regex: string) => {
   let rec exp = (i, l) =>
     if (i < 0) {
       l;
     } else {
-      exp(i - 1, [s.[i], ...l]);
+      exp(i - 1, [regex.[i], ...l]);
     };
-  exp(String.length(s) - 1, []);
+  exp(String.length(regex) - 1, []);
 };
 
-let parse = s =>
-  switch (re_parse_alt(explode(s))) {
+let parse = (regex: string) =>
+  switch (re_parse_alt(explode(regex))) {
   | (r, []) => r
-  | exception Fail => raise(Parse_error(s))
-  | (_, [_, ..._]) => raise(Parse_error(s))
+  | exception Fail => raise(Parse_error(regex))
+  | (_, [_, ..._]) => raise(Parse_error(regex))
   };

@@ -9,8 +9,8 @@ import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/ca
 
 var S = $$Set.Make([Int32.compare]);
 
-function to_string(s) {
-  return "{" + ($$String.concat(" ", List.map(Int32.to_string, Curry._1(S[/* elements */19], s))) + "}");
+function to_string(state_set) {
+  return "{" + ($$String.concat(" ", List.map(Int32.to_string, Curry._1(S[/* elements */19], state_set))) + "}");
 }
 
 function example(state_list) {
@@ -25,7 +25,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            22,
+            21,
             2
           ]
         ];
@@ -38,7 +38,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            23,
+            22,
             2
           ]
         ];
@@ -59,7 +59,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            24,
+            23,
             2
           ]
         ];

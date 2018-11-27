@@ -6,15 +6,12 @@ let (<+>) = S.union;
 let to_string = (letter_set) => {
   String.concat(
     " ",
-    List.rev(S.fold(
-      (letter, l) => [Letter.to_string(letter), ...l],
-      letter_set,
-      []
-    ))
+    List.map(Letter.to_string, S.elements(letter_set))
   );
 };
 
-let example = (char_list, state) => S.singleton(Letter.example(char_list, state));
+let example = (char_list, state) =>
+  S.singleton(Letter.example(char_list, state));
 
 let test = () => {
   let a = example(['a'],0);

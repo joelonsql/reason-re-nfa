@@ -233,9 +233,9 @@ function compile(r) {
           /* firsts */LetterSet$ReasonReNfa.to_string(firsts),
           /* lasts */LetterSet$ReasonReNfa.to_string(lasts),
           /* factors */Letter2Set$ReasonReNfa.to_string(factors),
-          /* factor_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_string(factor_transitions),
+          /* factor_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(factor_transitions),
           /* initial_transitions */CharSetMapStateSet$ReasonReNfa.to_string(initial_transitions),
-          /* joint_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_string(joint_transitions)
+          /* joint_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(joint_transitions)
         ];
 }
 
@@ -324,34 +324,14 @@ function test(param) {
           ]
         ];
   }
-  if (glushkov[/* factor_transitions */6] !== "{2:{d:{3}},3:{e:{4}}}") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            211,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* initial_transitions */7] !== "{a:{1},{b c}:{2}}") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            212,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* joint_transitions */8] === "{0:{a:{1},{b c}:{2}},2:{d:{3}},3:{e:{4}}}") {
+  if (glushkov[/* initial_transitions */7] === "{a:{1},{b c}:{2}}") {
     return 0;
   } else {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            213,
+            211,
             2
           ]
         ];

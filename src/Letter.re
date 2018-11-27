@@ -2,9 +2,11 @@
     uniquely identifies the character set within the regex */
 type t = (CharSet.S.t, Nfa.state);
 
-let compare = ((_, x), (_, y)) => Pervasives.compare(x, y);
+let compare = ((_, x), (_, y)) =>
+  Pervasives.compare(x, y);
 
-let example = (char_list, state) => (CharSet.example(char_list), Int32.of_int(state));
+let example = (char_list, state) =>
+  (CharSet.example(char_list), Int32.of_int(state));
 
 let to_string =
   fun

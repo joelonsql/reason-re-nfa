@@ -120,8 +120,18 @@ function test(param) {
                   ])]),
             "%a@."
           ]), Digraph$ReasonReNfa.format, digraph_of_nfa(compiled[/* nfa */0]));
-  console.log(dot);
-  return /* () */0;
+  if (dot === "digraph {\n  \"rankdir\" = \"LR\";\n  node [ \"shape\" = \"none\";\"width\" = \"0\";] \"\"\n  node [ \"shape\" = \"circle\";] \"2\"\n  node [ \"shape\" = \"doublecircle\";] \"3\"\n  node [ \"shape\" = \"circle\";] \"0\"\n  node [ \"shape\" = \"circle\";] \"1\"\n  \"\" -> \"0\" \n  \"0\" -> \"1\" [ \"label\" = \"a\";]\n  \"1\" -> \"2\" [ \"label\" = \"{b c}\";]\n  \"2\" -> \"3\" [ \"label\" = \"d\";]\n}\n") {
+    return 0;
+  } else {
+    throw [
+          Caml_builtin_exceptions.assert_failure,
+          /* tuple */[
+            "Nfa_dot.re",
+            101,
+            2
+          ]
+        ];
+  }
 }
 
 var format_digraph = Digraph$ReasonReNfa.format;

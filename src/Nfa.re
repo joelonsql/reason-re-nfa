@@ -29,7 +29,7 @@ let accept = (nfa, inp) => {
        Since the automaton is non-deterministic, encountering a character
        in a given state can cause transitions to multiple different
        states */
-  let rec step = cur =>
+  let rec step = (cur) =>
     fun
     | [] => StateSet.S.(!is_empty(inter(cur, nfa.finals)))
     | [c, ...cs] => step(nextss(cur, c, nfa), cs);

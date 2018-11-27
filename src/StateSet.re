@@ -1,22 +1,21 @@
 module S = Set.Make(Int32);
 
-let to_string = (s) => "{" ++
-  String.concat(
+let to_string = (state_set) =>
+  "{" ++ String.concat(
     " ",
-    List.map(
-      Int32.to_string,
-      S.elements(s)
+    List.map(Int32.to_string, S.elements(state_set)
     )
   ) ++ "}";
 
-let example = (state_list) => List.fold_left(
-  (state_set, state) => S.add(
-    Int32.of_int(state),
-    state_set
-  ),
-  S.empty,
-  state_list
-);
+let example = (state_list) =>
+  List.fold_left(
+    (state_set, state) => S.add(
+      Int32.of_int(state),
+      state_set
+    ),
+    S.empty,
+    state_list
+  );
 
 let test = () => {
   assert(to_string(example([])) == "{}");

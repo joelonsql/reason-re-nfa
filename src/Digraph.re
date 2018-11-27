@@ -1,7 +1,7 @@
 type id = string;
 type attr = (id, id);
 
-let format_attrs = formatter =>
+let format_attrs = (formatter) =>
   fun
   | [] => ()
   | attrs => {
@@ -41,7 +41,7 @@ let with_edge = ((id, stmts), ~attrs=?, (n1, n2)) =>
   };
 let with_name = ((_, s), n) => (Some(n), s);
 
-let format_stmt = formatter =>
+let format_stmt = (formatter) =>
   fun
   | Node(node) =>
     Format.fprintf(formatter, "node@ @[%a@]", Node.format, node)

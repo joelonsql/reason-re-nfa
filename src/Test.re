@@ -1,6 +1,5 @@
-let () = {
-  print_string("testing...");
-  flush(stdout);
+let test = () => {
+  print_endline("testing...");
   CharSet.test();
   StateSet.test();
   Letter.test();

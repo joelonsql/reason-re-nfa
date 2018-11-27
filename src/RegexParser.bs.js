@@ -62,8 +62,8 @@ function re_parse_atom(param) {
   
 }
 
-function re_parse_suffixed(s) {
-  var match = re_parse_atom(s);
+function re_parse_suffixed(char_list) {
+  var match = re_parse_atom(char_list);
   if (match !== undefined) {
     var match$1 = match;
     var rest = match$1[1];
@@ -103,8 +103,8 @@ function re_parse_suffixed(s) {
   
 }
 
-function re_parse_seq(s) {
-  var match = re_parse_suffixed(s);
+function re_parse_seq(char_list) {
+  var match = re_parse_suffixed(char_list);
   if (match !== undefined) {
     var match$1 = match;
     var match$2 = re_parse_seq(match$1[1]);
@@ -115,13 +115,13 @@ function re_parse_seq(s) {
   } else {
     return /* tuple */[
             Regex$ReasonReNfa.eps,
-            s
+            char_list
           ];
   }
 }
 
-function re_parse_alt(s) {
-  var match = re_parse_seq(s);
+function re_parse_alt(char_list) {
+  var match = re_parse_seq(char_list);
   var rest = match[1];
   var r = match[0];
   if (rest && rest[0] === 124) {
@@ -138,8 +138,8 @@ function re_parse_alt(s) {
   }
 }
 
-function explode(s) {
-  var _i = s.length - 1 | 0;
+function explode(regex) {
+  var _i = regex.length - 1 | 0;
   var _l = /* [] */0;
   while(true) {
     var l = _l;
@@ -148,7 +148,7 @@ function explode(s) {
       return l;
     } else {
       _l = /* :: */[
-        Caml_string.get(s, i),
+        Caml_string.get(regex, i),
         l
       ];
       _i = i - 1 | 0;
@@ -157,18 +157,18 @@ function explode(s) {
   };
 }
 
-function parse(s) {
+function parse(regex) {
   var exit = 0;
   var val;
   try {
-    val = re_parse_alt(explode(s));
+    val = re_parse_alt(explode(regex));
     exit = 1;
   }
   catch (exn){
     if (exn === Fail) {
       throw [
             Parse_error,
-            s
+            regex
           ];
     } else {
       throw exn;
@@ -178,7 +178,7 @@ function parse(s) {
     if (val[1]) {
       throw [
             Parse_error,
-            s
+            regex
           ];
     } else {
       return val[0];

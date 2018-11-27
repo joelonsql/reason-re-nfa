@@ -31,7 +31,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "CharMapStateSet.re",
-            14,
+            15,
             17
           ]
         ];

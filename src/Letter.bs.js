@@ -34,7 +34,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Letter.re",
-            17,
+            19,
             2
           ]
         ];
@@ -46,7 +46,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Letter.re",
-            18,
+            20,
             2
           ]
         ];

@@ -14,9 +14,9 @@ type t = {
   firsts: string,
   lasts: string,
   factors: string,
-  factor_transitions: string,
+  factor_transitions: array(array(string)),
   initial_transitions: string,
-  joint_transitions: string
+  joint_transitions: array(array(string))
 };
 
 /** Λ(r) is {ε} ∩ L(r); we represent it as a bool */
@@ -189,9 +189,9 @@ let compile: regex('c) => t = (r) => {
     firsts: LetterSet.to_string(firsts),
     lasts: LetterSet.to_string(lasts),
     factors: Letter2Set.to_string(factors),
-    factor_transitions: StateMapCharSetMapStateSet.to_string(factor_transitions),
+    factor_transitions: StateMapCharSetMapStateSet.to_matrix(factor_transitions),
     initial_transitions: CharSetMapStateSet.to_string(initial_transitions),
-    joint_transitions: StateMapCharSetMapStateSet.to_string(joint_transitions)
+    joint_transitions: StateMapCharSetMapStateSet.to_matrix(joint_transitions)
   };
 };
 
@@ -208,8 +208,5 @@ let test = () => {
   assert(glushkov.firsts == "a<sub>1</sub> {b c}<sub>2</sub>");
   assert(glushkov.lasts == "a<sub>1</sub> e<sub>4</sub>");
   assert(glushkov.factors == "{b c}<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>");
-  assert(glushkov.factor_transitions == "{2:{d:{3}},3:{e:{4}}}");
   assert(glushkov.initial_transitions == "{a:{1},{b c}:{2}}");
-  assert(glushkov.joint_transitions == "{0:{a:{1},{b c}:{2}},2:{d:{3}},3:{e:{4}}}");
-
 };

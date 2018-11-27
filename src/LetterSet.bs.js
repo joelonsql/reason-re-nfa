@@ -12,12 +12,7 @@ var S = $$Set.Make([Letter$ReasonReNfa.compare]);
 var $less$plus$great = S[/* union */6];
 
 function to_string(letter_set) {
-  return $$String.concat(" ", List.rev(Curry._3(S[/* fold */13], (function (letter, l) {
-                        return /* :: */[
-                                Letter$ReasonReNfa.to_string(letter),
-                                l
-                              ];
-                      }), letter_set, /* [] */0)));
+  return $$String.concat(" ", List.map(Letter$ReasonReNfa.to_string, Curry._1(S[/* elements */19], letter_set)));
 }
 
 function example(char_list, state) {
@@ -44,7 +39,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "LetterSet.re",
-            23,
+            20,
             2
           ]
         ];
