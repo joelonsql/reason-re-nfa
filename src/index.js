@@ -1,6 +1,4 @@
 import * as ReasonRegex from "./ReasonRegex.bs.js";
-import * as Test from "./Test.bs.js";
-import * as StateMapCharSetMapStateSet from "./StateMapCharSetMapStateSet.bs.js";
 
 function matrix_to_table(matrix) {
   let result = ["<table border='1'>"];
