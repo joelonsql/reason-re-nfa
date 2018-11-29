@@ -42,14 +42,15 @@ let to_matrix = (state_map) => {
         )
       )
     );
+
   let states =
     Array.of_list(
-      M.fold(
-        fun (state, _, state_list) => [state, ...state_list],
-        state_map,
-        []
+      List.map(
+        fun ((state,_)) => state,
+        M.bindings(state_map)
       )
     );
+
   let dimx = Array.length(states);
   let dimy = Array.length(char_sets);
   let matrix = Array.make_matrix(dimx+1, dimy+1, "");

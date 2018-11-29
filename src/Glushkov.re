@@ -14,9 +14,7 @@ type t = {
   firsts: string,
   lasts: string,
   factors: string,
-  factor_transitions: array(array(string)),
-  initial_transitions: array(array(string)),
-  joint_transitions: array(array(string))
+  transitions: array(array(string))
 };
 
 /** Λ(r) is {ε} ∩ L(r); we represent it as a bool */
@@ -189,9 +187,7 @@ let compile: regex('c) => t = (r) => {
     firsts: LetterSet.to_string(firsts),
     lasts: LetterSet.to_string(lasts),
     factors: Letter2Set.to_string(factors),
-    factor_transitions: StateMapCharSetMapStateSet.to_matrix(factor_transitions),
-    initial_transitions: StateMapCharSetMapStateSet.(to_matrix(M.singleton(start, initial_transitions))),
-    joint_transitions: StateMapCharSetMapStateSet.to_matrix(joint_transitions)
+    transitions: StateMapCharSetMapStateSet.to_matrix(joint_transitions)
   };
 };
 

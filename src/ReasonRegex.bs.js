@@ -25,9 +25,7 @@ function analyze(regexp) {
           compiled[/* lasts */4],
           compiled[/* factors */5],
           compiled[/* annotated */1],
-          compiled[/* factor_transitions */6],
-          compiled[/* initial_transitions */7],
-          compiled[/* joint_transitions */8]
+          compiled[/* transitions */6]
         ];
 }
 

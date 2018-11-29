@@ -14,9 +14,9 @@ function to_string(state_set) {
 }
 
 function example(state_list) {
-  return List.fold_left((function (state_set, state) {
-                return Curry._2(S[/* add */3], state, state_set);
-              }), S[/* empty */0], state_list);
+  return Curry._1(S[/* of_list */25], List.map((function (prim) {
+                    return prim;
+                  }), state_list));
 }
 
 function test(param) {
@@ -25,7 +25,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            21,
+            13,
             2
           ]
         ];
@@ -38,7 +38,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            22,
+            14,
             2
           ]
         ];
@@ -59,7 +59,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            23,
+            15,
             2
           ]
         ];

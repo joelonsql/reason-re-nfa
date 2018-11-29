@@ -23,30 +23,29 @@
     </head>
     <body>
         <h2><a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm</a></h2>
-
+        <div>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</div>
+        <div>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div>
         <div id="regexp-to-nfa">
             <h3>Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a></h3>
             <form id="regexp-to-nfa-form" autocomplete="off">
-                <label for="regexp-input">Regexp:</label>
-                <input type="text" id="regexp-input"/><br/>
-                <div>Supported regex operators: &lpar;&nbsp;&vert;&nbsp;&rpar;&nbsp;&quest;&nbsp;&plus;&nbsp;&ast;&nbsp;&period;</div>
-                <div>Give every character set a unique identifier: <span id="annotated"/></div>
-                <div>Λ(r) is {ε} ∩ L(r); we represent it as a bool: <span id="nullability"/></div>
-                <div>firsts: P(r) = {c | ∃s.cs ∈ L(r) }: <span id="firsts"/></div>
-                <div>lasts: D(r) = {c | ∃s.sc ∈ L(r) }: <span id="lasts"/></div>
-                <div>factors of length 2: F(r) = {c₁c₂ | ∃s₁s₂.s₁c₁c₂s₂ ∈ L(R):} <span id="letterpairs"/></div>
-                <div>transitions<sub>factor</sub>:<span id="factor_transitions"/></div>
-                <div>transitions<sub>initial</sub>:<span id="initial_transitions"/></div>
-                <div>transitions<sub>joint</sub>:<span id="joint_transitions"/></div>
+                <table class="variables">
+                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input"/>              </td></tr>
+                    <tr><td>r'   </td><td>annotated(r)                   </td><td><span id="annotated"/>  </td></tr>
+                    <tr><td>Λ(r')</td><td>{ε} ∩ L(r')                    </td><td><span id="nullability"/></td></tr>
+                    <tr><td>P(r')</td><td>{c | ∃s.cs ∈ L(r') }           </td><td><span id="firsts"/>     </td></tr>
+                    <tr><td>D(r')</td><td>{c | ∃s.sc ∈ L(r') }           </td><td><span id="lasts"/>      </td></tr>
+                    <tr><td>F(r')</td><td>{c₁c₂ | ∃s₁s₂.s₁c₁c₂s₂ ∈ L(r')}</td><td><span id="letterpairs"/></td></tr>
+                </table>
             </form>
         </div>
-
-        <div class="chart" id="parseTree"></div>
-
-        <div id="graph" style="text-align: center;"></div>
-
-        <h3>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</h3>
-        <h3>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</h3>
-
+        <div>
+            <table>
+                <tr>
+                    <td><div class="chart" id="parseTree"></div></td>
+                    <td><span id="transitions"/></td>
+                    <td><div id="graph" style="text-align: center;"></div></td>
+                </tr>
+            </table>
+        </div>
     </body>
 </html>

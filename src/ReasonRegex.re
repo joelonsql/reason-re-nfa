@@ -9,8 +9,6 @@ let analyze = (regexp) => {
     compiled.lasts,
     compiled.factors,
     compiled.annotated,
-    compiled.factor_transitions,
-    compiled.initial_transitions,
-    compiled.joint_transitions
+    compiled.transitions
   );
 };

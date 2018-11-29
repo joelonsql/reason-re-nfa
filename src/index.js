@@ -4,7 +4,7 @@ function matrix_to_table(matrix) {
   let result = ["<table border='1'>"];
   for(let row of matrix) {
     result.push("<tr>");
-    for(let cell of row){
+    for(let cell of row) {
       result.push(`<td>${cell}</td>`);
     }
     result.push("</tr>");
@@ -25,9 +25,7 @@ function(event){
       document.getElementById("firsts").innerHTML = "";
       document.getElementById("lasts").innerHTML = "";
       document.getElementById("letterpairs").innerHTML = "";
-      document.getElementById("factor_transitions").innerHTML = "";
-      document.getElementById("initial_transitions").innerHTML = "";
-      document.getElementById("joint_transitions").innerHTML = "";
+      document.getElementById("transitions").innerHTML = "";
       return;
     }
     let re = ReasonRegex.analyze(regexinput);
@@ -39,9 +37,7 @@ function(event){
       document.getElementById("lasts").innerHTML = re[4];
       document.getElementById("letterpairs").innerHTML = re[5];
       document.getElementById("annotated").innerHTML = re[6];
-      document.getElementById("factor_transitions").innerHTML = matrix_to_table(re[7]);
-      document.getElementById("initial_transitions").innerHTML = matrix_to_table(re[8]);
-      document.getElementById("joint_transitions").innerHTML = matrix_to_table(re[9]);
+      document.getElementById("transitions").innerHTML = matrix_to_table(re[7]);
       function createTreantNodeStructure(parseTree) {
         let node = {
           text: { name: parseTree[0] }

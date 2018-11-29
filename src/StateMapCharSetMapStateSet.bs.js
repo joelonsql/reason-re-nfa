@@ -57,12 +57,9 @@ function to_matrix(state_map) {
                                         return param[0];
                                       }), Curry._1(CharSetMapStateSet$ReasonReNfa.M[/* bindings */16], char_set_map))), char_set_set);
                 }), state_map, CharSetSet[/* empty */0])));
-  var states = $$Array.of_list(Curry._3(M[/* fold */10], (function (state, param, state_list) {
-              return /* :: */[
-                      state,
-                      state_list
-                    ];
-            }), state_map, /* [] */0));
+  var states = $$Array.of_list(List.map((function (param) {
+              return param[0];
+            }), Curry._1(M[/* bindings */16], state_map)));
   var dimx = states.length;
   var dimy = char_sets.length;
   var matrix = $$Array.make_matrix(dimx + 1 | 0, dimy + 1 | 0, "");

@@ -7,15 +7,7 @@ let to_string = (state_set) =>
     )
   ) ++ "}";
 
-let example = (state_list) =>
-  List.fold_left(
-    (state_set, state) => S.add(
-      Int32.of_int(state),
-      state_set
-    ),
-    S.empty,
-    state_list
-  );
+let example = (state_list) => List.map(Int32.of_int, state_list)->S.of_list;
 
 let test = () => {
   assert(to_string(example([])) == "{}");

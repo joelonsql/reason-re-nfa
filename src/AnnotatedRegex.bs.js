@@ -64,32 +64,27 @@ function annotate(r) {
   return annotate$1(Int32.zero, r)[1];
 }
 
-function to_string(_annotated) {
-  while(true) {
-    var annotated = _annotated;
-    var exit = 0;
-    if (typeof annotated === "number") {
+function to_string(annotated) {
+  if (typeof annotated === "number") {
+    if (annotated === 0) {
       return "";
     } else {
-      switch (annotated.tag | 0) {
-        case 0 : 
-            var x = annotated[0];
-            return CharSet$ReasonReNfa.to_string(x[0]) + ("<sub>" + (Int32.to_string(x[1]) + "</sub> "));
-        case 1 : 
-        case 2 : 
-            exit = 1;
-            break;
-        case 3 : 
-            _annotated = annotated[0];
-            continue ;
-        
-      }
+      return "&epsilon;";
     }
-    if (exit === 1) {
-      return to_string(annotated[0]) + to_string(annotated[1]);
+  } else {
+    switch (annotated.tag | 0) {
+      case 0 : 
+          var x = annotated[0];
+          return CharSet$ReasonReNfa.to_string(x[0]) + ("<sub>" + (Int32.to_string(x[1]) + "</sub>"));
+      case 1 : 
+          return "(" + (to_string(annotated[0]) + ("|" + (to_string(annotated[1]) + ")")));
+      case 2 : 
+          return to_string(annotated[0]) + to_string(annotated[1]);
+      case 3 : 
+          return "(" + (to_string(annotated[0]) + ")*");
+      
     }
-    
-  };
+  }
 }
 
 export {

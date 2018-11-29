@@ -33,12 +33,12 @@ let annotate: 'a. regex('a) => t('a) = (r) => {
 let rec to_string = (annotated) =>
   switch (annotated) {
   | Empty => ""
-  | Eps => ""
-  | Star(x) => to_string(x)
+  | Eps => "&epsilon;"
+  | Star(x) => "(" ++ to_string(x) ++ ")*"
   | Seq(a, b) => to_string(a) ++ to_string(b)
-  | Alt(a, b) => to_string(a) ++ to_string(b)
+  | Alt(a, b) => "(" ++ to_string(a) ++ "|" ++ to_string(b) ++ ")"
   | Char(x) =>
     switch (x) {
-    | (c, i) => CharSet.to_string(c) ++ "<sub>" ++ Int32.to_string(i) ++ "</sub> "
+    | (c, i) => CharSet.to_string(c) ++ "<sub>" ++ Int32.to_string(i) ++ "</sub>"
     };
   };

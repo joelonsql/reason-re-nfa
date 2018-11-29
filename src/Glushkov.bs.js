@@ -233,9 +233,7 @@ function compile(r) {
           /* firsts */LetterSet$ReasonReNfa.to_string(firsts),
           /* lasts */LetterSet$ReasonReNfa.to_string(lasts),
           /* factors */Letter2Set$ReasonReNfa.to_string(factors),
-          /* factor_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(factor_transitions),
-          /* initial_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.M[/* singleton */4], Int32.zero, initial_transitions)),
-          /* joint_transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(joint_transitions)
+          /* transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(joint_transitions)
         ];
 }
 
@@ -247,7 +245,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            201,
+            197,
             2
           ]
         ];
@@ -258,7 +256,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            203,
+            199,
             2
           ]
         ];
@@ -269,7 +267,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            205,
+            201,
             2
           ]
         ];
@@ -279,7 +277,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            206,
+            202,
             2
           ]
         ];
@@ -289,7 +287,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            207,
+            203,
             2
           ]
         ];
@@ -299,7 +297,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            208,
+            204,
             2
           ]
         ];
@@ -309,7 +307,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            209,
+            205,
             2
           ]
         ];
@@ -321,7 +319,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            210,
+            206,
             2
           ]
         ];
