@@ -2,6 +2,7 @@
 .node { border: 1px solid; }
 .node p { font-size: 20px; line-height: 20px; height: 20px; padding: 3px; margin: 0; }
 table.variables td {font-family: 'Courier New', Courier, monospace; padding: 3px}
+input {font-family: 'Courier New', Courier, monospace}
 a:link{color:inherit}
 a:active{color:inherit}
 a:visited{color:inherit}

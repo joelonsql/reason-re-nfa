@@ -15,7 +15,7 @@ function matrix_to_table(matrix) {
 
 document.addEventListener('DOMContentLoaded',
 function(event){
-  document.getElementById("regexp-input").addEventListener("keyup", function(event) {
+  let visualize = function(event) {
     let regexinput = document.getElementById("regexp-input").value;
     if (regexinput.length == 0) {
       document.getElementById("graph").innerHTML = "";
@@ -65,7 +65,9 @@ function(event){
       console.log(e);
       document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";
     }
-  });
+  };
+  document.getElementById("regexp-input").addEventListener("keyup", visualize);
+  visualize();
 });
 
 export {}

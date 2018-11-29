@@ -29,7 +29,7 @@
             <h3>Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a></h3>
             <form id="regexp-to-nfa-form" autocomplete="off">
                 <table class="variables">
-                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input"/>              </td></tr>
+                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input" value="ab?c*(d|e)(fg|hi)"/>              </td></tr>
                     <tr><td>r'   </td><td>annotated(r)                   </td><td><span id="annotated"/>  </td></tr>
                     <tr><td>Λ(r')</td><td>{ε} ∩ L(r')                    </td><td><span id="nullability"/></td></tr>
                     <tr><td>P(r')</td><td>{c | ∃s.cs ∈ L(r') }           </td><td><span id="firsts"/>     </td></tr>
