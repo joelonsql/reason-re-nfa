@@ -6,9 +6,9 @@ let to_string = (char_set) =>
   | 1 => String.make(1, S.choose(char_set))
   | 256 => "."
   | _ =>
-    "{"
-    ++ String.concat(" ", List.map(String.make(1), S.elements(char_set)))
-    ++ "}"
+    "["
+    ++ String.concat("", List.map(String.make(1), S.elements(char_set)))
+    ++ "]"
   };
 
 let example = (char_list) => S.of_list(char_list);

@@ -18,9 +18,9 @@ function to_string(char_set) {
       return "\xce\xb5";
     }
   } else if (match !== 256) {
-    return "{" + ($$String.concat(" ", List.map((function (param) {
+    return "[" + ($$String.concat("", List.map((function (param) {
                         return $$String.make(1, param);
-                      }), Curry._1(S[/* elements */19], char_set))) + "}");
+                      }), Curry._1(S[/* elements */19], char_set))) + "]");
   } else {
     return ".";
   }

@@ -12,11 +12,5 @@ let rec of_regex = (r) =>
   | Star(s) => One("Star", of_regex(s))
   | Seq(l, r) => Two("Seq", of_regex(l), of_regex(r))
   | Alt(l, r) => Two("Alt", of_regex(l), of_regex(r))
-  | Char(s) => One("Char", Leaf(
-    switch (CharSet.S.cardinal(s)) {
-    | 0 => "{}"
-    | 1 => String.make(1, CharSet.S.choose(s))
-    | 256 => "."
-    | _ => "{" ++ String.concat(" ", List.map(String.make(1), CharSet.S.elements(s))) ++ "}"
-    }))
+  | Char(s) => One("Char", Leaf(CharSet.to_string(s)))
   };
