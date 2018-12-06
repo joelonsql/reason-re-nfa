@@ -3,20 +3,19 @@
 import * as $$Set from "../node_modules/bs-platform/lib/es6/set.js";
 import * as List from "../node_modules/bs-platform/lib/es6/list.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
+import * as Int32 from "../node_modules/bs-platform/lib/es6/int32.js";
 import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
-import * as Caml_obj from "../node_modules/bs-platform/lib/es6/caml_obj.js";
 import * as Letter$ReasonReNfa from "./Letter.bs.js";
 import * as LetterSet$ReasonReNfa from "./LetterSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
 function compare(param, param$1) {
-  return Caml_obj.caml_compare(/* tuple */[
-              param[0][1],
-              param[1][1]
-            ], /* tuple */[
-              param$1[0][1],
-              param$1[1][1]
-            ]);
+  var i = Int32.compare(param[0][1], param$1[0][1]);
+  if (i !== 0) {
+    return i;
+  } else {
+    return Int32.compare(param[1][1], param$1[1][1]);
+  }
 }
 
 var Pair = /* module */[/* compare */compare];
@@ -28,6 +27,8 @@ var empty = include[0];
 var singleton = include[4];
 
 var union = include[6];
+
+var equal = include[10];
 
 var fold = include[13];
 
@@ -85,7 +86,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Letter2Set.re",
-            42,
+            44,
             2
           ]
         ];
@@ -102,12 +103,12 @@ function test(param) {
         ]
       ], 1);
   var abc$prime = $less$star$great(a, bc);
-  if (!Caml_obj.caml_equal(abc, abc$prime)) {
+  if (!Curry._2(equal, abc, abc$prime)) {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Letter2Set.re",
-            46,
+            48,
             2
           ]
         ];
@@ -120,14 +121,14 @@ function test(param) {
                                   ]);
                       }));
         }));
-  if (Caml_obj.caml_equal(abc, abc$prime$prime)) {
+  if (Curry._2(equal, abc, abc$prime$prime)) {
     return 0;
   } else {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Letter2Set.re",
-            48,
+            50,
             2
           ]
         ];
@@ -147,8 +148,6 @@ var inter = include[7];
 var diff = include[8];
 
 var compare$1 = include[9];
-
-var equal = include[10];
 
 var subset = include[11];
 

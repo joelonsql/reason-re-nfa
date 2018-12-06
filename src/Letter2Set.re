@@ -1,7 +1,9 @@
 module Pair = {
   type t = (Letter.t, Letter.t);
-  let compare = (((_, w), (_, x)), ((_, y), (_, z))) =>
-    Pervasives.compare((w, x), (y, z));
+  let compare = (((_, w), (_, x)), ((_, y), (_, z))) => switch (Int32.compare(w, y)) {
+    | 0 => Int32.compare(x, z)
+    | i => i
+  };
 };
 
 include Set.Make(Pair);
@@ -43,7 +45,7 @@ let test = () => {
   let a = LetterSet.example(['a'],0);
   let bc = LetterSet.example(['b','c'],1);
   let abc' = a <*> bc;
-  assert(abc == abc');
+  assert(equal(abc, abc'));
   let abc'' = a >>= (x => bc >>= (y => singleton((x, y))));
-  assert(abc == abc'');
+  assert(equal(abc, abc''));
 };

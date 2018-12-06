@@ -13,7 +13,8 @@
   "bs-dependencies": [
   ],
   "warnings": {
-    "error" : "+101"
+    "number" : "+102",
+    "error" : "+101+102"
   },
   "namespace": true,
   "refmt": 3

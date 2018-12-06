@@ -3,7 +3,7 @@
 type t = (CharSet.t, Nfa.state);
 
 let compare = ((_, x), (_, y)) =>
-  Pervasives.compare(x, y);
+  Int32.compare(x, y);
 
 let example = (char_list, state) =>
   (CharSet.example(char_list), Int32.of_int(state));
