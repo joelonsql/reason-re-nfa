@@ -32,7 +32,7 @@ function alt(l, r) {
               r
             ]);
   } else {
-    return /* Char */Block.__(0, [Curry._2(CharSet$ReasonReNfa.S[/* union */6], l[0], r[0])]);
+    return /* Char */Block.__(0, [Curry._2(CharSet$ReasonReNfa.union, l[0], r[0])]);
   }
 }
 
@@ -45,7 +45,7 @@ function plus(t) {
 }
 
 function chr(c) {
-  return /* Char */Block.__(0, [Curry._1(CharSet$ReasonReNfa.S[/* singleton */4], c)]);
+  return /* Char */Block.__(0, [Curry._1(CharSet$ReasonReNfa.singleton, c)]);
 }
 
 function opt(t) {
@@ -55,14 +55,14 @@ function opt(t) {
 function range_(l, h) {
   var _i = l;
   var h$1 = h;
-  var _acc = CharSet$ReasonReNfa.S[/* empty */0];
+  var _acc = CharSet$ReasonReNfa.empty;
   while(true) {
     var acc = _acc;
     var i = _i;
     if (i === h$1) {
-      return Curry._2(CharSet$ReasonReNfa.S[/* add */3], Char.chr(i), acc);
+      return Curry._2(CharSet$ReasonReNfa.add, Char.chr(i), acc);
     } else {
-      _acc = Curry._2(CharSet$ReasonReNfa.S[/* add */3], Char.chr(i), acc);
+      _acc = Curry._2(CharSet$ReasonReNfa.add, Char.chr(i), acc);
       _i = i + 1 | 0;
       continue ;
     }

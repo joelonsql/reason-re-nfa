@@ -1,13 +1,13 @@
-module S = Set.Make(Int32);
+include Set.Make(Int32);
 
 let to_string = (state_set) =>
   "{" ++ String.concat(
     " ",
-    List.map(Int32.to_string, S.elements(state_set)
+    List.map(Int32.to_string, elements(state_set)
     )
   ) ++ "}";
 
-let example = (state_list) => List.map(Int32.of_int, state_list)->S.of_list;
+let example = (state_list) => List.map(Int32.of_int, state_list)->of_list;
 
 let test = () => {
   assert(to_string(example([])) == "{}");

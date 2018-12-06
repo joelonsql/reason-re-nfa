@@ -13,10 +13,18 @@ import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 import * as CharSetMapStateSet$ReasonReNfa from "./CharSetMapStateSet.bs.js";
 
-var M = $$Map.Make([Int32.compare]);
+var include = $$Map.Make([Int32.compare]);
+
+var singleton = include[4];
+
+var fold = include[10];
+
+var bindings = include[16];
+
+var find = include[21];
 
 function to_string(state_map) {
-  return "{" + ($$String.concat(",", List.rev(Curry._3(M[/* fold */10], (function (state, char_set, l) {
+  return "{" + ($$String.concat(",", List.rev(Curry._3(fold, (function (state, char_set, l) {
                           return /* :: */[
                                   Int32.to_string(state) + (":" + CharSetMapStateSet$ReasonReNfa.to_string(char_set)),
                                   l
@@ -25,7 +33,7 @@ function to_string(state_map) {
 }
 
 function example(state, char_list, state_list) {
-  return Curry._2(M[/* singleton */4], state, CharSetMapStateSet$ReasonReNfa.example(char_list, state_list));
+  return Curry._2(singleton, state, CharSetMapStateSet$ReasonReNfa.example(char_list, state_list));
 }
 
 function test(param) {
@@ -51,15 +59,15 @@ function test(param) {
 }
 
 function to_matrix(state_map) {
-  var CharSetSet = $$Set.Make([CharSet$ReasonReNfa.S[9]]);
-  var char_sets = $$Array.of_list(Curry._1(CharSetSet[/* elements */19], Curry._3(M[/* fold */10], (function (param, char_set_map, char_set_set) {
+  var CharSetSet = $$Set.Make([CharSet$ReasonReNfa.compare]);
+  var char_sets = $$Array.of_list(Curry._1(CharSetSet[/* elements */19], Curry._3(fold, (function (param, char_set_map, char_set_set) {
                   return Curry._2(CharSetSet[/* union */6], Curry._1(CharSetSet[/* of_list */25], List.map((function (param) {
                                         return param[0];
-                                      }), Curry._1(CharSetMapStateSet$ReasonReNfa.M[/* bindings */16], char_set_map))), char_set_set);
+                                      }), Curry._1(CharSetMapStateSet$ReasonReNfa.bindings, char_set_map))), char_set_set);
                 }), state_map, CharSetSet[/* empty */0])));
   var states = $$Array.of_list(List.map((function (param) {
               return param[0];
-            }), Curry._1(M[/* bindings */16], state_map)));
+            }), Curry._1(bindings, state_map)));
   var dimx = states.length;
   var dimy = char_sets.length;
   var matrix = $$Array.make_matrix(dimx + 1 | 0, dimy + 1 | 0, "");
@@ -73,7 +81,7 @@ function to_matrix(state_map) {
       var exit = 0;
       var state_set;
       try {
-        state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.M[/* find */21], Caml_array.caml_array_get(char_sets, y - 1 | 0), Curry._2(M[/* find */21], Caml_array.caml_array_get(states, x - 1 | 0), state_map));
+        state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.find, Caml_array.caml_array_get(char_sets, y - 1 | 0), Curry._2(find, Caml_array.caml_array_get(states, x - 1 | 0), state_map));
         exit = 1;
       }
       catch (exn){
@@ -92,12 +100,75 @@ function to_matrix(state_map) {
   return matrix;
 }
 
+var empty = include[0];
+
+var is_empty = include[1];
+
+var mem = include[2];
+
+var add = include[3];
+
+var remove = include[5];
+
+var merge = include[6];
+
+var compare = include[7];
+
+var equal = include[8];
+
+var iter = include[9];
+
+var for_all = include[11];
+
+var exists = include[12];
+
+var filter = include[13];
+
+var partition = include[14];
+
+var cardinal = include[15];
+
+var min_binding = include[17];
+
+var max_binding = include[18];
+
+var choose = include[19];
+
+var split = include[20];
+
+var map = include[22];
+
+var mapi = include[23];
+
 export {
-  M ,
+  empty ,
+  is_empty ,
+  mem ,
+  add ,
+  singleton ,
+  remove ,
+  merge ,
+  compare ,
+  equal ,
+  iter ,
+  fold ,
+  for_all ,
+  exists ,
+  filter ,
+  partition ,
+  cardinal ,
+  bindings ,
+  min_binding ,
+  max_binding ,
+  choose ,
+  split ,
+  find ,
+  map ,
+  mapi ,
   to_string ,
   example ,
   test ,
   to_matrix ,
   
 }
-/* M Not a pure module */
+/* include Not a pure module */

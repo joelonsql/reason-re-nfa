@@ -7,32 +7,36 @@ import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
 import * as Letter$ReasonReNfa from "./Letter.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
-var S = $$Set.Make([Letter$ReasonReNfa.compare]);
+var include = $$Set.Make([Letter$ReasonReNfa.compare]);
 
-var $less$plus$great = S[/* union */6];
+var singleton = include[4];
+
+var union = include[6];
+
+var elements = include[19];
 
 function to_string(letter_set) {
-  return $$String.concat(" ", List.map(Letter$ReasonReNfa.to_string, Curry._1(S[/* elements */19], letter_set)));
+  return $$String.concat(" ", List.map(Letter$ReasonReNfa.to_string, Curry._1(elements, letter_set)));
 }
 
 function example(char_list, state) {
-  return Curry._1(S[/* singleton */4], Letter$ReasonReNfa.example(char_list, state));
+  return Curry._1(singleton, Letter$ReasonReNfa.example(char_list, state));
 }
 
 function test(param) {
-  var a = example(/* :: */[
-        /* "a" */97,
-        /* [] */0
-      ], 0);
-  var bc = example(/* :: */[
-        /* "b" */98,
-        /* :: */[
-          /* "c" */99,
-          /* [] */0
-        ]
-      ], 1);
-  var abc = Curry._2($less$plus$great, a, bc);
-  if (to_string(abc) === "a<sub>0</sub> {b c}<sub>1</sub>") {
+  var a = Curry._1(singleton, Letter$ReasonReNfa.example(/* :: */[
+            /* "a" */97,
+            /* [] */0
+          ], 0));
+  var bc = Curry._1(singleton, Letter$ReasonReNfa.example(/* :: */[
+            /* "b" */98,
+            /* :: */[
+              /* "c" */99,
+              /* [] */0
+            ]
+          ], 1));
+  var abc = Curry._2(union, a, bc);
+  if (to_string(abc) === "a<sub>0</sub> [bc]<sub>1</sub>") {
     return 0;
   } else {
     throw [
@@ -46,12 +50,85 @@ function test(param) {
   }
 }
 
+var empty = include[0];
+
+var is_empty = include[1];
+
+var mem = include[2];
+
+var add = include[3];
+
+var remove = include[5];
+
+var inter = include[7];
+
+var diff = include[8];
+
+var compare = include[9];
+
+var equal = include[10];
+
+var subset = include[11];
+
+var iter = include[12];
+
+var fold = include[13];
+
+var for_all = include[14];
+
+var exists = include[15];
+
+var filter = include[16];
+
+var partition = include[17];
+
+var cardinal = include[18];
+
+var min_elt = include[20];
+
+var max_elt = include[21];
+
+var choose = include[22];
+
+var split = include[23];
+
+var find = include[24];
+
+var of_list = include[25];
+
+var $less$plus$great = union;
+
 export {
-  S ,
+  empty ,
+  is_empty ,
+  mem ,
+  add ,
+  singleton ,
+  remove ,
+  union ,
+  inter ,
+  diff ,
+  compare ,
+  equal ,
+  subset ,
+  iter ,
+  fold ,
+  for_all ,
+  exists ,
+  filter ,
+  partition ,
+  cardinal ,
+  elements ,
+  min_elt ,
+  max_elt ,
+  choose ,
+  split ,
+  find ,
+  of_list ,
   $less$plus$great ,
   to_string ,
   example ,
   test ,
   
 }
-/* S Not a pure module */
+/* include Not a pure module */

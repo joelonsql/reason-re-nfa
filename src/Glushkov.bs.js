@@ -53,16 +53,16 @@ function p(_param) {
   while(true) {
     var param = _param;
     if (typeof param === "number") {
-      return LetterSet$ReasonReNfa.S[/* empty */0];
+      return LetterSet$ReasonReNfa.empty;
     } else {
       switch (param.tag | 0) {
         case 0 : 
-            return Curry._1(LetterSet$ReasonReNfa.S[/* singleton */4], param[0]);
+            return Curry._1(LetterSet$ReasonReNfa.singleton, param[0]);
         case 1 : 
             return Curry._2(LetterSet$ReasonReNfa.$less$plus$great, p(param[0]), p(param[1]));
         case 2 : 
             var e = param[0];
-            return Curry._2(LetterSet$ReasonReNfa.$less$plus$great, p(e), l(e) ? p(param[1]) : LetterSet$ReasonReNfa.S[/* empty */0]);
+            return Curry._2(LetterSet$ReasonReNfa.$less$plus$great, p(e), l(e) ? p(param[1]) : LetterSet$ReasonReNfa.empty);
         case 3 : 
             _param = param[0];
             continue ;
@@ -76,16 +76,16 @@ function d(_param) {
   while(true) {
     var param = _param;
     if (typeof param === "number") {
-      return LetterSet$ReasonReNfa.S[/* empty */0];
+      return LetterSet$ReasonReNfa.empty;
     } else {
       switch (param.tag | 0) {
         case 0 : 
-            return Curry._1(LetterSet$ReasonReNfa.S[/* singleton */4], param[0]);
+            return Curry._1(LetterSet$ReasonReNfa.singleton, param[0]);
         case 1 : 
             return Curry._2(LetterSet$ReasonReNfa.$less$plus$great, d(param[0]), d(param[1]));
         case 2 : 
             var e = param[1];
-            return Curry._2(LetterSet$ReasonReNfa.$less$plus$great, l(e) ? d(param[0]) : LetterSet$ReasonReNfa.S[/* empty */0], d(e));
+            return Curry._2(LetterSet$ReasonReNfa.$less$plus$great, l(e) ? d(param[0]) : LetterSet$ReasonReNfa.empty, d(e));
         case 3 : 
             _param = param[0];
             continue ;
@@ -97,7 +97,7 @@ function d(_param) {
 
 function f_(param) {
   if (typeof param === "number") {
-    return Letter2Set$ReasonReNfa.S[/* empty */0];
+    return Letter2Set$ReasonReNfa.empty;
   } else {
     switch (param.tag | 0) {
       case 1 : 
@@ -110,13 +110,13 @@ function f_(param) {
           var e$1 = param[0];
           return Curry._2(Letter2Set$ReasonReNfa.$less$plus$great, f_(e$1), Letter2Set$ReasonReNfa.$less$star$great(d(e$1), p(e$1)));
       default:
-        return Letter2Set$ReasonReNfa.S[/* empty */0];
+        return Letter2Set$ReasonReNfa.empty;
     }
   }
 }
 
 function transition_map_of_factor_set(factors) {
-  return Curry._3(Letter2Set$ReasonReNfa.S[/* fold */13], (function (param, state_map) {
+  return Curry._3(Letter2Set$ReasonReNfa.fold, (function (param, state_map) {
                 var match = param[1];
                 var from_state = param[0][1];
                 var char_set = match[0];
@@ -124,80 +124,80 @@ function transition_map_of_factor_set(factors) {
                 var state_map$1 = state_map;
                 var char_set_map;
                 try {
-                  char_set_map = Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.M[/* find */21], from_state, state_map$1);
+                  char_set_map = Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.find, from_state, state_map$1);
                 }
                 catch (exn){
                   if (exn === Caml_builtin_exceptions.not_found) {
-                    char_set_map = CharSetMapStateSet$ReasonReNfa.M[/* empty */0];
+                    char_set_map = CharSetMapStateSet$ReasonReNfa.empty;
                   } else {
                     throw exn;
                   }
                 }
                 var state_set;
                 try {
-                  state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.M[/* find */21], char_set, char_set_map);
+                  state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.find, char_set, char_set_map);
                 }
                 catch (exn$1){
                   if (exn$1 === Caml_builtin_exceptions.not_found) {
-                    state_set = StateSet$ReasonReNfa.S[/* empty */0];
+                    state_set = StateSet$ReasonReNfa.empty;
                   } else {
                     throw exn$1;
                   }
                 }
-                var state_set$1 = Curry._2(StateSet$ReasonReNfa.S[/* add */3], to_state, state_set);
-                var char_set_map$1 = Curry._3(CharSetMapStateSet$ReasonReNfa.M[/* add */3], char_set, state_set$1, char_set_map);
-                return Curry._3(StateMapCharSetMapStateSet$ReasonReNfa.M[/* add */3], from_state, char_set_map$1, state_map$1);
-              }), factors, StateMapCharSetMapStateSet$ReasonReNfa.M[/* empty */0]);
+                var state_set$1 = Curry._2(StateSet$ReasonReNfa.add, to_state, state_set);
+                var char_set_map$1 = Curry._3(CharSetMapStateSet$ReasonReNfa.add, char_set, state_set$1, char_set_map);
+                return Curry._3(StateMapCharSetMapStateSet$ReasonReNfa.add, from_state, char_set_map$1, state_map$1);
+              }), factors, StateMapCharSetMapStateSet$ReasonReNfa.empty);
 }
 
 function positions(letter_set) {
-  return Curry._1(StateSet$ReasonReNfa.S[/* of_list */25], List.map((function (prim) {
+  return Curry._1(StateSet$ReasonReNfa.of_list, List.map((function (prim) {
                     return prim[1];
-                  }), Curry._1(LetterSet$ReasonReNfa.S[/* elements */19], letter_set)));
+                  }), Curry._1(LetterSet$ReasonReNfa.elements, letter_set)));
 }
 
 function transition_map_of_letter_set(letter_set) {
-  return Curry._3(LetterSet$ReasonReNfa.S[/* fold */13], (function (param, char_set_map) {
+  return Curry._3(LetterSet$ReasonReNfa.fold, (function (param, char_set_map) {
                 var state = param[1];
                 var char_set = param[0];
                 var entry;
                 var exit = 0;
                 var state_set;
                 try {
-                  state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.M[/* find */21], char_set, char_set_map);
+                  state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.find, char_set, char_set_map);
                   exit = 1;
                 }
                 catch (exn){
                   if (exn === Caml_builtin_exceptions.not_found) {
-                    entry = Curry._1(StateSet$ReasonReNfa.S[/* singleton */4], state);
+                    entry = Curry._1(StateSet$ReasonReNfa.singleton, state);
                   } else {
                     throw exn;
                   }
                 }
                 if (exit === 1) {
-                  entry = Curry._2(StateSet$ReasonReNfa.S[/* add */3], state, state_set);
+                  entry = Curry._2(StateSet$ReasonReNfa.add, state, state_set);
                 }
-                return Curry._3(CharSetMapStateSet$ReasonReNfa.M[/* add */3], char_set, entry, char_set_map);
-              }), letter_set, CharSetMapStateSet$ReasonReNfa.M[/* empty */0]);
+                return Curry._3(CharSetMapStateSet$ReasonReNfa.add, char_set, entry, char_set_map);
+              }), letter_set, CharSetMapStateSet$ReasonReNfa.empty);
 }
 
 function flatten_transitions(char_map) {
-  return Curry._3(CharSetMapStateSet$ReasonReNfa.M[/* fold */10], (function (char_set, state_set, char_map) {
-                return Curry._3(CharSet$ReasonReNfa.S[/* fold */13], (function ($$char, char_map) {
+  return Curry._3(CharSetMapStateSet$ReasonReNfa.fold, (function (char_set, state_set, char_map) {
+                return Curry._3(CharSet$ReasonReNfa.fold, (function ($$char, char_map) {
                               var entry;
                               try {
-                                entry = Curry._2(CharMapStateSet$ReasonReNfa.M[/* find */21], $$char, char_map);
+                                entry = Curry._2(CharMapStateSet$ReasonReNfa.find, $$char, char_map);
                               }
                               catch (exn){
                                 if (exn === Caml_builtin_exceptions.not_found) {
-                                  entry = StateSet$ReasonReNfa.S[/* empty */0];
+                                  entry = StateSet$ReasonReNfa.empty;
                                 } else {
                                   throw exn;
                                 }
                               }
-                              return Curry._3(CharMapStateSet$ReasonReNfa.M[/* add */3], $$char, Curry._2(StateSet$ReasonReNfa.S[/* union */6], state_set, entry), char_map);
+                              return Curry._3(CharMapStateSet$ReasonReNfa.add, $$char, Curry._2(StateSet$ReasonReNfa.union, state_set, entry), char_map);
                             }), char_set, char_map);
-              }), char_map, CharMapStateSet$ReasonReNfa.M[/* empty */0]);
+              }), char_map, CharMapStateSet$ReasonReNfa.empty);
 }
 
 function compile(r) {
@@ -206,17 +206,17 @@ function compile(r) {
   var firsts = p(annotated);
   var lasts = d(annotated);
   var factors = f_(annotated);
-  var finals = nullable ? Curry._2(StateSet$ReasonReNfa.S[/* add */3], Int32.zero, positions(lasts)) : positions(lasts);
+  var finals = nullable ? Curry._2(StateSet$ReasonReNfa.add, Int32.zero, positions(lasts)) : positions(lasts);
   var factor_transitions = transition_map_of_factor_set(factors);
   var initial_transitions = transition_map_of_letter_set(firsts);
-  var joint_transitions = Curry._3(StateMapCharSetMapStateSet$ReasonReNfa.M[/* add */3], Int32.zero, initial_transitions, factor_transitions);
+  var joint_transitions = Curry._3(StateMapCharSetMapStateSet$ReasonReNfa.add, Int32.zero, initial_transitions, factor_transitions);
   var next = function (state) {
     try {
-      return flatten_transitions(Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.M[/* find */21], state, joint_transitions));
+      return flatten_transitions(Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.find, state, joint_transitions));
     }
     catch (exn){
       if (exn === Caml_builtin_exceptions.not_found) {
-        return CharMapStateSet$ReasonReNfa.M[/* empty */0];
+        return CharMapStateSet$ReasonReNfa.empty;
       } else {
         throw exn;
       }
@@ -245,7 +245,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            197,
+            195,
             2
           ]
         ];
@@ -256,7 +256,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            199,
+            197,
             2
           ]
         ];
@@ -267,17 +267,17 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            201,
+            199,
             2
           ]
         ];
   }
-  if (glushkov[/* annotated */1] !== "a<sub>1</sub> {b c}<sub>2</sub> d<sub>3</sub> e<sub>4</sub> ") {
+  if (glushkov[/* annotated */1] !== "(a<sub>1</sub>|[bc]<sub>2</sub>d<sub>3</sub>e<sub>4</sub>)") {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            202,
+            200,
             2
           ]
         ];
@@ -287,17 +287,17 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            203,
+            201,
             2
           ]
         ];
   }
-  if (glushkov[/* firsts */3] !== "a<sub>1</sub> {b c}<sub>2</sub>") {
+  if (glushkov[/* firsts */3] !== "a<sub>1</sub> [bc]<sub>2</sub>") {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            204,
+            202,
             2
           ]
         ];
@@ -307,19 +307,19 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            205,
+            203,
             2
           ]
         ];
   }
-  if (glushkov[/* factors */5] === "{b c}<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>") {
+  if (glushkov[/* factors */5] === "[bc]<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>") {
     return 0;
   } else {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            206,
+            204,
             2
           ]
         ];

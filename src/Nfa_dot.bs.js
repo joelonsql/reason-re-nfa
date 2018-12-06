@@ -20,7 +20,7 @@ function digraph_of_nfa(nfa) {
     var name = String(counter[0]);
     counter[0] = counter[0] + 1 | 0;
     var node = Digraph$ReasonReNfa.Node[/* make */0](name);
-    var shape = Curry._2(StateSet$ReasonReNfa.S[/* mem */2], n, nfa[/* finals */1]) ? "doublecircle" : "circle";
+    var shape = Curry._2(StateSet$ReasonReNfa.mem, n, nfa[/* finals */1]) ? "doublecircle" : "circle";
     return Digraph$ReasonReNfa.Node[/* with_attrs */1](node, /* :: */[
                 /* tuple */[
                   "shape",
@@ -42,13 +42,13 @@ function digraph_of_nfa(nfa) {
     }
     catch (exn){
       if (exn === Caml_builtin_exceptions.not_found) {
-        tmp = Curry._1(CharSet$ReasonReNfa.S[/* singleton */4], c);
+        tmp = Curry._1(CharSet$ReasonReNfa.singleton, c);
       } else {
         throw exn;
       }
     }
     if (exit === 1) {
-      tmp = Curry._2(CharSet$ReasonReNfa.S[/* add */3], c, set);
+      tmp = Curry._2(CharSet$ReasonReNfa.add, c, set);
     }
     return Hashtbl.replace(edges, /* tuple */[
                 source,
@@ -60,8 +60,8 @@ function digraph_of_nfa(nfa) {
       return 0;
     } else {
       Hashtbl.add(states, state, make_node(state));
-      return Curry._2(CharMapStateSet$ReasonReNfa.M[/* iter */9], (function (c, targets) {
-                    return Curry._2(StateSet$ReasonReNfa.S[/* iter */12], (function (target) {
+      return Curry._2(CharMapStateSet$ReasonReNfa.iter, (function (c, targets) {
+                    return Curry._2(StateSet$ReasonReNfa.iter, (function (target) {
                                   add_edge(state, c, target);
                                   return step(target);
                                 }), targets);
@@ -120,7 +120,7 @@ function test(param) {
                   ])]),
             "%a@."
           ]), Digraph$ReasonReNfa.format, digraph_of_nfa(compiled[/* nfa */0]));
-  if (dot === "digraph {\n  \"rankdir\" = \"LR\";\n  node [ \"shape\" = \"none\";\"width\" = \"0\";] \"\"\n  node [ \"shape\" = \"circle\";] \"2\"\n  node [ \"shape\" = \"doublecircle\";] \"3\"\n  node [ \"shape\" = \"circle\";] \"0\"\n  node [ \"shape\" = \"circle\";] \"1\"\n  \"\" -> \"0\" \n  \"0\" -> \"1\" [ \"label\" = \"a\";]\n  \"1\" -> \"2\" [ \"label\" = \"{b c}\";]\n  \"2\" -> \"3\" [ \"label\" = \"d\";]\n}\n") {
+  if (dot === "digraph {\n  \"rankdir\" = \"LR\";\n  node [ \"shape\" = \"none\";\"width\" = \"0\";] \"\"\n  node [ \"shape\" = \"circle\";] \"2\"\n  node [ \"shape\" = \"doublecircle\";] \"3\"\n  node [ \"shape\" = \"circle\";] \"0\"\n  node [ \"shape\" = \"circle\";] \"1\"\n  \"\" -> \"0\" \n  \"0\" -> \"1\" [ \"label\" = \"a\";]\n  \"1\" -> \"2\" [ \"label\" = \"[bc]\";]\n  \"2\" -> \"3\" [ \"label\" = \"d\";]\n}\n") {
     return 0;
   } else {
     throw [

@@ -34,16 +34,14 @@ let rec p =
   LetterSet.(
     fun
     | Empty
-    | Eps => S.empty
-    | Char(c) => S.singleton(c)
+    | Eps => LetterSet.empty
+    | Char(c) => singleton(c)
     | Alt(e, f) => p(e) <+> p(f)
-    | Seq(e, f) =>
-      p(e)
-      <+> (
+    | Seq(e, f) => p(e) <+> (
         if (l(e)) {
           p(f);
         } else {
-          S.empty;
+          LetterSet.empty;
         }
       )
     | Star(e) => p(e)
@@ -55,15 +53,15 @@ let rec d =
   LetterSet.(
     fun
     | Empty
-    | Eps => S.empty
-    | Char(c) => S.singleton(c)
+    | Eps => LetterSet.empty
+    | Char(c) => singleton(c)
     | Alt(f, e) => d(f) <+> d(e)
     | Seq(f, e) =>
       (
         if (l(e)) {
           d(f);
         } else {
-          S.empty;
+          LetterSet.empty;
         }
       )
       <+> d(e)
@@ -77,7 +75,7 @@ let rec f_ =
     fun
     | Empty
     | Eps
-    | Char(_) => S.empty
+    | Char(_) => Letter2Set.empty
     | Alt(e, f) => f_(e) <+> f_(f)
     | Seq(e, f) => f_(e) <+> f_(f) <+> (d(e) <*> p(f))
     | Star(e) => f_(e) <+> (d(e) <*> p(e))
@@ -86,60 +84,60 @@ let rec f_ =
 let transition_map_of_factor_set = (factors) => {
   let add_transition = (from_state, char_set, to_state, state_map) => {
     let char_set_map =
-      switch (StateMapCharSetMapStateSet.M.find(from_state, state_map)) {
-      | exception Not_found => CharSetMapStateSet.M.empty
+      switch (StateMapCharSetMapStateSet.find(from_state, state_map)) {
+      | exception Not_found => CharSetMapStateSet.empty
       | char_set_map => char_set_map
       };
     let state_set =
-      switch (CharSetMapStateSet.M.find(char_set, char_set_map)) {
-      | exception Not_found => StateSet.S.empty
+      switch (CharSetMapStateSet.find(char_set, char_set_map)) {
+      | exception Not_found => StateSet.empty
       | state_set => state_set
       };
-    let state_set = StateSet.S.add(to_state, state_set);
-    let char_set_map = CharSetMapStateSet.M.add(char_set, state_set, char_set_map);
-    StateMapCharSetMapStateSet.M.add(from_state, char_set_map, state_map);
+    let state_set = StateSet.add(to_state, state_set);
+    let char_set_map = CharSetMapStateSet.add(char_set, state_set, char_set_map);
+    StateMapCharSetMapStateSet.add(from_state, char_set_map, state_map);
   };
-  Letter2Set.S.fold(
+  Letter2Set.fold(
     (((_, from_state), (char_set, to_state)), state_map) => add_transition(from_state, char_set, to_state, state_map),
     factors,
-    StateMapCharSetMapStateSet.M.empty
+    StateMapCharSetMapStateSet.empty
   );
 };
 
-let positions: LetterSet.S.t => StateSet.S.t = (letter_set) =>
-  StateSet.S.of_list(List.map(snd, LetterSet.S.elements(letter_set)));
+let positions: LetterSet.t => StateSet.t = (letter_set) =>
+  StateSet.of_list(List.map(snd, LetterSet.elements(letter_set)));
 
-let transition_map_of_letter_set: LetterSet.S.t => CharSetMapStateSet.M.t(StateSet.S.t) = (letter_set) =>
-  LetterSet.S.fold(
+let transition_map_of_letter_set: LetterSet.t => CharSetMapStateSet.t(StateSet.t) = (letter_set) =>
+  LetterSet.fold(
     ((char_set, state), char_set_map) => {
       let entry =
-        switch (CharSetMapStateSet.M.find(char_set, char_set_map)) {
-        | exception Not_found => StateSet.S.singleton(state)
-        | state_set => StateSet.S.add(state, state_set)
+        switch (CharSetMapStateSet.find(char_set, char_set_map)) {
+        | exception Not_found => StateSet.singleton(state)
+        | state_set => StateSet.add(state, state_set)
         };
-      CharSetMapStateSet.M.add(char_set, entry, char_set_map);
+      CharSetMapStateSet.add(char_set, entry, char_set_map);
     },
     letter_set,
-    CharSetMapStateSet.M.empty
+    CharSetMapStateSet.empty
   );
 
-let flatten_transitions: CharSetMapStateSet.M.t(StateSet.S.t) => CharMapStateSet.M.t(StateSet.S.t) = (char_map) =>
-  CharSetMapStateSet.M.fold(
+let flatten_transitions: CharSetMapStateSet.t(StateSet.t) => CharMapStateSet.t(StateSet.t) = (char_map) =>
+  CharSetMapStateSet.fold(
     (char_set, state_set, char_map) =>
-    CharSet.S.fold(
+    CharSet.fold(
       (char, char_map) => {
         let entry =
-          switch (CharMapStateSet.M.find(char, char_map)) {
-          | exception Not_found => StateSet.S.empty
+          switch (CharMapStateSet.find(char, char_map)) {
+          | exception Not_found => StateSet.empty
           | state_set => state_set
           };
-        CharMapStateSet.M.add(char, StateSet.S.union(state_set, entry), char_map);
+        CharMapStateSet.add(char, StateSet.union(state_set, entry), char_map);
       },
       char_set,
       char_map
     ),
     char_map,
-    CharMapStateSet.M.empty,
+    CharMapStateSet.empty,
   );
 
 let compile: regex('c) => t = (r) => {
@@ -156,7 +154,7 @@ let compile: regex('c) => t = (r) => {
        (+ the start state if r accepts the empty string) */
   let finals =
     if (nullable) {
-      StateSet.S.add(start, positions(lasts));
+      StateSet.add(start, positions(lasts));
     } else {
       positions(lasts);
     };
@@ -168,12 +166,12 @@ let compile: regex('c) => t = (r) => {
   /*** ... and from the start state to the initial character sets. */
   let initial_transitions = transition_map_of_letter_set(firsts);
   let joint_transitions =
-    StateMapCharSetMapStateSet.M.add(start, initial_transitions, factor_transitions);
+    StateMapCharSetMapStateSet.add(start, initial_transitions, factor_transitions);
 
   /*** The 'next' function is built from the transition sets. */
   let next = (state) =>
-    try (flatten_transitions(StateMapCharSetMapStateSet.M.find(state, joint_transitions))) {
-    | Not_found => CharMapStateSet.M.empty
+    try (flatten_transitions(StateMapCharSetMapStateSet.find(state, joint_transitions))) {
+    | Not_found => CharMapStateSet.empty
     };
 
   {
@@ -199,9 +197,9 @@ let test = () => {
   assert(CharMapStateSet.to_string(char_map) == "{a:{1},b:{2},c:{2}}");
   let char_map = glushkov.nfa.next(Int32.of_int(2));
   assert(CharMapStateSet.to_string(char_map) == "{d:{3}}");
-  assert(glushkov.annotated == "a<sub>1</sub> {b c}<sub>2</sub> d<sub>3</sub> e<sub>4</sub> ");
+  assert(glushkov.annotated == "(a<sub>1</sub>|[bc]<sub>2</sub>d<sub>3</sub>e<sub>4</sub>)");
   assert(glushkov.nullable == false);
-  assert(glushkov.firsts == "a<sub>1</sub> {b c}<sub>2</sub>");
+  assert(glushkov.firsts == "a<sub>1</sub> [bc]<sub>2</sub>");
   assert(glushkov.lasts == "a<sub>1</sub> e<sub>4</sub>");
-  assert(glushkov.factors == "{b c}<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>");
+  assert(glushkov.factors == "[bc]<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>");
 };

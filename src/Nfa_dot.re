@@ -21,7 +21,7 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t = (nfa) => {
       incr(counter);
       let node = Digraph.Node.make(~id=name);
       let shape =
-        if (StateSet.S.mem(n, nfa.Nfa.finals)) {
+        if (StateSet.mem(n, nfa.Nfa.finals)) {
           "doublecircle";
         } else {
           "circle";
@@ -34,8 +34,8 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t = (nfa) => {
     Hashtbl.replace(edges, (source, target)) @@
     (
       switch (Hashtbl.find(edges, (source, target))) {
-      | exception Not_found => CharSet.S.singleton(c)
-      | set => CharSet.S.add(c, set)
+      | exception Not_found => CharSet.singleton(c)
+      | set => CharSet.add(c, set)
       }
     );
 
@@ -44,9 +44,9 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t = (nfa) => {
         'seen lists' to ensure each node and edge is only visited once */
     if (!Hashtbl.mem(states, state)) {
       Hashtbl.add(states, state, make_node(state));
-      CharMapStateSet.M.iter(
+      CharMapStateSet.iter(
         (c, targets) =>
-          StateSet.S.iter(
+          StateSet.iter(
             target => {
               add_edge(state, c, target);
               step(target);
@@ -107,7 +107,7 @@ let test = () => {
   node [ "shape" = "circle";] "1"
   "" -> "0" 
   "0" -> "1" [ "label" = "a";]
-  "1" -> "2" [ "label" = "{b c}";]
+  "1" -> "2" [ "label" = "[bc]";]
   "2" -> "3" [ "label" = "d";]
 }
 |});

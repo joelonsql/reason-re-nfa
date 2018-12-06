@@ -7,11 +7,11 @@ import * as CharMapStateSet$ReasonReNfa from "./CharMapStateSet.bs.js";
 
 function find_states(sym, nfa, m) {
   try {
-    return Curry._2(CharMapStateSet$ReasonReNfa.M[/* find */21], sym, Curry._1(nfa[/* next */2], m));
+    return Curry._2(CharMapStateSet$ReasonReNfa.find, sym, Curry._1(nfa[/* next */2], m));
   }
   catch (exn){
     if (exn === Caml_builtin_exceptions.not_found) {
-      return StateSet$ReasonReNfa.S[/* empty */0];
+      return StateSet$ReasonReNfa.empty;
     } else {
       throw exn;
     }
@@ -19,9 +19,9 @@ function find_states(sym, nfa, m) {
 }
 
 function flat_map(f, ss) {
-  return Curry._3(StateSet$ReasonReNfa.S[/* fold */13], (function (s) {
-                return Curry._1(StateSet$ReasonReNfa.S[/* union */6], Curry._1(f, s));
-              }), ss, StateSet$ReasonReNfa.S[/* empty */0]);
+  return Curry._3(StateSet$ReasonReNfa.fold, (function (s) {
+                return Curry._1(StateSet$ReasonReNfa.union, Curry._1(f, s));
+              }), ss, StateSet$ReasonReNfa.empty);
 }
 
 function nextss(curs, sym, nfa) {
@@ -31,7 +31,7 @@ function nextss(curs, sym, nfa) {
 }
 
 function accept(nfa, inp) {
-  var _cur = Curry._1(StateSet$ReasonReNfa.S[/* singleton */4], nfa[/* start */0]);
+  var _cur = Curry._1(StateSet$ReasonReNfa.singleton, nfa[/* start */0]);
   var _param = inp;
   while(true) {
     var param = _param;
@@ -41,7 +41,7 @@ function accept(nfa, inp) {
       _cur = nextss(cur, param[0], nfa);
       continue ;
     } else {
-      return !Curry._1(StateSet$ReasonReNfa.S[/* is_empty */1], Curry._2(StateSet$ReasonReNfa.S[/* inter */7], cur, nfa[/* finals */1]));
+      return !Curry._1(StateSet$ReasonReNfa.is_empty, Curry._2(StateSet$ReasonReNfa.inter, cur, nfa[/* finals */1]));
     }
   };
 }

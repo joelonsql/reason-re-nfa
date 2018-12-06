@@ -8,23 +8,27 @@ import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
 import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
-var M = $$Map.Make([Char.compare]);
+var include = $$Map.Make([Char.compare]);
+
+var singleton = include[4];
+
+var bindings = include[16];
 
 function to_string(char_map_state_set) {
   return "{" + ($$String.concat(",", List.map((function (param) {
                       return $$String.make(1, param[0]) + (":" + StateSet$ReasonReNfa.to_string(param[1]));
-                    }), Curry._1(M[/* bindings */16], char_map_state_set))) + "}");
+                    }), Curry._1(bindings, char_map_state_set))) + "}");
 }
 
 function example($$char, state_list) {
-  return Curry._2(M[/* singleton */4], $$char, StateSet$ReasonReNfa.example(state_list));
+  return Curry._2(singleton, $$char, StateSet$ReasonReNfa.example(state_list));
 }
 
 function test(param) {
-  if (to_string(example(/* "a" */97, /* :: */[
-              0,
-              /* [] */0
-            ])) === "{a:{0}}") {
+  if (to_string(Curry._2(singleton, /* "a" */97, StateSet$ReasonReNfa.example(/* :: */[
+                  0,
+                  /* [] */0
+                ]))) === "{a:{0}}") {
     return 0;
   } else {
     throw [
@@ -38,11 +42,78 @@ function test(param) {
   }
 }
 
+var empty = include[0];
+
+var is_empty = include[1];
+
+var mem = include[2];
+
+var add = include[3];
+
+var remove = include[5];
+
+var merge = include[6];
+
+var compare = include[7];
+
+var equal = include[8];
+
+var iter = include[9];
+
+var fold = include[10];
+
+var for_all = include[11];
+
+var exists = include[12];
+
+var filter = include[13];
+
+var partition = include[14];
+
+var cardinal = include[15];
+
+var min_binding = include[17];
+
+var max_binding = include[18];
+
+var choose = include[19];
+
+var split = include[20];
+
+var find = include[21];
+
+var map = include[22];
+
+var mapi = include[23];
+
 export {
-  M ,
+  empty ,
+  is_empty ,
+  mem ,
+  add ,
+  singleton ,
+  remove ,
+  merge ,
+  compare ,
+  equal ,
+  iter ,
+  fold ,
+  for_all ,
+  exists ,
+  filter ,
+  partition ,
+  cardinal ,
+  bindings ,
+  min_binding ,
+  max_binding ,
+  choose ,
+  split ,
+  find ,
+  map ,
+  mapi ,
   to_string ,
   example ,
   test ,
   
 }
-/* M Not a pure module */
+/* include Not a pure module */

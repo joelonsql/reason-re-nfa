@@ -7,31 +7,37 @@ import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
-var S = $$Set.Make([Char.compare]);
+var include = $$Set.Make([Char.compare]);
+
+var cardinal = include[18];
+
+var elements = include[19];
+
+var choose = include[22];
+
+var of_list = include[25];
 
 function to_string(char_set) {
-  var match = Curry._1(S[/* cardinal */18], char_set);
+  var match = Curry._1(cardinal, char_set);
   if (match === 0 || match === 1) {
     if (match !== 0) {
-      return $$String.make(1, Curry._1(S[/* choose */22], char_set));
+      return $$String.make(1, Curry._1(choose, char_set));
     } else {
       return "\xce\xb5";
     }
   } else if (match !== 256) {
     return "[" + ($$String.concat("", List.map((function (param) {
                         return $$String.make(1, param);
-                      }), Curry._1(S[/* elements */19], char_set))) + "]");
+                      }), Curry._1(elements, char_set))) + "]");
   } else {
     return ".";
   }
 }
 
-function example(char_list) {
-  return Curry._1(S[/* of_list */25], char_list);
-}
+var example = Curry.__1(of_list);
 
 function test(param) {
-  if (to_string(Curry._1(S[/* of_list */25], /* [] */0)) !== "\xce\xb5") {
+  if (to_string(Curry._1(of_list, /* [] */0)) !== "\xce\xb5") {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
@@ -41,7 +47,7 @@ function test(param) {
           ]
         ];
   }
-  if (to_string(Curry._1(S[/* of_list */25], /* :: */[
+  if (to_string(Curry._1(of_list, /* :: */[
               /* "a" */97,
               /* [] */0
             ])) !== "a") {
@@ -54,7 +60,7 @@ function test(param) {
           ]
         ];
   }
-  if (to_string(Curry._1(S[/* of_list */25], /* :: */[
+  if (to_string(Curry._1(of_list, /* :: */[
               /* "b" */98,
               /* :: */[
                 /* "a" */97,
@@ -63,7 +69,7 @@ function test(param) {
                   /* [] */0
                 ]
               ]
-            ])) === "{a b c}") {
+            ])) === "[abc]") {
     return 0;
   } else {
     throw [
@@ -77,11 +83,80 @@ function test(param) {
   }
 }
 
+var empty = include[0];
+
+var is_empty = include[1];
+
+var mem = include[2];
+
+var add = include[3];
+
+var singleton = include[4];
+
+var remove = include[5];
+
+var union = include[6];
+
+var inter = include[7];
+
+var diff = include[8];
+
+var compare = include[9];
+
+var equal = include[10];
+
+var subset = include[11];
+
+var iter = include[12];
+
+var fold = include[13];
+
+var for_all = include[14];
+
+var exists = include[15];
+
+var filter = include[16];
+
+var partition = include[17];
+
+var min_elt = include[20];
+
+var max_elt = include[21];
+
+var split = include[23];
+
+var find = include[24];
+
 export {
-  S ,
+  empty ,
+  is_empty ,
+  mem ,
+  add ,
+  singleton ,
+  remove ,
+  union ,
+  inter ,
+  diff ,
+  compare ,
+  equal ,
+  subset ,
+  iter ,
+  fold ,
+  for_all ,
+  exists ,
+  filter ,
+  partition ,
+  cardinal ,
+  elements ,
+  min_elt ,
+  max_elt ,
+  choose ,
+  split ,
+  find ,
+  of_list ,
   to_string ,
   example ,
   test ,
   
 }
-/* S Not a pure module */
+/* include Not a pure module */

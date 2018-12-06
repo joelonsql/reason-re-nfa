@@ -1,9 +1,9 @@
-module M = Map.Make(Int32);
+include Map.Make(Int32);
 
 let to_string = (state_map) =>
   "{" ++ String.concat(
     ",",
-    List.rev(M.fold(
+    List.rev(fold(
       fun (state,char_set,l) => [Int32.to_string(state) ++ ":" ++ CharSetMapStateSet.to_string(char_set), ...l],
       state_map,
       []
@@ -11,7 +11,7 @@ let to_string = (state_map) =>
   ) ++ "}";
 
 let example = (state, char_list, state_list) =>
-  M.singleton(
+  singleton(
     Int32.of_int(state),
     CharSetMapStateSet.example(char_list, state_list)
   );
@@ -22,17 +22,17 @@ let test = () => {
 };
 
 let to_matrix = (state_map) => {
-  module CharSetSet = Set.Make(CharSet.S);
+  module CharSetSet = Set.Make(CharSet);
   let char_sets =
     Array.of_list(
       CharSetSet.elements(
-        M.fold(
+        fold(
           fun (_, char_set_map, char_set_set) =>
             CharSetSet.union(
               CharSetSet.of_list(
                 List.map(
                   fun ((char_set, _)) => char_set,
-                  CharSetMapStateSet.M.bindings(char_set_map)
+                  CharSetMapStateSet.bindings(char_set_map)
                 )
               ),
               char_set_set
@@ -47,7 +47,7 @@ let to_matrix = (state_map) => {
     Array.of_list(
       List.map(
         fun ((state,_)) => state,
-        M.bindings(state_map)
+        bindings(state_map)
       )
     );
 
@@ -61,7 +61,7 @@ let to_matrix = (state_map) => {
         matrix[0][y] = CharSet.to_string(char_sets[y-1]);
       }
       matrix[x][y] =
-        switch (CharSetMapStateSet.M.find(char_sets[y-1], M.find(states[x-1], state_map))) {
+        switch (CharSetMapStateSet.find(char_sets[y-1], find(states[x-1], state_map))) {
         | exception Not_found => ""
         | state_set => StateSet.to_string(state_set)
         };

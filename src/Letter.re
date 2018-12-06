@@ -1,6 +1,6 @@
 /** A 'letter' is a character set paired with an identifier that
     uniquely identifies the character set within the regex */
-type t = (CharSet.S.t, Nfa.state);
+type t = (CharSet.t, Nfa.state);
 
 let compare = ((_, x), (_, y)) =>
   Pervasives.compare(x, y);
