@@ -224,7 +224,7 @@ function compile(r) {
   };
   return /* record */[
           /* nfa : record */[
-            /* start */Int32.zero,
+            /* start */Curry._1(StateSet$ReasonReNfa.singleton, Int32.zero),
             /* finals */finals,
             /* next */next
           ],

@@ -31,7 +31,7 @@ function nextss(curs, sym, nfa) {
 }
 
 function accept(nfa, inp) {
-  var _cur = Curry._1(StateSet$ReasonReNfa.singleton, nfa[/* start */0]);
+  var _cur = nfa[/* start */0];
   var _param = inp;
   while(true) {
     var param = _param;

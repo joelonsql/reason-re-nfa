@@ -57,7 +57,7 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t = (nfa) => {
       );
     };
 
-  step(nfa.start);
+  StateSet.iter(step, nfa.start);
   /*** Empty node to the left of the start state */
   let input =
     Digraph.Node.with_attrs(
@@ -78,9 +78,13 @@ let digraph_of_nfa: Nfa.nfa => Digraph.t = (nfa) => {
       dg,
     );
 
-  /*** Add the initial edge */
+  /*** Add the initial edges */
   let dg =
-    Digraph.with_edge(dg, (input, Hashtbl.find(states, nfa.start)));
+    StateSet.fold(
+      (s, dg) => Digraph.with_edge(dg, (input, Hashtbl.find(states, s))),
+      nfa.start,
+      dg
+    );
   /*** Add the other edges */
   Hashtbl.fold(
     ((source, target), s, dg) =>

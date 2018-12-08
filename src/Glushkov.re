@@ -176,7 +176,7 @@ let compile: regex('c) => t = (r) => {
 
   {
     nfa: {
-      start,
+      start: StateSet.singleton(start),
       finals,
       next,
     },

@@ -3,8 +3,8 @@ type state = int32;
 type transitions = CharMapStateSet.t(StateSet.t);
 
 type nfa = {
-  /** the start state */
-  start: state,
+  /** the start states */
+  start: StateSet.t,
   /** the final (or "accept") states */
   finals: StateSet.t,
   /** the transition function, that maps a state and a character to a
@@ -33,5 +33,5 @@ let accept = (nfa, inp) => {
     fun
     | [] => StateSet.(!is_empty(inter(cur, nfa.finals)))
     | [c, ...cs] => step(nextss(cur, c, nfa), cs);
-  step(StateSet.singleton(nfa.start), inp);
+  step(nfa.start, inp);
 };

@@ -68,7 +68,7 @@ function digraph_of_nfa(nfa) {
                   }), Curry._1(nfa[/* next */2], state));
     }
   };
-  step(nfa[/* start */0]);
+  Curry._2(StateSet$ReasonReNfa.iter, step, nfa[/* start */0]);
   var input = Digraph$ReasonReNfa.Node[/* with_attrs */1](Digraph$ReasonReNfa.Node[/* make */0](""), /* :: */[
         /* tuple */[
           "shape",
@@ -92,10 +92,12 @@ function digraph_of_nfa(nfa) {
   var dg$1 = Hashtbl.fold((function (param, node, dg) {
           return Digraph$ReasonReNfa.with_node(dg, node);
         }), states, dg);
-  var dg$2 = Digraph$ReasonReNfa.with_edge(dg$1, undefined, /* tuple */[
-        input,
-        Hashtbl.find(states, nfa[/* start */0])
-      ]);
+  var dg$2 = Curry._3(StateSet$ReasonReNfa.fold, (function (s, dg) {
+          return Digraph$ReasonReNfa.with_edge(dg, undefined, /* tuple */[
+                      input,
+                      Hashtbl.find(states, s)
+                    ]);
+        }), nfa[/* start */0], dg$1);
   return Hashtbl.fold((function (param, s, dg) {
                 return Digraph$ReasonReNfa.with_edge(dg, /* :: */[
                             /* tuple */[
@@ -127,7 +129,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Nfa_dot.re",
-            101,
+            105,
             2
           ]
         ];
