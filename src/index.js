@@ -18,19 +18,21 @@ function(event){
   let visualize = function(event) {
     let regexinput = document.getElementById("regexp-input").value;
     if (regexinput.length == 0) {
-      document.getElementById("graph").innerHTML = "";
-      document.getElementById("parseTree").innerHTML = "";
       document.getElementById("annotated").innerHTML = "";
       document.getElementById("nullability").innerHTML = "";
       document.getElementById("firsts").innerHTML = "";
       document.getElementById("lasts").innerHTML = "";
       document.getElementById("letterpairs").innerHTML = "";
+      document.getElementById("parseTree").innerHTML = "";
       document.getElementById("transitions").innerHTML = "";
+      document.getElementById("nfa").innerHTML = "";
+      document.getElementById("dfa").innerHTML = "";
+      document.getElementById("dfaMinimized").innerHTML = "";
       return;
     }
     let re = ReasonRegex.analyze(regexinput);
     try {
-      d3.select("#graph").graphviz().renderDot(re[0]);
+      d3.select("#nfa").graphviz().renderDot(re[0]);
       document.getElementById("regexp-input").style.backgroundColor = "";
       document.getElementById("nullability").innerHTML = re[2] ? "true" : "false";
       document.getElementById("firsts").innerHTML = re[3];
@@ -38,6 +40,8 @@ function(event){
       document.getElementById("letterpairs").innerHTML = re[5];
       document.getElementById("annotated").innerHTML = re[6];
       document.getElementById("transitions").innerHTML = matrix_to_table(re[7]);
+      d3.select("#dfa").graphviz().renderDot(re[8]);
+      d3.select("#dfaMinimized").graphviz().renderDot(re[9]);
       function createTreantNodeStructure(parseTree) {
         let node = {
           text: { name: parseTree[0] }

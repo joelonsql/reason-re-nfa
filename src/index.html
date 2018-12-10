@@ -22,14 +22,16 @@
         </script>
     </head>
     <body>
-        <h2><a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm</a></h2>
-        <div>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</div>
-        <div>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div>
+        <a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm</a><br/>
+        <a href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm</a><br/>
+        <div>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</div><br/>
+        <div>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div><br/>
+        <br/>
         <div id="regexp-to-nfa">
-            <h3>Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a></h3>
+            Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a> to <a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">DFA</a> to <a href="https://en.wikipedia.org/wiki/DFA_minimization">minimal DFA</a>
             <form id="regexp-to-nfa-form" autocomplete="off">
                 <table class="variables">
-                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input" value="ab?c*(d|e)(fg|hi)"/>              </td></tr>
+                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input" value="a*(b|bc)"/>              </td></tr>
                     <tr><td>r'   </td><td>annotated(r)                   </td><td><span id="annotated"/>  </td></tr>
                     <tr><td>Λ(r')</td><td>{ε} ∩ L(r')                    </td><td><span id="nullability"/></td></tr>
                     <tr><td>P(r')</td><td>{c | ∃s.cs ∈ L(r') }           </td><td><span id="firsts"/>     </td></tr>
@@ -38,14 +40,10 @@
                 </table>
             </form>
         </div>
-        <div>
-            <table>
-                <tr>
-                    <td><div class="chart" id="parseTree"></div></td>
-                    <td><span id="transitions"/></td>
-                    <td><div id="graph" style="text-align: center;"></div></td>
-                </tr>
-            </table>
-        </div>
+        <div class="chart" id="parseTree"></div>
+        <div><span id="transitions"/></div>
+        <div id="nfa" style="text-align: center;"></div>
+        <div id="dfa" style="text-align: center;"></div>
+        <div id="dfaMinimized" style="text-align: center;"></div>
     </body>
 </html>

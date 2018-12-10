@@ -9,6 +9,8 @@ let analyze = (regexp) => {
     compiled.lasts,
     compiled.factors,
     compiled.annotated,
-    compiled.transitions
+    compiled.transitions,
+    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(Dfa.inject(Dfa.determinize(compiled.nfa)))),
+    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(Dfa.inject(Dfa.minimize(Dfa.determinize(compiled.nfa)))))
   );
 };

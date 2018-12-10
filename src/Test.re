@@ -11,4 +11,5 @@ let test = () => {
   Glushkov.test();
   Nfa_dot.test();
   print_endline("OK!");
+  print_endline(Sys.ocaml_version);
 };
