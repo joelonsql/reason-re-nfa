@@ -15,6 +15,9 @@ function matrix_to_table(matrix) {
 
 document.addEventListener('DOMContentLoaded',
 function(event){
+  let graphviz = function(id,dot) {
+    d3.select(id).graphviz().zoom(false).renderDot(dot);
+  };
   let visualize = function(event) {
     let regexinput = document.getElementById("regexp-input").value;
     if (regexinput.length == 0) {
@@ -32,7 +35,7 @@ function(event){
     }
     let re = ReasonRegex.analyze(regexinput);
     try {
-      d3.select("#nfa").graphviz().renderDot(re[0]);
+      graphviz("#nfa",re[0]);
       document.getElementById("regexp-input").style.backgroundColor = "";
       document.getElementById("nullability").innerHTML = re[2] ? "true" : "false";
       document.getElementById("firsts").innerHTML = re[3];
@@ -40,8 +43,11 @@ function(event){
       document.getElementById("letterpairs").innerHTML = re[5];
       document.getElementById("annotated").innerHTML = re[6];
       document.getElementById("transitions").innerHTML = matrix_to_table(re[7]);
-      d3.select("#dfa").graphviz().renderDot(re[8]);
-      d3.select("#dfaMinimized").graphviz().renderDot(re[9]);
+      graphviz("#dfa",re[8]);
+      graphviz("#reversed",re[9]);
+      graphviz("#dfa2",re[10]);
+      graphviz("#reversed2",re[11]);
+      graphviz("#dfaMinimized",re[12]);
       function createTreantNodeStructure(parseTree) {
         let node = {
           text: { name: parseTree[0] }

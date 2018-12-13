@@ -22,10 +22,8 @@
         </script>
     </head>
     <body>
-        <a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm</a><br/>
-        <a href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm</a><br/>
-        <div>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</div><br/>
-        <div>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div><br/>
+        <div>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</div>
+        <div>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div>
         <br/>
         <div id="regexp-to-nfa">
             Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a> to <a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">DFA</a> to <a href="https://en.wikipedia.org/wiki/DFA_minimization">minimal DFA</a>
@@ -40,10 +38,24 @@
                 </table>
             </form>
         </div>
-        <div class="chart" id="parseTree"></div>
+        <div><a href="https://en.wikipedia.org/wiki/Parse_tree">Parse tree:</a></div>
+        <div class="chart" id="parseTree" style="float: left;"></div>
+        <div style="clear: both;"><a href="https://en.wikipedia.org/wiki/State_transition_table">State transition table:</a></div>
         <div><span id="transitions"/></div>
-        <div id="nfa" style="text-align: center;"></div>
-        <div id="dfa" style="text-align: center;"></div>
-        <div id="dfaMinimized" style="text-align: center;"></div>
+        <div><a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm (Regex to NFA)</a></div>
+        <div><a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">Nondeterministic finite automaton (NFA):</a></div>
+        <div id="nfa"></div>
+        <div><a href="https://en.wikipedia.org/wiki/Powerset_construction">Rabin–Scott powerset construction (NFA to DFA)</a></div>
+        <div><a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">Deterministic finite automaton (DFA):</a></div>
+        <div id="dfa"></div>
+        <div><a href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm (DFA minimization):</a></div>
+        <div>1. reverse(DFA):</div>
+        <div id="reversed"></div>
+        <div>2. reverse(DFA) -> determinize:</div>
+        <div id="dfa2"></div>
+        <div>3. reverse(DFA) -> determinize -> reverse:</div>
+        <div id="reversed2"></div>
+        <div>4. reverse(DFA) -> determinize -> reverse -> determinize:</div>
+        <div id="dfaMinimized"></div>
     </body>
 </html>

@@ -1,4 +1,4 @@
-.chart { margin: 5px; margin: 5px auto; }
+.chart { margin: 5px auto; }
 .node { border: 1px solid; }
 .node p { font-size: 20px; line-height: 20px; height: 20px; padding: 3px; margin: 0; }
 table.variables td {font-family: 'Courier New', Courier, monospace; padding: 3px}
@@ -7,4 +7,4 @@ a:link{color:inherit}
 a:active{color:inherit}
 a:visited{color:inherit}
 a:hover{color:inherit}
-div {float: left;}
+div { margin: 5px; }

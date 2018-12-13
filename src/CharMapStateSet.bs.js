@@ -5,6 +5,7 @@ import * as Char from "../node_modules/bs-platform/lib/es6/char.js";
 import * as List from "../node_modules/bs-platform/lib/es6/list.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as $$String from "../node_modules/bs-platform/lib/es6/string.js";
+import * as Caml_option from "../node_modules/bs-platform/lib/es6/caml_option.js";
 import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 
@@ -12,7 +13,26 @@ var include = $$Map.Make([Char.compare]);
 
 var singleton = include[4];
 
+var merge = include[6];
+
 var bindings = include[16];
+
+function union(f) {
+  return Curry._1(merge, (function (k, x, y) {
+                if (x !== undefined) {
+                  var v = Caml_option.valFromOption(x);
+                  if (y !== undefined) {
+                    return Curry._3(f, k, v, Caml_option.valFromOption(y));
+                  } else {
+                    return Caml_option.some(v);
+                  }
+                } else if (y !== undefined) {
+                  return Caml_option.some(Caml_option.valFromOption(y));
+                } else {
+                  return undefined;
+                }
+              }));
+}
 
 function to_string(char_map_state_set) {
   return "{" + ($$String.concat(",", List.map((function (param) {
@@ -35,7 +55,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "CharMapStateSet.re",
-            15,
+            27,
             17
           ]
         ];
@@ -51,8 +71,6 @@ var mem = include[2];
 var add = include[3];
 
 var remove = include[5];
-
-var merge = include[6];
 
 var compare = include[7];
 
@@ -111,6 +129,7 @@ export {
   find ,
   map ,
   mapi ,
+  union ,
   to_string ,
   example ,
   test ,

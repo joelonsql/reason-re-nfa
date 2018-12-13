@@ -22,7 +22,6 @@ let test = () => {
 };
 
 let to_matrix = (state_map) => {
-  module CharSetSet = Set.Make(CharSet);
   let char_sets =
     Array.of_list(
       CharSetSet.elements(
