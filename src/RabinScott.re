@@ -34,7 +34,7 @@ let determinize: Nfa.nfa => Dfa.dfa = {
           };
         let map = StateSetMapState.add(states, state, map);
         let (map, ts, finals) =
-          CharMapStateSet.fold(
+          CharMapState.fold(
             (c, ss, (map, ts, finals)) => {
               let (dst, map, ts, finals) = build(ss, (map, ts, finals));
               let ts = Dfa.add_transition((state, c, dst), ts);
@@ -48,11 +48,11 @@ let determinize: Nfa.nfa => Dfa.dfa = {
       };
 
     let (start, _, trans, finals) =
-      build(nfa.Nfa.start, (StateSetMapState.empty, StateMapCharMapStateSet.empty, StateSet.empty));
+      build(nfa.Nfa.start, (StateSetMapState.empty, StateMapCharMapState.empty, StateSet.empty));
 
     let next = s =>
-      try (StateMapCharMapStateSet.find(s, trans)) {
-      | Not_found => CharMapStateSet.empty
+      try (StateMapCharMapState.find(s, trans)) {
+      | Not_found => CharMapState.empty
       };
     {start, finals, next};
   };

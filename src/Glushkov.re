@@ -189,9 +189,20 @@ let compile: regex('c) => t = (r) => {
   };
 };
 
+let explode = s => {
+  let rec exp = (i, l) =>
+    if (i < 0) {
+      l;
+    } else {
+      exp(i - 1, [s.[i], ...l]);
+    };
+  exp(String.length(s) - 1, []);
+};
+
 let test = () => {
   let r = RegexParser.parse("a|(b|c)de");
   let glushkov = compile(r);
+  assert(Nfa.accept(glushkov.nfa, explode("bde")));
   assert(StateSet.to_string(glushkov.nfa.finals) == "{1 4}");
   let char_map = glushkov.nfa.next(Int32.zero);
   assert(CharMapStateSet.to_string(char_map) == "{a:{1},b:{2},c:{2}}");

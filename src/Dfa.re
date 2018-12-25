@@ -9,7 +9,7 @@ type dfa = {
   finals: StateSet.t,
   /** the transition function, that maps a state and a character to the
       next state */
-  next: state => CharMapStateSet.t(state),
+  next: state => CharMapState.t(state),
 };
 
 let fold_states: 'a. ((state, 'a) => 'a, dfa, 'a) => 'a =
@@ -38,25 +38,10 @@ let fold_transitions: 'a. (((state, char, state), 'a) => 'a, dfa, 'a) => 'a =
 /** Add src--c-->dst to the transition set, replacing any existing src--c-->dst' */
 
 let add_transition = ((src, c, dst), trans) =>
-  switch (StateMapCharMapStateSet.find(src, trans)) {
+  switch (StateMapCharMapState.find(src, trans)) {
   | exception Not_found =>
-    StateMapCharMapStateSet.add(src, CharMapStateSet.singleton(c, dst), trans)
-  | cm => StateMapCharMapStateSet.add(src, CharMapStateSet.add(c, dst, cm), trans)
-  };
-
-/** Add src--c-->dst to the transition set, augmenting any existing src--c-->dst' */
-
-let add_transition' = ((src, c, dst), trans) =>
-  switch (StateMapCharMapStateSet.find(src, trans)) {
-  | exception Not_found =>
-    StateMapCharMapStateSet.add(src, CharMapStateSet.singleton(c, StateSet.singleton(dst)), trans)
-  | cm =>
-    let dstset =
-      switch (CharMapStateSet.find(c, cm)) {
-      | exception Not_found => StateSet.singleton(dst)
-      | dstset => StateSet.add(dst, dstset)
-      };
-    StateMapCharMapStateSet.add(src, CharMapStateSet.add(c, dstset, cm), trans);
+    StateMapCharMapState.add(src, CharMapState.singleton(c, dst), trans)
+  | cm => StateMapCharMapState.add(src, CharMapState.add(c, dst, cm), trans)
   };
 
 /** A simple DFA interpreter. */
@@ -66,7 +51,7 @@ let accept = (dfa, inp) => {
     fun
     | [] => StateSet.mem(cur, dfa.finals)
     | [c, ...cs] =>
-      switch (CharMapStateSet.find(c, dfa.next(cur))) {
+      switch (CharMapState.find(c, dfa.next(cur))) {
       | exception Not_found => false
       | s => step(s, cs)
       };

@@ -4,8 +4,9 @@ import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Hashtbl from "../node_modules/bs-platform/lib/es6/hashtbl.js";
 import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
+import * as CharMapState$ReasonReNfa from "./CharMapState.bs.js";
 import * as CharMapStateSet$ReasonReNfa from "./CharMapStateSet.bs.js";
-import * as StateMapCharMapStateSet$ReasonReNfa from "./StateMapCharMapStateSet.bs.js";
+import * as StateMapCharMapState$ReasonReNfa from "./StateMapCharMapState.bs.js";
 
 function fold_states(f, dfa, init) {
   var v = /* record */[/* contents */init];
@@ -44,58 +45,18 @@ function add_transition(param, trans) {
   var exit = 0;
   var cm;
   try {
-    cm = Curry._2(StateMapCharMapStateSet$ReasonReNfa.find, src, trans);
+    cm = Curry._2(StateMapCharMapState$ReasonReNfa.find, src, trans);
     exit = 1;
   }
   catch (exn){
     if (exn === Caml_builtin_exceptions.not_found) {
-      return Curry._3(StateMapCharMapStateSet$ReasonReNfa.add, src, Curry._2(CharMapStateSet$ReasonReNfa.singleton, c, dst), trans);
+      return Curry._3(StateMapCharMapState$ReasonReNfa.add, src, Curry._2(CharMapState$ReasonReNfa.singleton, c, dst), trans);
     } else {
       throw exn;
     }
   }
   if (exit === 1) {
-    return Curry._3(StateMapCharMapStateSet$ReasonReNfa.add, src, Curry._3(CharMapStateSet$ReasonReNfa.add, c, dst, cm), trans);
-  }
-  
-}
-
-function add_transition$prime(param, trans) {
-  var dst = param[2];
-  var c = param[1];
-  var src = param[0];
-  var exit = 0;
-  var cm;
-  try {
-    cm = Curry._2(StateMapCharMapStateSet$ReasonReNfa.find, src, trans);
-    exit = 1;
-  }
-  catch (exn){
-    if (exn === Caml_builtin_exceptions.not_found) {
-      return Curry._3(StateMapCharMapStateSet$ReasonReNfa.add, src, Curry._2(CharMapStateSet$ReasonReNfa.singleton, c, Curry._1(StateSet$ReasonReNfa.singleton, dst)), trans);
-    } else {
-      throw exn;
-    }
-  }
-  if (exit === 1) {
-    var dstset;
-    var exit$1 = 0;
-    var dstset$1;
-    try {
-      dstset$1 = Curry._2(CharMapStateSet$ReasonReNfa.find, c, cm);
-      exit$1 = 2;
-    }
-    catch (exn$1){
-      if (exn$1 === Caml_builtin_exceptions.not_found) {
-        dstset = Curry._1(StateSet$ReasonReNfa.singleton, dst);
-      } else {
-        throw exn$1;
-      }
-    }
-    if (exit$1 === 2) {
-      dstset = Curry._2(StateSet$ReasonReNfa.add, dst, dstset$1);
-    }
-    return Curry._3(StateMapCharMapStateSet$ReasonReNfa.add, src, Curry._3(CharMapStateSet$ReasonReNfa.add, c, dstset, cm), trans);
+    return Curry._3(StateMapCharMapState$ReasonReNfa.add, src, Curry._3(CharMapState$ReasonReNfa.add, c, dst, cm), trans);
   }
   
 }
@@ -110,7 +71,7 @@ function accept(dfa, inp) {
       var exit = 0;
       var s;
       try {
-        s = Curry._2(CharMapStateSet$ReasonReNfa.find, param[0], Curry._1(dfa[/* next */2], cur));
+        s = Curry._2(CharMapState$ReasonReNfa.find, param[0], Curry._1(dfa[/* next */2], cur));
         exit = 1;
       }
       catch (exn){
@@ -136,7 +97,6 @@ export {
   fold_states ,
   fold_transitions ,
   add_transition ,
-  add_transition$prime ,
   accept ,
   
 }

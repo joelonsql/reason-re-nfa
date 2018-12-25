@@ -8,6 +8,46 @@ import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/ca
 import * as CharMapStateSet$ReasonReNfa from "./CharMapStateSet.bs.js";
 import * as StateMapCharMapStateSet$ReasonReNfa from "./StateMapCharMapStateSet.bs.js";
 
+function add_transition$prime(param, trans) {
+  var dst = param[2];
+  var c = param[1];
+  var src = param[0];
+  var exit = 0;
+  var cm;
+  try {
+    cm = Curry._2(StateMapCharMapStateSet$ReasonReNfa.find, src, trans);
+    exit = 1;
+  }
+  catch (exn){
+    if (exn === Caml_builtin_exceptions.not_found) {
+      return Curry._3(StateMapCharMapStateSet$ReasonReNfa.add, src, Curry._2(CharMapStateSet$ReasonReNfa.singleton, c, Curry._1(StateSet$ReasonReNfa.singleton, dst)), trans);
+    } else {
+      throw exn;
+    }
+  }
+  if (exit === 1) {
+    var dstset;
+    var exit$1 = 0;
+    var dstset$1;
+    try {
+      dstset$1 = Curry._2(CharMapStateSet$ReasonReNfa.find, c, cm);
+      exit$1 = 2;
+    }
+    catch (exn$1){
+      if (exn$1 === Caml_builtin_exceptions.not_found) {
+        dstset = Curry._1(StateSet$ReasonReNfa.singleton, dst);
+      } else {
+        throw exn$1;
+      }
+    }
+    if (exit$1 === 2) {
+      dstset = Curry._2(StateSet$ReasonReNfa.add, dst, dstset$1);
+    }
+    return Curry._3(StateMapCharMapStateSet$ReasonReNfa.add, src, Curry._3(CharMapStateSet$ReasonReNfa.add, c, dstset, cm), trans);
+  }
+  
+}
+
 function reverse(dfa) {
   var map = Dfa$ReasonReNfa.fold_transitions((function (param) {
           var partial_arg_000 = param[2];
@@ -19,7 +59,7 @@ function reverse(dfa) {
             partial_arg_002
           ];
           return (function (param) {
-              return Dfa$ReasonReNfa.add_transition$prime(partial_arg, param);
+              return add_transition$prime(partial_arg, param);
             });
         }), dfa, StateMapCharMapStateSet$ReasonReNfa.empty);
   return /* record */[
@@ -56,6 +96,7 @@ function inject(param) {
 }
 
 export {
+  add_transition$prime ,
   reverse ,
   minimize ,
   inject ,

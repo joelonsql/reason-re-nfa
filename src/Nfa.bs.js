@@ -5,51 +5,39 @@ import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 import * as CharMapStateSet$ReasonReNfa from "./CharMapStateSet.bs.js";
 
-function find_states(sym, nfa, m) {
-  try {
-    return Curry._2(CharMapStateSet$ReasonReNfa.find, sym, Curry._1(nfa[/* next */2], m));
-  }
-  catch (exn){
-    if (exn === Caml_builtin_exceptions.not_found) {
-      return StateSet$ReasonReNfa.empty;
-    } else {
-      throw exn;
-    }
-  }
-}
-
-function flat_map(f, ss) {
-  return Curry._3(StateSet$ReasonReNfa.fold, (function (s) {
-                return Curry._1(StateSet$ReasonReNfa.union, Curry._1(f, s));
-              }), ss, StateSet$ReasonReNfa.empty);
-}
-
-function nextss(curs, sym, nfa) {
-  return flat_map((function (param) {
-                return find_states(sym, nfa, param);
-              }), curs);
-}
-
 function accept(nfa, inp) {
-  var _cur = nfa[/* start */0];
+  var _cur_states = nfa[/* start */0];
   var _param = inp;
   while(true) {
     var param = _param;
-    var cur = _cur;
+    var cur_states = _cur_states;
     if (param) {
+      var cur_char = param[0];
       _param = param[1];
-      _cur = nextss(cur, param[0], nfa);
+      _cur_states = Curry._3(StateSet$ReasonReNfa.fold, (function(cur_char){
+          return function (dst) {
+            var tmp;
+            try {
+              tmp = Curry._2(CharMapStateSet$ReasonReNfa.find, cur_char, Curry._1(nfa[/* next */2], dst));
+            }
+            catch (exn){
+              if (exn === Caml_builtin_exceptions.not_found) {
+                tmp = StateSet$ReasonReNfa.empty;
+              } else {
+                throw exn;
+              }
+            }
+            return Curry._1(StateSet$ReasonReNfa.union, tmp);
+          }
+          }(cur_char)), cur_states, StateSet$ReasonReNfa.empty);
       continue ;
     } else {
-      return !Curry._1(StateSet$ReasonReNfa.is_empty, Curry._2(StateSet$ReasonReNfa.inter, cur, nfa[/* finals */1]));
+      return !Curry._1(StateSet$ReasonReNfa.is_empty, Curry._2(StateSet$ReasonReNfa.inter, cur_states, nfa[/* finals */1]));
     }
   };
 }
 
 export {
-  find_states ,
-  flat_map ,
-  nextss ,
   accept ,
   
 }

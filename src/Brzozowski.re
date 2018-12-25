@@ -1,5 +1,20 @@
 /** Brzozowski's DFA minimization algorithm: */
 
+/** Add src--c-->dst to the transition set, augmenting any existing src--c-->dst' */
+
+let add_transition' = ((src, c, dst), trans) =>
+  switch (StateMapCharMapStateSet.find(src, trans)) {
+  | exception Not_found =>
+    StateMapCharMapStateSet.add(src, CharMapStateSet.singleton(c, StateSet.singleton(dst)), trans)
+  | cm =>
+    let dstset =
+      switch (CharMapStateSet.find(c, cm)) {
+      | exception Not_found => StateSet.singleton(dst)
+      | dstset => StateSet.add(dst, dstset)
+      };
+    StateMapCharMapStateSet.add(src, CharMapStateSet.add(c, dstset, cm), trans);
+  };
+
 /** Build an NFA by reversing a DFA, inverting transition arrows,
    turning finals states into start states, and the start state into
    the final state */
@@ -7,7 +22,7 @@
 let reverse = dfa => {
   let map =
     Dfa.fold_transitions(
-      ((s, c, t)) => Dfa.add_transition'((t, c, s)),
+      ((s, c, t)) => add_transition'((t, c, s)),
       dfa,
       StateMapCharMapStateSet.empty,
     );

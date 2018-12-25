@@ -3,6 +3,8 @@
 import * as List from "../node_modules/bs-platform/lib/es6/list.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Int32 from "../node_modules/bs-platform/lib/es6/int32.js";
+import * as Caml_string from "../node_modules/bs-platform/lib/es6/caml_string.js";
+import * as Nfa$ReasonReNfa from "./Nfa.bs.js";
 import * as CharSet$ReasonReNfa from "./CharSet.bs.js";
 import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as LetterSet$ReasonReNfa from "./LetterSet.bs.js";
@@ -237,15 +239,44 @@ function compile(r) {
         ];
 }
 
+function explode(s) {
+  var _i = s.length - 1 | 0;
+  var _l = /* [] */0;
+  while(true) {
+    var l = _l;
+    var i = _i;
+    if (i < 0) {
+      return l;
+    } else {
+      _l = /* :: */[
+        Caml_string.get(s, i),
+        l
+      ];
+      _i = i - 1 | 0;
+      continue ;
+    }
+  };
+}
+
 function test(param) {
   var r = RegexParser$ReasonReNfa.parse("a|(b|c)de");
   var glushkov = compile(r);
+  if (!Nfa$ReasonReNfa.accept(glushkov[/* nfa */0], explode("bde"))) {
+    throw [
+          Caml_builtin_exceptions.assert_failure,
+          /* tuple */[
+            "Glushkov.re",
+            205,
+            2
+          ]
+        ];
+  }
   if (StateSet$ReasonReNfa.to_string(glushkov[/* nfa */0][/* finals */1]) !== "{1 4}") {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            195,
+            206,
             2
           ]
         ];
@@ -256,7 +287,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            197,
+            208,
             2
           ]
         ];
@@ -267,7 +298,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            199,
+            210,
             2
           ]
         ];
@@ -277,7 +308,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            200,
+            211,
             2
           ]
         ];
@@ -287,7 +318,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            201,
+            212,
             2
           ]
         ];
@@ -297,7 +328,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            202,
+            213,
             2
           ]
         ];
@@ -307,7 +338,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            203,
+            214,
             2
           ]
         ];
@@ -319,7 +350,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            204,
+            215,
             2
           ]
         ];
@@ -336,7 +367,8 @@ export {
   transition_map_of_letter_set ,
   flatten_transitions ,
   compile ,
+  explode ,
   test ,
   
 }
-/* CharSet-ReasonReNfa Not a pure module */
+/* Nfa-ReasonReNfa Not a pure module */

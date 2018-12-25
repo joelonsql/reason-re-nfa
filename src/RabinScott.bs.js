@@ -6,9 +6,10 @@ import * as Caml_option from "../node_modules/bs-platform/lib/es6/caml_option.js
 import * as Dfa$ReasonReNfa from "./Dfa.bs.js";
 import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
+import * as CharMapState$ReasonReNfa from "./CharMapState.bs.js";
 import * as CharMapStateSet$ReasonReNfa from "./CharMapStateSet.bs.js";
 import * as StateSetMapState$ReasonReNfa from "./StateSetMapState.bs.js";
-import * as StateMapCharMapStateSet$ReasonReNfa from "./StateMapCharMapStateSet.bs.js";
+import * as StateMapCharMapState$ReasonReNfa from "./StateMapCharMapState.bs.js";
 
 function transitions(states, nfa) {
   return Curry._3(StateSet$ReasonReNfa.fold, (function (s, m) {
@@ -40,7 +41,7 @@ function determinize(nfa) {
         var state$1 = fresh(/* () */0);
         var finals$1 = Curry._1(StateSet$ReasonReNfa.is_empty, Curry._2(StateSet$ReasonReNfa.inter, states, nfa[/* finals */1])) ? finals : Curry._2(StateSet$ReasonReNfa.add, state$1, finals);
         var map$1 = Curry._3(StateSetMapState$ReasonReNfa.add, states, state$1, map);
-        var match = Curry._3(CharMapStateSet$ReasonReNfa.fold, (function (c, ss, param) {
+        var match = Curry._3(CharMapState$ReasonReNfa.fold, (function (c, ss, param) {
                 var match = build(ss, /* tuple */[
                       param[0],
                       param[1],
@@ -83,17 +84,17 @@ function determinize(nfa) {
   };
   var match = build(nfa[/* start */0], /* tuple */[
         StateSetMapState$ReasonReNfa.empty,
-        StateMapCharMapStateSet$ReasonReNfa.empty,
+        StateMapCharMapState$ReasonReNfa.empty,
         StateSet$ReasonReNfa.empty
       ]);
   var trans = match[2];
   var next = function (s) {
     try {
-      return Curry._2(StateMapCharMapStateSet$ReasonReNfa.find, s, trans);
+      return Curry._2(StateMapCharMapState$ReasonReNfa.find, s, trans);
     }
     catch (exn){
       if (exn === Caml_builtin_exceptions.not_found) {
-        return CharMapStateSet$ReasonReNfa.empty;
+        return CharMapState$ReasonReNfa.empty;
       } else {
         throw exn;
       }
