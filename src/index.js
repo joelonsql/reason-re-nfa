@@ -56,8 +56,8 @@ function(event){
       }
       return;
     }
-    let re = ReasonRegex.analyze(regexinput);
     try {
+      let re = ReasonRegex.analyze(regexinput);
       document.getElementById("regexp-input").style.backgroundColor = "";
       let glushkovPos = 0;
       document.getElementById("nullability").innerHTML = re[glushkovPos] ? "true" : "false";
@@ -106,8 +106,6 @@ function(event){
         renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
         algoPos += 2;
       }
-
-
     } catch (e) {
       console.log(e);
       document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";
