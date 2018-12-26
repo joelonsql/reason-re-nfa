@@ -13,13 +13,35 @@ function matrix_to_table(matrix) {
   return result.join('\n');
 }
 
+let renderGraphIntervalIds = {};
+
+function renderGraph(id) {
+  document.getElementById(id + "Graph").innerHTML = "";
+  let dot = document.getElementById(id + "Dot").value;
+  if (dot.length > 0) {
+    d3.select("#" + id + "Graph").graphviz().zoom(false).renderDot(dot);
+  }
+  return;
+}
+
 document.addEventListener('DOMContentLoaded',
 function(event){
-  let graphviz = function(id,dot) {
-    d3.select(id).graphviz().zoom(false).renderDot(dot);
+  let drawButtons = document.getElementsByClassName("draw");
+  let renderGraphHandler = function(event) {
+    let id = event.currentTarget.id;
+    renderGraph(id);
+    return;
   };
+  Array.from(drawButtons).forEach(function(element) {
+    element.addEventListener("click", renderGraphHandler);
+  });
+});
+
+document.addEventListener('DOMContentLoaded',
+function(event){
   let visualize = function(event) {
     let regexinput = document.getElementById("regexp-input").value;
+    let algoSteps = ['nfa','dfa','reversed','dfa2','reversed2','dfaMinimized'];
     if (regexinput.length == 0) {
       document.getElementById("annotated").innerHTML = "";
       document.getElementById("nullability").innerHTML = "";
@@ -27,27 +49,24 @@ function(event){
       document.getElementById("lasts").innerHTML = "";
       document.getElementById("letterpairs").innerHTML = "";
       document.getElementById("parseTree").innerHTML = "";
-      document.getElementById("transitions").innerHTML = "";
-      document.getElementById("nfa").innerHTML = "";
-      document.getElementById("dfa").innerHTML = "";
-      document.getElementById("dfaMinimized").innerHTML = "";
+      for (let algoStep of algoSteps) {
+        document.getElementById(algoStep + "Matrix").innerHTML = "";
+        document.getElementById(algoStep + "Dot").innerHTML = "";
+        document.getElementById(algoStep + "Graph").innerHTML = "";
+      }
       return;
     }
     let re = ReasonRegex.analyze(regexinput);
     try {
-      graphviz("#nfa",re[0]);
       document.getElementById("regexp-input").style.backgroundColor = "";
-      document.getElementById("nullability").innerHTML = re[2] ? "true" : "false";
-      document.getElementById("firsts").innerHTML = re[3];
-      document.getElementById("lasts").innerHTML = re[4];
-      document.getElementById("letterpairs").innerHTML = re[5];
-      document.getElementById("annotated").innerHTML = re[6];
-      document.getElementById("transitions").innerHTML = matrix_to_table(re[7]);
-      graphviz("#dfa",re[8]);
-      graphviz("#reversed",re[9]);
-      graphviz("#dfa2",re[10]);
-      graphviz("#reversed2",re[11]);
-      graphviz("#dfaMinimized",re[12]);
+      let glushkovPos = 0;
+      document.getElementById("nullability").innerHTML = re[glushkovPos] ? "true" : "false";
+      document.getElementById("firsts").innerHTML = re[glushkovPos+1];
+      document.getElementById("lasts").innerHTML = re[glushkovPos+2];
+      document.getElementById("letterpairs").innerHTML = re[glushkovPos+3];
+      document.getElementById("annotated").innerHTML = re[glushkovPos+4];
+
+      let parseTreePos = 5;
       function createTreantNodeStructure(parseTree) {
         let node = {
           text: { name: parseTree[0] }
@@ -68,9 +87,27 @@ function(event){
             collapsable: true
           }
         },
-        nodeStructure: createTreantNodeStructure(re[1])
+        nodeStructure: createTreantNodeStructure(re[parseTreePos])
       };
       new Treant(simple_chart_config);
+
+      let algoPos = 6;
+      for (let algoStep of algoSteps) {
+        document.getElementById(algoStep + "Matrix").innerHTML = "";
+        document.getElementById(algoStep + "Dot").innerHTML = "";
+        document.getElementById(algoStep + "Graph").innerHTML = "";
+        let dot = re[algoPos];
+        let matrix = re[algoPos+1];
+        document.getElementById(algoStep + "Dot").value = dot;
+        document.getElementById(algoStep + "Matrix").innerHTML = matrix_to_table(matrix);
+        if (renderGraphIntervalIds[algoStep]) {
+          clearTimeout(renderGraphIntervalIds[algoStep]);
+        }
+        renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
+        algoPos += 2;
+      }
+
+
     } catch (e) {
       console.log(e);
       document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";

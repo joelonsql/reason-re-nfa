@@ -3,18 +3,13 @@
 import * as List from "../node_modules/bs-platform/lib/es6/list.js";
 import * as Curry from "../node_modules/bs-platform/lib/es6/curry.js";
 import * as Int32 from "../node_modules/bs-platform/lib/es6/int32.js";
-import * as Caml_string from "../node_modules/bs-platform/lib/es6/caml_string.js";
 import * as Nfa$ReasonReNfa from "./Nfa.bs.js";
-import * as CharSet$ReasonReNfa from "./CharSet.bs.js";
 import * as StateSet$ReasonReNfa from "./StateSet.bs.js";
 import * as LetterSet$ReasonReNfa from "./LetterSet.bs.js";
 import * as Letter2Set$ReasonReNfa from "./Letter2Set.bs.js";
 import * as Caml_builtin_exceptions from "../node_modules/bs-platform/lib/es6/caml_builtin_exceptions.js";
 import * as RegexParser$ReasonReNfa from "./RegexParser.bs.js";
 import * as AnnotatedRegex$ReasonReNfa from "./AnnotatedRegex.bs.js";
-import * as CharMapStateSet$ReasonReNfa from "./CharMapStateSet.bs.js";
-import * as CharSetMapStateSet$ReasonReNfa from "./CharSetMapStateSet.bs.js";
-import * as StateMapCharSetMapStateSet$ReasonReNfa from "./StateMapCharSetMapStateSet.bs.js";
 
 function l(_param) {
   while(true) {
@@ -117,89 +112,10 @@ function f_(param) {
   }
 }
 
-function transition_map_of_factor_set(factors) {
-  return Curry._3(Letter2Set$ReasonReNfa.fold, (function (param, state_map) {
-                var match = param[1];
-                var from_state = param[0][1];
-                var char_set = match[0];
-                var to_state = match[1];
-                var state_map$1 = state_map;
-                var char_set_map;
-                try {
-                  char_set_map = Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.find, from_state, state_map$1);
-                }
-                catch (exn){
-                  if (exn === Caml_builtin_exceptions.not_found) {
-                    char_set_map = CharSetMapStateSet$ReasonReNfa.empty;
-                  } else {
-                    throw exn;
-                  }
-                }
-                var state_set;
-                try {
-                  state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.find, char_set, char_set_map);
-                }
-                catch (exn$1){
-                  if (exn$1 === Caml_builtin_exceptions.not_found) {
-                    state_set = StateSet$ReasonReNfa.empty;
-                  } else {
-                    throw exn$1;
-                  }
-                }
-                var state_set$1 = Curry._2(StateSet$ReasonReNfa.add, to_state, state_set);
-                var char_set_map$1 = Curry._3(CharSetMapStateSet$ReasonReNfa.add, char_set, state_set$1, char_set_map);
-                return Curry._3(StateMapCharSetMapStateSet$ReasonReNfa.add, from_state, char_set_map$1, state_map$1);
-              }), factors, StateMapCharSetMapStateSet$ReasonReNfa.empty);
-}
-
 function positions(letter_set) {
   return Curry._1(StateSet$ReasonReNfa.of_list, List.map((function (prim) {
                     return prim[1];
                   }), Curry._1(LetterSet$ReasonReNfa.elements, letter_set)));
-}
-
-function transition_map_of_letter_set(letter_set) {
-  return Curry._3(LetterSet$ReasonReNfa.fold, (function (param, char_set_map) {
-                var state = param[1];
-                var char_set = param[0];
-                var entry;
-                var exit = 0;
-                var state_set;
-                try {
-                  state_set = Curry._2(CharSetMapStateSet$ReasonReNfa.find, char_set, char_set_map);
-                  exit = 1;
-                }
-                catch (exn){
-                  if (exn === Caml_builtin_exceptions.not_found) {
-                    entry = Curry._1(StateSet$ReasonReNfa.singleton, state);
-                  } else {
-                    throw exn;
-                  }
-                }
-                if (exit === 1) {
-                  entry = Curry._2(StateSet$ReasonReNfa.add, state, state_set);
-                }
-                return Curry._3(CharSetMapStateSet$ReasonReNfa.add, char_set, entry, char_set_map);
-              }), letter_set, CharSetMapStateSet$ReasonReNfa.empty);
-}
-
-function flatten_transitions(char_map) {
-  return Curry._3(CharSetMapStateSet$ReasonReNfa.fold, (function (char_set, state_set, char_map) {
-                return Curry._3(CharSet$ReasonReNfa.fold, (function ($$char, char_map) {
-                              var entry;
-                              try {
-                                entry = Curry._2(CharMapStateSet$ReasonReNfa.find, $$char, char_map);
-                              }
-                              catch (exn){
-                                if (exn === Caml_builtin_exceptions.not_found) {
-                                  entry = StateSet$ReasonReNfa.empty;
-                                } else {
-                                  throw exn;
-                                }
-                              }
-                              return Curry._3(CharMapStateSet$ReasonReNfa.add, $$char, Curry._2(StateSet$ReasonReNfa.union, state_set, entry), char_map);
-                            }), char_set, char_map);
-              }), char_map, CharMapStateSet$ReasonReNfa.empty);
 }
 
 function compile(r) {
@@ -208,149 +124,42 @@ function compile(r) {
   var firsts = p(annotated);
   var lasts = d(annotated);
   var factors = f_(annotated);
-  var finals = nullable ? Curry._2(StateSet$ReasonReNfa.add, Int32.zero, positions(lasts)) : positions(lasts);
-  var factor_transitions = transition_map_of_factor_set(factors);
-  var initial_transitions = transition_map_of_letter_set(firsts);
-  var joint_transitions = Curry._3(StateMapCharSetMapStateSet$ReasonReNfa.add, Int32.zero, initial_transitions, factor_transitions);
-  var next = function (state) {
-    try {
-      return flatten_transitions(Curry._2(StateMapCharSetMapStateSet$ReasonReNfa.find, state, joint_transitions));
-    }
-    catch (exn){
-      if (exn === Caml_builtin_exceptions.not_found) {
-        return CharMapStateSet$ReasonReNfa.empty;
-      } else {
-        throw exn;
-      }
-    }
-  };
+  var nfa = Nfa$ReasonReNfa.set_finals(nullable ? Curry._2(StateSet$ReasonReNfa.add, Int32.zero, positions(lasts)) : positions(lasts), Curry._3(Letter2Set$ReasonReNfa.fold, (function (param, nfa) {
+              var match = param[1];
+              return Nfa$ReasonReNfa.add_transition(/* tuple */[
+                          param[0][1],
+                          match[0],
+                          match[1]
+                        ], nfa);
+            }), factors, Curry._3(LetterSet$ReasonReNfa.fold, (function (param, nfa) {
+                  return Nfa$ReasonReNfa.add_transition(/* tuple */[
+                              Int32.zero,
+                              param[0],
+                              param[1]
+                            ], nfa);
+                }), firsts, Nfa$ReasonReNfa.singleton(Curry._1(StateSet$ReasonReNfa.singleton, Int32.zero)))));
   return /* record */[
-          /* nfa : record */[
-            /* start */Curry._1(StateSet$ReasonReNfa.singleton, Int32.zero),
-            /* finals */finals,
-            /* next */next
-          ],
+          /* nfa */nfa,
           /* annotated */AnnotatedRegex$ReasonReNfa.to_string(annotated),
           /* nullable */nullable,
           /* firsts */LetterSet$ReasonReNfa.to_string(firsts),
           /* lasts */LetterSet$ReasonReNfa.to_string(lasts),
-          /* factors */Letter2Set$ReasonReNfa.to_string(factors),
-          /* transitions */StateMapCharSetMapStateSet$ReasonReNfa.to_matrix(joint_transitions)
+          /* factors */Letter2Set$ReasonReNfa.to_string(factors)
         ];
-}
-
-function explode(s) {
-  var _i = s.length - 1 | 0;
-  var _l = /* [] */0;
-  while(true) {
-    var l = _l;
-    var i = _i;
-    if (i < 0) {
-      return l;
-    } else {
-      _l = /* :: */[
-        Caml_string.get(s, i),
-        l
-      ];
-      _i = i - 1 | 0;
-      continue ;
-    }
-  };
 }
 
 function test(param) {
   var r = RegexParser$ReasonReNfa.parse("a|(b|c)de");
   var glushkov = compile(r);
-  if (!Nfa$ReasonReNfa.accept(glushkov[/* nfa */0], explode("bde"))) {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            205,
-            2
-          ]
-        ];
-  }
-  if (StateSet$ReasonReNfa.to_string(glushkov[/* nfa */0][/* finals */1]) !== "{1 4}") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            206,
-            2
-          ]
-        ];
-  }
-  var char_map = Curry._1(glushkov[/* nfa */0][/* next */2], Int32.zero);
-  if (CharMapStateSet$ReasonReNfa.to_string(char_map) !== "{a:{1},b:{2},c:{2}}") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            208,
-            2
-          ]
-        ];
-  }
-  var char_map$1 = Curry._1(glushkov[/* nfa */0][/* next */2], 2);
-  if (CharMapStateSet$ReasonReNfa.to_string(char_map$1) !== "{d:{3}}") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            210,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* annotated */1] !== "(a<sub>1</sub>|[bc]<sub>2</sub>d<sub>3</sub>e<sub>4</sub>)") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            211,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* nullable */2] !== false) {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            212,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* firsts */3] !== "a<sub>1</sub> [bc]<sub>2</sub>") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            213,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* lasts */4] !== "a<sub>1</sub> e<sub>4</sub>") {
-    throw [
-          Caml_builtin_exceptions.assert_failure,
-          /* tuple */[
-            "Glushkov.re",
-            214,
-            2
-          ]
-        ];
-  }
-  if (glushkov[/* factors */5] === "[bc]<sub>2</sub>d<sub>3</sub> d<sub>3</sub>e<sub>4</sub>") {
+  console.log(Nfa$ReasonReNfa.to_matrix(glushkov[/* nfa */0]));
+  if (Nfa$ReasonReNfa.accept(glushkov[/* nfa */0], "bde")) {
     return 0;
   } else {
     throw [
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "Glushkov.re",
-            215,
+            135,
             2
           ]
         ];
@@ -362,12 +171,8 @@ export {
   p ,
   d ,
   f_ ,
-  transition_map_of_factor_set ,
   positions ,
-  transition_map_of_letter_set ,
-  flatten_transitions ,
   compile ,
-  explode ,
   test ,
   
 }

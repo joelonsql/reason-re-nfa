@@ -1,7 +1,8 @@
 let analyze = (regexp) => {
   let parsed = RegexParser.parse(regexp);
-  let compiled = Glushkov.compile(parsed);
-  let dfa = RabinScott.determinize(compiled.nfa);
+  let glushkov = Glushkov.compile(parsed);
+  let nfa = glushkov.nfa;
+  let dfa = RabinScott.determinize(nfa);
 
   /** let minimize = dfa => reverse(dfa) -> RabinScott.determinize -> reverse -> RabinScott.determinize; */
   let reversed = Brzozowski.reverse(dfa);
@@ -10,19 +11,30 @@ let analyze = (regexp) => {
   let dfa_minimal = RabinScott.determinize(reversed2);
 
   (
-    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(compiled.nfa)),
-    RegexParseTree.of_regex(parsed),
-    compiled.nullable,
-    compiled.firsts,
-    compiled.lasts,
-    compiled.factors,
-    compiled.annotated,
-    compiled.transitions,
-    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(Brzozowski.inject(dfa))),
-    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(reversed)),
-    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(Brzozowski.inject(dfa2))),
-    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(reversed2)),
-    Format.asprintf("%a@.", Nfa_dot.format_digraph, Nfa_dot.digraph_of_nfa(Brzozowski.inject(dfa_minimal))),
+    glushkov.nullable,
+    glushkov.firsts,
+    glushkov.lasts,
+    glushkov.factors,
+    glushkov.annotated,
 
+    RegexParseTree.of_regex(parsed),
+
+    Nfa.to_dot(nfa),
+    Nfa.to_matrix(nfa),
+
+    Dfa.to_dot(dfa),
+    Dfa.to_matrix(dfa),
+
+    Nfa.to_dot(reversed),
+    Nfa.to_matrix(reversed),
+
+    Dfa.to_dot(dfa2),
+    Dfa.to_matrix(dfa2),
+
+    Nfa.to_dot(reversed2),
+    Nfa.to_matrix(reversed2),
+
+    Dfa.to_dot(dfa_minimal),
+    Dfa.to_matrix(dfa_minimal),
   );
 };

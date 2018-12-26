@@ -29,7 +29,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            13,
+            12,
             2
           ]
         ];
@@ -42,7 +42,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            14,
+            13,
             2
           ]
         ];
@@ -63,7 +63,7 @@ function test(param) {
           Caml_builtin_exceptions.assert_failure,
           /* tuple */[
             "StateSet.re",
-            15,
+            14,
             2
           ]
         ];

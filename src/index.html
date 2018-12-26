@@ -25,11 +25,11 @@
         <div>Original OCaml project: <a href="https://github.com/yallop/ocaml-re-nfa">https://github.com/yallop/ocaml-re-nfa</a>.</div>
         <div>ReasonML port + WebUI: <a href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div>
         <br/>
-        <div id="regexp-to-nfa">
-            Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a> to <a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">DFA</a> to <a href="https://en.wikipedia.org/wiki/DFA_minimization">minimal DFA</a>
+        <div id="regexp-to-nfa"  style="float: left;">
+            Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a> to <a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">DFA</a> to <a href="https://en.wikipedia.org/wiki/DFA_minimization">minimal DFA</a><br /><br />
             <form id="regexp-to-nfa-form" autocomplete="off">
                 <table class="variables">
-                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input" value="a|ab*"/>              </td></tr>
+                    <tr><td>r    </td><td colspan="2"><input type="text" id="regexp-input" value="(a|b)*a"/>              </td></tr>
                     <tr><td>r'   </td><td>annotated(r)                   </td><td><span id="annotated"/>  </td></tr>
                     <tr><td>Λ(r')</td><td>{ε} ∩ L(r')                    </td><td><span id="nullability"/></td></tr>
                     <tr><td>P(r')</td><td>{c | ∃s.cs ∈ L(r') }           </td><td><span id="firsts"/>     </td></tr>
@@ -38,24 +38,64 @@
                 </table>
             </form>
         </div>
-        <div><a href="https://en.wikipedia.org/wiki/Parse_tree">Parse tree:</a></div>
-        <div class="chart" id="parseTree" style="float: left;"></div>
+        <div class="chart" id="parseTree"></div>
         <div style="clear: both;"><a href="https://en.wikipedia.org/wiki/State_transition_table">State transition table:</a></div>
-        <div><span id="transitions"/></div>
         <div><a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm (Regex to NFA)</a></div>
         <div><a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">Nondeterministic finite automaton (NFA):</a></div>
-        <div id="nfa"></div>
+        <table>
+            <tr>
+                <td><div><span id="nfaMatrix"/></div></td>
+                <td><textarea id="nfaDot"></textarea></td>
+                <td><input type="button" value="draw" class="draw" id="nfa"/></td>
+                <td><div id="nfaGraph"></div></td>
+            </tr>
+        </table>
         <div><a href="https://en.wikipedia.org/wiki/Powerset_construction">Rabin–Scott powerset construction (NFA to DFA)</a></div>
         <div><a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">Deterministic finite automaton (DFA):</a></div>
-        <div id="dfa"></div>
+        <table>
+            <tr>
+                <td><div><span id="dfaMatrix"/></div></td>
+                <td><textarea id="dfaDot"></textarea></td>
+                <td><input type="button" value="draw" class="draw" id="dfa"/></td>
+                <td><div id="dfaGraph"></div></td>
+            </tr>
+        </table>
         <div><a href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm (DFA minimization):</a></div>
         <div>1. reverse(DFA):</div>
-        <div id="reversed"></div>
+        <table>
+            <tr>
+                <td><div><span id="reversedMatrix"/></div></td>
+                <td><textarea id="reversedDot"></textarea></td>
+                <td><input type="button" value="draw" class="draw" id="reversed"/></td>
+                <td><div id="reversedGraph"></div></td>
+            </tr>
+        </table>
         <div>2. reverse(DFA) -> determinize:</div>
-        <div id="dfa2"></div>
+        <table>
+            <tr>
+                <td><div><span id="dfa2Matrix"/></div></td>
+                <td><textarea id="dfa2Dot"></textarea></td>
+                <td><input type="button" value="draw" class="draw" id="dfa2"/></td>
+                <td><div id="dfa2Graph"></div></td>
+            </tr>
+        </table>
         <div>3. reverse(DFA) -> determinize -> reverse:</div>
-        <div id="reversed2"></div>
+        <table>
+            <tr>
+                <td><div><span id="reversed2Matrix"/></div></td>
+                <td><textarea id="reversed2Dot"></textarea></td>
+                <td><input type="button" value="draw" class="draw" id="reversed2"/></td>
+                <td><div id="reversed2Graph"></div></td>
+            </tr>
+        </table>
         <div>4. reverse(DFA) -> determinize -> reverse -> determinize:</div>
-        <div id="dfaMinimized"></div>
+        <table>
+            <tr>
+                <td><div><span id="dfaMinimizedMatrix"/></div></td>
+                <td><textarea id="dfaMinimizedDot"></textarea></td>
+                <td><input type="button" value="draw" class="draw" id="dfaMinimized"/></td>
+                <td><div id="dfaMinimizedGraph"></div></td>
+            </tr>
+        </table>
     </body>
 </html>

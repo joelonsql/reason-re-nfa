@@ -3,8 +3,7 @@ include Set.Make(Int32);
 let to_string = (state_set) =>
   "{" ++ String.concat(
     " ",
-    List.map(Int32.to_string, elements(state_set)
-    )
+    List.map(Int32.to_string, elements(state_set))
   ) ++ "}";
 
 let example = (state_list) => List.map(Int32.of_int, state_list)->of_list;

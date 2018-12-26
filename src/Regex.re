@@ -1,10 +1,3 @@
-/** Convert a regex to an ε-free NFA using a slight modification of
-    Glushkov's algorithm.
-
-    (The modification: we label character sets rather than characters
-     to prevent a state explosion.)
- */
-
 type regex('c) =
   | Empty: regex('c) /* L = { } */
   | Eps: regex('c) /* L = {ε} */
@@ -47,3 +40,4 @@ let range_ = (l, h) => {
 
 let range = (l, h) => Char(range_(l, h));
 let any = range(Char.chr(0), Char.chr(255));
+
