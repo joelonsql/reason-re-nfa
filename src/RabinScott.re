@@ -1,23 +1,24 @@
 /** Conversion to DFA via the powerset construction */
 
-let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) = (char_map) =>
-  CharSetMap.fold(
-    (char_set, state_set, char_map) =>
-    CharSet.fold(
-      (char, char_map) => {
-        let entry =
-          switch (CharMap.find(char, char_map)) {
-          | exception Not_found => StateSet.empty
-          | state_set => state_set
-          };
-        CharMap.add(char, StateSet.union(state_set, entry), char_map);
-      },
-      char_set,
-      char_map
-    ),
-    char_map,
-    CharMap.empty,
-  );
+let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
+  char_map =>
+    CharSetMap.fold(
+      (char_set, state_set, char_map) =>
+        CharSet.fold(
+          (char, char_map) => {
+            let entry =
+              switch (CharMap.find(char, char_map)) {
+              | exception Not_found => StateSet.empty
+              | state_set => state_set
+              };
+            CharMap.add(char, StateSet.union(state_set, entry), char_map);
+          },
+          char_set,
+          char_map,
+        ),
+      char_map,
+      CharMap.empty,
+    );
 
 let determinize: Nfa.t => Dfa.t = {
   nfa => {
@@ -49,10 +50,19 @@ let determinize: Nfa.t => Dfa.t = {
             },
             StateSet.fold(
               (s, m) => {
-                let m' = try (flatten_transitions(StateMap.find(s, nfa.Nfa.transitions))) {
-                | Not_found => CharMap.empty
-                };
-                CharMap.union((_, s, s') => Some(StateSet.union(s, s')), m, m');
+                let m' =
+                  try (
+                    flatten_transitions(
+                      StateMap.find(s, nfa.Nfa.transitions),
+                    )
+                  ) {
+                  | Not_found => CharMap.empty
+                  };
+                CharMap.union(
+                  (_, s, s') => Some(StateSet.union(s, s')),
+                  m,
+                  m',
+                );
               },
               states,
               CharMap.empty,
@@ -64,7 +74,10 @@ let determinize: Nfa.t => Dfa.t = {
       };
 
     let (_, _, dfa, finals) =
-      build(nfa.Nfa.start, (StateSetMap.empty, Dfa.singleton(Int32.zero), StateSet.empty));
+      build(
+        nfa.Nfa.start,
+        (StateSetMap.empty, Dfa.singleton(Int32.zero), StateSet.empty),
+      );
     Dfa.set_finals(finals, dfa);
   };
 };
@@ -97,8 +110,8 @@ let test = () => {
          CharSet.singleton('c'),
          Int32.of_int(4),
        ))
-    |> Nfa.set_finals(StateSet.example([1,3,4]));
-  Js.log(Nfa.to_matrix(nfa));
+    |> Nfa.set_finals(StateSet.example([1, 3, 4]));
   let dfa = determinize(nfa);
-  Js.log(Dfa.to_matrix(dfa));
+  assert(Dfa.accept(dfa, "abccc"));
+  assert(!Dfa.accept(dfa, "ab"));
 };

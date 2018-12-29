@@ -1,4 +1,4 @@
-open Common
+open Common;
 
 type state = int32;
 type transitions = StateMap.t(CharSetMap.t(StateSet.t));
@@ -14,7 +14,7 @@ let singleton = (start: StateSet.t) => {
   states: start,
   alphabet: CharSetSet.empty,
   transitions: StateMap.empty,
-  start: start,
+  start,
   finals: StateSet.empty,
 };
 
@@ -57,45 +57,52 @@ let add_transition: ((state, CharSet.t, state), t) => t =
 
 let to_dot: t => string =
   nfa =>
-    "digraph {\n" ++
-    "rankdir = LR;\n" ++
-    "node [shape = none; width = 0;] \"\";\n" ++
-    String.concat(
-      "\n",
-      List.map(
-        (state) => {
-          let shape = if (StateSet.mem(state, nfa.finals)) {
-            "doublecircle"
-          } else {
-            "circle"
-          };
-          "node [shape = " ++ shape ++ "] " ++ Int32.to_string(state) ++ ";";
-        },
-        StateSet.elements(nfa.states),
-      ),
-    ) ++
-    "\n\"\" -> " ++ StateSet.to_string(nfa.start) ++ ";\n" ++
-    String.concat(
-      "\n",
-      List.map(
-        ((src, char_set_map)) =>
-          String.concat(
-            "\n",
-            List.map(
-              ((char_set, dsts)) =>
-                Int32.to_string(src)
-                ++ "->"
-                  ++ StateSet.to_string(dsts)
-                ++ " [label=\""
-                ++ CharSet.to_string(char_set)
-                ++ "\"];",
-              CharSetMap.bindings(char_set_map),
-            ),
-          ),
-        StateMap.bindings(nfa.transitions),
-      ),
-    ) ++
-    "\n}\n";
+    "digraph {\n"
+    ++ "rankdir = LR;\n"
+    ++ "node [shape = none; width = 0;] \"\";\n"
+    ++ String.concat(
+         "\n",
+         List.map(
+           state => {
+             let shape =
+               if (StateSet.mem(state, nfa.finals)) {
+                 "doublecircle";
+               } else {
+                 "circle";
+               };
+             "node [shape = "
+             ++ shape
+             ++ "] "
+             ++ Int32.to_string(state)
+             ++ ";";
+           },
+           StateSet.elements(nfa.states),
+         ),
+       )
+    ++ "\n\"\" -> "
+    ++ StateSet.to_string(nfa.start)
+    ++ ";\n"
+    ++ String.concat(
+         "\n",
+         List.map(
+           ((src, char_set_map)) =>
+             String.concat(
+               "\n",
+               List.map(
+                 ((char_set, dsts)) =>
+                   Int32.to_string(src)
+                   ++ "->"
+                   ++ StateSet.to_string(dsts)
+                   ++ " [label=\""
+                   ++ CharSet.to_string(char_set)
+                   ++ "\"];",
+                 CharSetMap.bindings(char_set_map),
+               ),
+             ),
+           StateMap.bindings(nfa.transitions),
+         ),
+       )
+    ++ "\n}\n";
 
 let to_matrix: t => array(array(string)) =
   nfa => {
@@ -158,15 +165,6 @@ let accept: (t, string) => bool =
     step(nfa.start, explode(input));
   };
 
-let dump = (nfa) => {
-  Js.log("Nfa.states: " ++ StateSet.to_string(nfa.states));
-  Js.log("Nfa.alphabet: " ++ CharSetSet.to_string(nfa.alphabet));
-  Js.log("Nfa.transitions:");
-  Js.log(to_matrix(nfa));
-  Js.log("Nfa.start: " ++ StateSet.to_string(nfa.start));
-  Js.log("Nfa.finals: " ++ StateSet.to_string(nfa.finals));
-};
-
 let test = () => {
   let nfa =
     singleton(StateSet.singleton(Int32.zero))
@@ -195,8 +193,8 @@ let test = () => {
          CharSet.singleton('c'),
          Int32.of_int(4),
        ))
-    |> set_finals(StateSet.example([1,3,4]));
-  print_endline(to_dot(nfa));
-  Js.log(to_matrix(nfa));
-  Js.log(accept(nfa, "abc"));
+    |> set_finals(StateSet.example([1, 3, 4]));
+  assert(accept(nfa, "a"));
+  assert(accept(nfa, "abccccc"));
+  assert(!accept(nfa, "ab"));
 };

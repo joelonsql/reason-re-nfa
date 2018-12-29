@@ -4,7 +4,6 @@
     (The modification: we label character sets rather than characters
      to prevent a state explosion.)
  */
-
 open Regex;
 
 type t = {
@@ -13,7 +12,7 @@ type t = {
   nullable: bool,
   firsts: string,
   lasts: string,
-  factors: string
+  factors: string,
 };
 
 /** Λ(r) is {ε} ∩ L(r); we represent it as a bool */
@@ -36,7 +35,9 @@ let rec p =
     | Eps => LetterSet.empty
     | Char(c) => singleton(c)
     | Alt(e, f) => p(e) <+> p(f)
-    | Seq(e, f) => p(e) <+> (
+    | Seq(e, f) =>
+      p(e)
+      <+> (
         if (l(e)) {
           p(f);
         } else {
@@ -80,57 +81,60 @@ let rec f_ =
     | Star(e) => f_(e) <+> (d(e) <*> p(e))
   );
 
-let positions: LetterSet.t => StateSet.t = (letter_set) =>
-  StateSet.of_list(List.map(snd, LetterSet.elements(letter_set)));
+let positions: LetterSet.t => StateSet.t =
+  letter_set =>
+    StateSet.of_list(List.map(snd, LetterSet.elements(letter_set)));
 
-let compile: regex('c) => t = (r) => {
-  let start: Nfa.state = Int32.zero;
+let compile: regex('c) => t =
+  r => {
+    let start: Nfa.state = Int32.zero;
 
-  /*** Give every character set in 'r' a unique identifier */
-  let annotated = AnnotatedRegex.annotate(r);
+    /*** Give every character set in 'r' a unique identifier */
+    let annotated = AnnotatedRegex.annotate(r);
 
-  let nullable = l(annotated);
-  let firsts = p(annotated);
-  let lasts = d(annotated);
-  let factors = f_(annotated);
+    let nullable = l(annotated);
+    let firsts = p(annotated);
+    let lasts = d(annotated);
+    let factors = f_(annotated);
 
-  let nfa =
-    Nfa.singleton(StateSet.singleton(start))
-    /*** Transitions arise from the start state to the initial character sets ... */
-    |> LetterSet.fold(
-      ((char_set, state), nfa) =>
-        Nfa.add_transition((start, char_set, state), nfa),
-      firsts
-    )
-    /*** .. and between factors (pairs of character sets with a transition between them) */
-    |> Letter2Set.fold(
-      (((_, from_state), (char_set, to_state)), nfa) =>
-        Nfa.add_transition((from_state, char_set, to_state), nfa),
-      factors
-    )
-    /*** The final states are the set of 'last' characters in r,
-       (+ the start state if r accepts the empty string) */
-    |> Nfa.set_finals(
-      if (nullable) {
-        StateSet.add(start, positions(lasts));
-      } else {
-        positions(lasts);
-      }
-    );
+    let nfa =
+      Nfa.singleton(StateSet.singleton(start))
+      /*** Transitions arise from the start state to the initial character sets ... */
+      |> LetterSet.fold(
+           ((char_set, state), nfa) =>
+             Nfa.add_transition((start, char_set, state), nfa),
+           firsts,
+         )
+      /*** .. and between factors (pairs of character sets with a transition between them) */
+      |> Letter2Set.fold(
+           (((_, from_state), (char_set, to_state)), nfa) =>
+             Nfa.add_transition((from_state, char_set, to_state), nfa),
+           factors,
+         )
+      /*** The final states are the set of 'last' characters in r,
+           (+ the start state if r accepts the empty string) */
+      |> Nfa.set_finals(
+           if (nullable) {
+             StateSet.add(start, positions(lasts));
+           } else {
+             positions(lasts);
+           },
+         );
 
-  {
-    nfa: nfa,
-    annotated: AnnotatedRegex.to_string(annotated),
-    nullable,
-    firsts: LetterSet.to_string(firsts),
-    lasts: LetterSet.to_string(lasts),
-    factors: Letter2Set.to_string(factors)
+    {
+      nfa,
+      annotated: AnnotatedRegex.to_string(annotated),
+      nullable,
+      firsts: LetterSet.to_string(firsts),
+      lasts: LetterSet.to_string(lasts),
+      factors: Letter2Set.to_string(factors),
+    };
   };
-};
 
 let test = () => {
   let r = RegexParser.parse("a|(b|c)de");
   let glushkov = compile(r);
-  Js.log(Nfa.to_matrix(glushkov.nfa))
+  assert(Nfa.accept(glushkov.nfa, "a"));
   assert(Nfa.accept(glushkov.nfa, "bde"));
+  assert(!Nfa.accept(glushkov.nfa, "abde"));
 };

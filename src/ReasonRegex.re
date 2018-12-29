@@ -1,4 +1,4 @@
-let analyze = (regexp) => {
+let analyze = regexp => {
   let parsed = RegexParser.parse(regexp);
   let glushkov = Glushkov.compile(parsed);
   let nfa = glushkov.nfa;
@@ -16,24 +16,17 @@ let analyze = (regexp) => {
     glushkov.lasts,
     glushkov.factors,
     glushkov.annotated,
-
     RegexParseTree.of_regex(parsed),
-
     Nfa.to_dot(nfa),
     Nfa.to_matrix(nfa),
-
     Dfa.to_dot(dfa),
     Dfa.to_matrix(dfa),
-
     Nfa.to_dot(reversed),
     Nfa.to_matrix(reversed),
-
     Dfa.to_dot(dfa2),
     Dfa.to_matrix(dfa2),
-
     Nfa.to_dot(reversed2),
     Nfa.to_matrix(reversed2),
-
     Dfa.to_dot(dfa_minimal),
     Dfa.to_matrix(dfa_minimal),
   );

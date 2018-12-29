@@ -5,8 +5,8 @@ type t('a) =
   | Two('a, t('a), t('a))
   | Leaf('a);
 
-let rec of_regex = (r) =>
-  switch(r) {
+let rec of_regex = r =>
+  switch (r) {
   | Empty => Leaf("Empty")
   | Eps => Leaf("Eps")
   | Star(s) => One("Star", of_regex(s))
