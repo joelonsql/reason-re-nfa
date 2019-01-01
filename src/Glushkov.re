@@ -1,10 +1,11 @@
+open Regex;
+
 /** Convert a regex to an ε-free NFA using a slight modification of
     Glushkov's algorithm.
 
     (The modification: we label character sets rather than characters
      to prevent a state explosion.)
- */
-open Regex;
+ */;
 
 type t = {
   nfa: Nfa.t,
@@ -88,31 +89,27 @@ let positions: LetterSet.t => StateSet.t =
 let compile: regex('c) => t =
   r => {
     let start: Nfa.state = Int32.zero;
-
-    /*** Give every character set in 'r' a unique identifier */
     let annotated = AnnotatedRegex.annotate(r);
-
     let nullable = l(annotated);
     let firsts = p(annotated);
     let lasts = d(annotated);
     let factors = f_(annotated);
-
     let nfa =
       Nfa.singleton(StateSet.singleton(start))
-      /*** Transitions arise from the start state to the initial character sets ... */
+      /* Transitions arise from the start state to the initial character sets ... */
       |> LetterSet.fold(
            ((char_set, state), nfa) =>
              Nfa.add_transition((start, char_set, state), nfa),
            firsts,
          )
-      /*** .. and between factors (pairs of character sets with a transition between them) */
+      /* .. and between factors (pairs of character sets with a transition between them) */
       |> Letter2Set.fold(
            (((_, from_state), (char_set, to_state)), nfa) =>
              Nfa.add_transition((from_state, char_set, to_state), nfa),
            factors,
          )
-      /*** The final states are the set of 'last' characters in r,
-           (+ the start state if r accepts the empty string) */
+      /* The final states are the set of 'last' characters in r,
+         (+ the start state if r accepts the empty string) */
       |> Nfa.set_finals(
            if (nullable) {
              StateSet.add(start, positions(lasts));

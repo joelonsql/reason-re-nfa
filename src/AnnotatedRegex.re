@@ -2,6 +2,8 @@ open Regex;
 
 type t('a) = regex(('a, int32));
 
+/** Give every character set in 'r' a unique identifier */
+
 let annotate: 'a. regex('a) => t('a) =
   r => {
     let rec annotate: 'a. (int32, regex('a)) => (int32, t('a)) =
@@ -28,6 +30,7 @@ let annotate: 'a. regex('a) => t('a) =
             let (count', e') = annotate(count, e);
             (count', Star(e'));
           };
+
     let (_, annotated) = annotate(Int32.zero, r);
     annotated;
   };

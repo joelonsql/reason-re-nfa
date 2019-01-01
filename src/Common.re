@@ -7,3 +7,22 @@ let explode = s => {
     };
   exp(String.length(s) - 1, []);
 };
+
+let escaped =
+  fun
+  | ' '..'~' as c => String.make(1, c)
+  | c => Printf.sprintf("\\x%02x", Char.code(c));
+
+let escaped_single_quote =
+  fun
+  | '\'' => "\\'"
+  | '\\' => "\\\\"
+  | ' '..'~' as c => String.make(1, c)
+  | c => Printf.sprintf("\\x%02x", Char.code(c));
+
+let escaped_double_quote =
+  fun
+  | '"' => "\\\""
+  | '\\' => "\\\\"
+  | ' '..'~' as c => String.make(1, c)
+  | c => Printf.sprintf("\\\\x%02x", Char.code(c));

@@ -1,5 +1,6 @@
 module Pair = {
   type t = (Letter.t, Letter.t);
+
   let compare = (((_, w), (_, x)), ((_, y), (_, z))) =>
     switch (Int32.compare(w, y)) {
     | 0 => Int32.compare(x, z)
@@ -12,9 +13,11 @@ include Set.Make(Pair);
 let (<+>) = union;
 
 /** Flat map */
+
 let (>>=) = (m, k) => LetterSet.fold((x, s) => union(k(x), s), m, empty);
 
 /** Cartensian product, i.e. all elements in l combined with all elements in r */
+
 let (<*>): (LetterSet.t, LetterSet.t) => t =
   (l, r) => l >>= (x => r >>= (y => singleton((x, y))));
 

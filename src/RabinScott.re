@@ -1,4 +1,4 @@
-/** Conversion to DFA via the powerset construction */
+/** Conversion to DFA via the powerset construction */;
 
 let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
   char_map =>
@@ -11,6 +11,7 @@ let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
               | exception Not_found => StateSet.empty
               | state_set => state_set
               };
+
             CharMap.add(char, StateSet.union(state_set, entry), char_map);
           },
           char_set,
@@ -20,7 +21,7 @@ let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
       CharMap.empty,
     );
 
-let determinize: Nfa.t => Dfa.t = {
+let determinize: Nfa.t => Dfa.t =
   nfa => {
     let fresh = {
       let r = ref(-1l);
@@ -29,6 +30,7 @@ let determinize: Nfa.t => Dfa.t = {
         r^;
       };
     };
+
     let rec build = (states, (map, dfa, finals)) =>
       switch (StateSetMap.find(states, map)) {
       | state => (state, map, dfa, finals)
@@ -40,6 +42,7 @@ let determinize: Nfa.t => Dfa.t = {
           } else {
             finals;
           };
+
         let map = StateSetMap.add(states, state, map);
         let (state, map, dfa, finals) =
           CharMap.fold(
@@ -58,6 +61,7 @@ let determinize: Nfa.t => Dfa.t = {
                   ) {
                   | Not_found => CharMap.empty
                   };
+
                 CharMap.union(
                   (_, s, s') => Some(StateSet.union(s, s')),
                   m,
@@ -78,9 +82,9 @@ let determinize: Nfa.t => Dfa.t = {
         nfa.Nfa.start,
         (StateSetMap.empty, Dfa.singleton(Int32.zero), StateSet.empty),
       );
+
     Dfa.set_finals(finals, dfa);
   };
-};
 
 let test = () => {
   let nfa =
@@ -111,6 +115,7 @@ let test = () => {
          Int32.of_int(4),
        ))
     |> Nfa.set_finals(StateSet.example([1, 3, 4]));
+
   let dfa = determinize(nfa);
   assert(Dfa.accept(dfa, "abccc"));
   assert(!Dfa.accept(dfa, "ab"));

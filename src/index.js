@@ -24,6 +24,7 @@ function renderGraph(id) {
   return;
 }
 
+/*
 document.addEventListener('DOMContentLoaded',
   function (event) {
     let drawButtons = document.getElementsByClassName("draw");
@@ -36,13 +37,21 @@ document.addEventListener('DOMContentLoaded',
       element.addEventListener("click", renderGraphHandler);
     });
   });
+*/
+
+let last_regexp_input = '';
 
 document.addEventListener('DOMContentLoaded',
   function (event) {
     let visualize = function (event) {
-      let regexinput = document.getElementById("regexp-input").value;
+      let regex_input = document.getElementById("regexp-input").value;
+      if (regex_input == last_regexp_input) {
+        // unchanged
+        return;
+      }
+      last_regexp_input = regex_input;
       let algoSteps = ['nfa', 'dfa', 'reversed', 'dfa2', 'reversed2', 'dfaMinimized'];
-      if (regexinput.length == 0) {
+      if (regex_input.length == 0) {
         document.getElementById("annotated").innerHTML = "";
         document.getElementById("nullability").innerHTML = "";
         document.getElementById("firsts").innerHTML = "";
@@ -54,10 +63,12 @@ document.addEventListener('DOMContentLoaded',
           document.getElementById(algoStep + "Dot").innerHTML = "";
           document.getElementById(algoStep + "Graph").innerHTML = "";
         }
+        document.getElementById("dfaMinimizedC").innerHTML = "";
+        document.getElementById("dfaMinimizedLLVMIR").innerHTML = "";
         return;
       }
       try {
-        let re = ReasonRegex.analyze(regexinput);
+        let re = ReasonRegex.analyze(regex_input);
         document.getElementById("regexp-input").style.backgroundColor = "";
         let glushkovPos = 0;
         document.getElementById("nullability").innerHTML = re[glushkovPos] ? "true" : "false";
@@ -103,9 +114,11 @@ document.addEventListener('DOMContentLoaded',
           if (renderGraphIntervalIds[algoStep]) {
             clearTimeout(renderGraphIntervalIds[algoStep]);
           }
-          renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 1000, algoStep);
+          renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
+        document.getElementById("dfaMinimizedC").innerHTML = re[algoPos];;
+        document.getElementById("dfaMinimizedLLVMIR").innerHTML = re[algoPos + 1];
       } catch (e) {
         console.log(e);
         document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";

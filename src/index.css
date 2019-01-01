@@ -8,3 +8,4 @@ a:active{color:inherit}
 a:visited{color:inherit}
 a:hover{color:inherit}
 div { margin: 5px; }
+.code { white-space: pre; }

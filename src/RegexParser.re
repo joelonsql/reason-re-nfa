@@ -57,18 +57,8 @@ and re_parse_alt = (s: list(char)) =>
   | (r, rest) => (r, rest)
   };
 
-let explode = s => {
-  let rec exp = (i, l) =>
-    if (i < 0) {
-      l;
-    } else {
-      exp(i - 1, [s.[i], ...l]);
-    };
-  exp(String.length(s) - 1, []);
-};
-
 let parse = s =>
-  switch (re_parse_alt(explode(s))) {
+  switch (re_parse_alt(Common.explode(s))) {
   | (r, []) => r
   | exception Fail => raise(Parse_error(s))
   | (_, [_, ..._]) => raise(Parse_error(s))

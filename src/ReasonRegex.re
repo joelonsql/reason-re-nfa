@@ -29,5 +29,7 @@ let analyze = regexp => {
     Nfa.to_matrix(reversed2),
     Dfa.to_dot(dfa_minimal),
     Dfa.to_matrix(dfa_minimal),
+    Dfa.to_c(dfa_minimal),
+    Dfa.to_llvm_ir(dfa_minimal),
   );
 };

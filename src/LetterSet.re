@@ -1,11 +1,11 @@
-/** Sets of single letters */
+/** Sets of single letters */;
+
 include Set.Make(Letter);
 
 let (<+>) = union;
 
-let to_string = letter_set => {
+let to_string = letter_set =>
   String.concat(" ", List.map(Letter.to_string, elements(letter_set)));
-};
 
 let example = (char_list, state) =>
   singleton(Letter.example(char_list, state));

@@ -1,7 +1,7 @@
-open Common;
-
 type state = int32;
+
 type transitions = StateMap.t(CharSetMap.t(StateSet.t));
+
 type t = {
   states: StateSet.t,
   alphabet: CharSetSet.t,
@@ -70,6 +70,7 @@ let to_dot: t => string =
                } else {
                  "circle";
                };
+
              "node [shape = "
              ++ shape
              ++ "] "
@@ -162,7 +163,8 @@ let accept: (t, string) => bool =
             ),
             rest,
           );
-    step(nfa.start, explode(input));
+
+    step(nfa.start, Common.explode(input));
   };
 
 let test = () => {
@@ -194,6 +196,7 @@ let test = () => {
          Int32.of_int(4),
        ))
     |> set_finals(StateSet.example([1, 3, 4]));
+
   assert(accept(nfa, "a"));
   assert(accept(nfa, "abccccc"));
   assert(!accept(nfa, "ab"));
