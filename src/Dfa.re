@@ -2,10 +2,6 @@ type state = int32;
 
 type transitions = StateMap.t(CharMap.t(state));
 
-type src_dsts = StateMap.t(StateSet.t);
-
-type src_dst_charset = StateMap.t(StateMap.t(CharSet.t));
-
 exception Non_deterministic(string);
 
 type t = {
@@ -14,8 +10,6 @@ type t = {
   transitions,
   start: state,
   finals: StateSet.t,
-  src_dsts,
-  src_dst_charset,
 };
 
 let singleton = (start: state) => {
@@ -24,8 +18,6 @@ let singleton = (start: state) => {
   transitions: StateMap.empty,
   start,
   finals: StateSet.empty,
-  src_dsts: StateMap.empty,
-  src_dst_charset: StateMap.empty,
 };
 
 let set_finals = (finals: StateSet.t, dfa) => {
@@ -37,8 +29,6 @@ let set_finals = (finals: StateSet.t, dfa) => {
     StateSet.(
       elements(finals) |> List.map(s => find(s, dfa.states)) |> of_list
     ),
-  src_dsts: dfa.src_dsts,
-  src_dst_charset: dfa.src_dst_charset,
 };
 
 let add_transition: ((state, char, state), t) => t =
@@ -72,70 +62,38 @@ let add_transition: ((state, char, state), t) => t =
       ),
     start: dfa.start,
     finals: dfa.finals,
-    src_dsts:
-      StateMap.add(
-        src,
-        switch (StateMap.find(src, dfa.src_dsts)) {
-        | exception Not_found => StateSet.singleton(dst)
-        | dsts => StateSet.add(dst, dsts)
-        },
-        dfa.src_dsts,
-      ),
-    src_dst_charset:
-      StateMap.add(
-        src,
-        switch (StateMap.find(src, dfa.src_dst_charset)) {
-        | exception Not_found =>
-          StateMap.singleton(dst, CharSet.singleton(char))
-        | dst_map =>
-          StateMap.add(
-            dst,
-            switch (StateMap.find(dst, dst_map)) {
-            | exception Not_found => CharSet.singleton(char)
-            | char_set => CharSet.add(char, char_set)
-            },
-            dst_map,
-          )
-        },
-        dfa.src_dst_charset,
-      ),
   };
 
-let to_src_charset_dst: src_dst_charset => StateMap.t(CharSetMap.t(state)) =
-  src_dstmap_charset =>
+let group_by_charset: transitions => StateMap.t(CharSetMap.t(state)) =
+  transitions =>
     StateMap.fold(
-      (src, dstmap, src_charsetmap_dst) =>
+      (src, charmap, acc) =>
         StateMap.fold(
-          (dst, charset, src_charsetmap_dst) =>
+          (dst, charset, acc) =>
             StateMap.add(
               src,
-              switch (StateMap.find(src, src_charsetmap_dst)) {
+              switch (StateMap.find(src, acc)) {
               | exception Not_found => CharSetMap.singleton(charset, dst)
-              | charsetmap =>
-                switch (CharSetMap.find(charset, charsetmap)) {
-                | exception Not_found =>
-                  CharSetMap.add(charset, dst, charsetmap)
-                | cur_dst =>
-                  raise(
-                    Non_deterministic(
-                      "cannot add transition from "
-                      ++ Int32.to_string(src)
-                      ++ " for charset "
-                      ++ CharSet.to_string(charset)
-                      ++ " to "
-                      ++ Int32.to_string(dst)
-                      ++ " due to existing transition to "
-                      ++ Int32.to_string(cur_dst),
-                    ),
-                  )
-                }
+              | char_set_map => CharSetMap.add(charset, dst, char_set_map)
               },
-              src_charsetmap_dst,
+              acc,
             ),
-          dstmap,
-          src_charsetmap_dst,
+          CharMap.fold(
+            (char, dst, dstmap) =>
+              StateMap.add(
+                dst,
+                switch (StateMap.find(dst, dstmap)) {
+                | exception Not_found => CharSet.singleton(char)
+                | charset => CharSet.add(char, charset)
+                },
+                dstmap,
+              ),
+            charmap,
+            StateMap.empty,
+          ),
+          acc,
         ),
-      src_dstmap_charset,
+      transitions,
       StateMap.empty,
     );
 
@@ -170,21 +128,21 @@ let to_dot: t => string =
     ++ String.concat(
          "\n",
          List.map(
-           ((src, dst_map)) =>
+           ((src, char_set_map)) =>
              String.concat(
                "\n",
                List.map(
-                 ((dst, char_set)) =>
+                 ((char_set, dst)) =>
                    Int32.to_string(src)
                    ++ "->"
                    ++ Int32.to_string(dst)
                    ++ " [label=\""
                    ++ CharSet.to_string(char_set)
                    ++ "\"];",
-                 StateMap.bindings(dst_map),
+                 CharSetMap.bindings(char_set_map),
                ),
              ),
-           StateMap.bindings(dfa.src_dst_charset),
+           StateMap.bindings(group_by_charset(dfa.transitions)),
          ),
        )
     ++ "\n}\n";
@@ -206,19 +164,29 @@ let to_c: t => string =
              ++ String.concat(
                   "",
                   List.map(
-                    ((char, dst)) =>
-                      "    case '"
-                      ++ Common.escaped_single_quote(char)
-                      ++ "': s++; match = "
+                    ((charset, dst)) =>
+                      String.concat(
+                        "\n",
+                        List.map(
+                          char =>
+                            "    case '"
+                            ++ Common.escaped_single_quote(char)
+                            ++ "':",
+                          CharSet.elements(charset),
+                        ),
+                      )
+                      ++ " s++; match = "
                       ++ (StateSet.mem(dst, dfa.finals) ? "true" : "false")
                       ++ "; goto state"
                       ++ Int32.to_string(dst)
                       ++ "; /* "
-                      ++ Common.escaped(char)
+                      ++ CharSet.to_string(charset)
                       ++ " */\n",
-                    switch (StateMap.find(src, dfa.transitions)) {
+                    switch (
+                      StateMap.find(src, group_by_charset(dfa.transitions))
+                    ) {
                     | exception Not_found => []
-                    | char_map => CharMap.bindings(char_map)
+                    | char_set_map => CharSetMap.bindings(char_set_map)
                     },
                   ),
                 )
@@ -308,12 +276,12 @@ let to_llvm_ir: t => string =
     ++ String.concat(
          "\n",
          List.map(
-           ((src, dsts)) => {
+           ((src, char_set_map)) => {
              let s = Int32.to_string(src);
              String.concat(
                "\n",
                List.map(
-                 dst => {
+                 ((_, dst)) => {
                    let d = Int32.to_string(dst);
                    "state"
                    ++ s
@@ -330,11 +298,11 @@ let to_llvm_ir: t => string =
                    ++ d
                    ++ "\n";
                  },
-                 StateSet.elements(dsts),
+                 CharSetMap.bindings(char_set_map),
                ),
              );
            },
-           StateMap.bindings(dfa.src_dsts),
+           StateMap.bindings(group_by_charset(dfa.transitions)),
          ),
        )
     ++ "\n"
@@ -353,16 +321,16 @@ let to_matrix: t => array(array(string)) =
   dfa => {
     let states = Array.of_list(StateSet.elements(dfa.states));
     let dimx = Array.length(states);
-    let src_charset_dst = to_src_charset_dst(dfa.src_dst_charset);
+    let grouped_transitions = group_by_charset(dfa.transitions);
     let charsetset =
       StateMap.fold(
-        (_, charsetmap, charsetset) =>
+        (_, char_set_map, charsetset) =>
           CharSetMap.fold(
             (charset, _, charsetset) => CharSetSet.add(charset, charsetset),
-            charsetmap,
+            char_set_map,
             charsetset,
           ),
-        src_charset_dst,
+        grouped_transitions,
         CharSetSet.empty,
       );
     let alphabet = Array.of_list(CharSetSet.elements(charsetset));
@@ -378,7 +346,7 @@ let to_matrix: t => array(array(string)) =
         };
         matrix[x][y] = (
           switch (
-            CharSetMap.find(charset, StateMap.find(src, src_charset_dst))
+            CharSetMap.find(charset, StateMap.find(src, grouped_transitions))
           ) {
           | exception Not_found => ""
           | dst => Int32.to_string(dst)
