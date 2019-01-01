@@ -1,6 +1,7 @@
 let test = () => {
   print_endline("testing...");
   Dfa.test();
+  Nfa.test();
   CharSet.test();
   let regex = "0000|0101|1010|1111";
   let dfa = Re0.compile(regex);

@@ -1,10 +1,10 @@
 type state = int32;
 
-type transitions = StateMap.t(CharSetMap.t(StateSet.t));
+type transitions = StateMap.t(CharMap.t(StateSet.t));
 
 type t = {
   states: StateSet.t,
-  alphabet: CharSetSet.t,
+  alphabet: CharSet.t,
   transitions,
   start: StateSet.t,
   finals: StateSet.t,
@@ -12,7 +12,7 @@ type t = {
 
 let singleton = (start: StateSet.t) => {
   states: start,
-  alphabet: CharSetSet.empty,
+  alphabet: CharSet.empty,
   transitions: StateMap.empty,
   start,
   finals: StateSet.empty,
@@ -29,24 +29,24 @@ let set_finals = (finals: StateSet.t, nfa) => {
     ),
 };
 
-let add_transition: ((state, CharSet.t, state), t) => t =
-  ((src, char_set, dst), nfa) => {
+let add_transition: ((state, char, state), t) => t =
+  ((src, char, dst), nfa) => {
     states: StateSet.(nfa.states |> add(src) |> add(dst)),
-    alphabet: CharSetSet.add(char_set, nfa.alphabet),
+    alphabet: CharSet.add(char, nfa.alphabet),
     transitions:
       StateMap.add(
         src,
         switch (StateMap.find(src, nfa.transitions)) {
         | exception Not_found =>
-          CharSetMap.singleton(char_set, StateSet.singleton(dst))
-        | char_set_map =>
-          CharSetMap.add(
-            char_set,
-            switch (CharSetMap.find(char_set, char_set_map)) {
+          CharMap.singleton(char, StateSet.singleton(dst))
+        | char_map =>
+          CharMap.add(
+            char,
+            switch (CharMap.find(char, char_map)) {
             | exception Not_found => StateSet.singleton(dst)
             | dsts => StateSet.add(dst, dsts)
             },
-            char_set_map,
+            char_map,
           )
         },
         nfa.transitions,
@@ -54,6 +54,39 @@ let add_transition: ((state, CharSet.t, state), t) => t =
     start: nfa.start,
     finals: nfa.finals,
   };
+
+let group_by_charset: transitions => StateMap.t(CharSetMap.t(StateSet.t)) =
+  transitions =>
+    StateMap.fold(
+      (src, charmap, acc) =>
+        StateSetMap.fold(
+          (dsts, char_set, acc) =>
+            StateMap.add(
+              src,
+              switch (StateMap.find(src, acc)) {
+              | exception Not_found => CharSetMap.singleton(char_set, dsts)
+              | char_set_map => CharSetMap.add(char_set, dsts, char_set_map)
+              },
+              acc,
+            ),
+          CharMap.fold(
+            (char, dsts, dsts_map) =>
+              StateSetMap.add(
+                dsts,
+                switch (StateSetMap.find(dsts, dsts_map)) {
+                | exception Not_found => CharSet.singleton(char)
+                | char_set => CharSet.add(char, char_set)
+                },
+                dsts_map,
+              ),
+            charmap,
+            StateSetMap.empty,
+          ),
+          acc,
+        ),
+      transitions,
+      StateMap.empty,
+    );
 
 let to_dot: t => string =
   nfa =>
@@ -100,7 +133,7 @@ let to_dot: t => string =
                  CharSetMap.bindings(char_set_map),
                ),
              ),
-           StateMap.bindings(nfa.transitions),
+           StateMap.bindings(group_by_charset(nfa.transitions)),
          ),
        )
     ++ "\n}\n";
@@ -109,7 +142,20 @@ let to_matrix: t => array(array(string)) =
   nfa => {
     let states = Array.of_list(StateSet.elements(nfa.states));
     let dimx = Array.length(states);
-    let alphabet = Array.of_list(CharSetSet.elements(nfa.alphabet));
+    let grouped_transitions = group_by_charset(nfa.transitions);
+    let char_set_set =
+      StateMap.fold(
+        (_, char_set_map, char_set_set) =>
+          CharSetMap.fold(
+            (char_set, _, char_set_set) =>
+              CharSetSet.add(char_set, char_set_set),
+            char_set_map,
+            char_set_set,
+          ),
+        grouped_transitions,
+        CharSetSet.empty,
+      );
+    let alphabet = Array.of_list(CharSetSet.elements(char_set_set));
     let dimy = Array.length(alphabet);
     let matrix = Array.make_matrix(dimx + 1, dimy + 1, "");
     for (x in 1 to dimx) {
@@ -122,7 +168,10 @@ let to_matrix: t => array(array(string)) =
         };
         matrix[x][y] = (
           switch (
-            CharSetMap.find(char_set, StateMap.find(src, nfa.transitions))
+            CharSetMap.find(
+              char_set,
+              StateMap.find(src, grouped_transitions),
+            )
           ) {
           | exception Not_found => ""
           | dsts => StateSet.to_string(dsts)
@@ -144,18 +193,11 @@ let accept: (t, string) => bool =
             StateSet.fold(
               src =>
                 StateSet.union(
-                  switch (StateMap.find(src, nfa.transitions)) {
-                  | exception Not_found => StateSet.empty
-                  | char_set_map =>
-                    CharSetMap.fold(
-                      (_, state_set, dsts) =>
-                        StateSet.union(dsts, state_set),
-                      CharSetMap.filter(
-                        (char_set, _) => CharSet.mem(cur_char, char_set),
-                        char_set_map,
-                      ),
-                      StateSet.empty,
-                    )
+                  try (
+                    StateMap.find(src, nfa.transitions)
+                    |> CharMap.find(cur_char)
+                  ) {
+                  | Not_found => StateSet.empty
                   },
                 ),
               cur_states,
@@ -170,34 +212,13 @@ let accept: (t, string) => bool =
 let test = () => {
   let nfa =
     singleton(StateSet.singleton(Int32.zero))
-    |> add_transition((
-         Int32.of_int(0),
-         CharSet.singleton('a'),
-         Int32.of_int(1),
-       ))
-    |> add_transition((
-         Int32.of_int(0),
-         CharSet.singleton('a'),
-         Int32.of_int(2),
-       ))
-    |> add_transition((
-         Int32.of_int(2),
-         CharSet.singleton('b'),
-         Int32.of_int(3),
-       ))
-    |> add_transition((
-         Int32.of_int(3),
-         CharSet.singleton('c'),
-         Int32.of_int(4),
-       ))
-    |> add_transition((
-         Int32.of_int(4),
-         CharSet.singleton('c'),
-         Int32.of_int(4),
-       ))
+    |> add_transition((Int32.of_int(0), 'a', Int32.of_int(1)))
+    |> add_transition((Int32.of_int(0), 'a', Int32.of_int(2)))
+    |> add_transition((Int32.of_int(2), 'b', Int32.of_int(3)))
+    |> add_transition((Int32.of_int(3), 'c', Int32.of_int(4)))
+    |> add_transition((Int32.of_int(4), 'c', Int32.of_int(4)))
     |> set_finals(StateSet.example([1, 3, 4]));
-
   assert(accept(nfa, "a"));
   assert(accept(nfa, "abccccc"));
-  assert(!accept(nfa, "ab"));
+  assert(accept(nfa, "ab"));
 };
