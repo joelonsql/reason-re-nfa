@@ -69,24 +69,24 @@ let group_by_charset: transitions => StateMap.t(CharSetMap.t(state)) =
     StateMap.fold(
       (src, charmap, acc) =>
         StateMap.fold(
-          (dst, charset, acc) =>
+          (dst, char_set, acc) =>
             StateMap.add(
               src,
               switch (StateMap.find(src, acc)) {
-              | exception Not_found => CharSetMap.singleton(charset, dst)
-              | char_set_map => CharSetMap.add(charset, dst, char_set_map)
+              | exception Not_found => CharSetMap.singleton(char_set, dst)
+              | char_set_map => CharSetMap.add(char_set, dst, char_set_map)
               },
               acc,
             ),
           CharMap.fold(
-            (char, dst, dstmap) =>
+            (char, dst, dst_map) =>
               StateMap.add(
                 dst,
-                switch (StateMap.find(dst, dstmap)) {
+                switch (StateMap.find(dst, dst_map)) {
                 | exception Not_found => CharSet.singleton(char)
-                | charset => CharSet.add(char, charset)
+                | char_set => CharSet.add(char, char_set)
                 },
-                dstmap,
+                dst_map,
               ),
             charmap,
             StateMap.empty,
@@ -164,7 +164,7 @@ let to_c: t => string =
              ++ String.concat(
                   "",
                   List.map(
-                    ((charset, dst)) =>
+                    ((char_set, dst)) =>
                       String.concat(
                         "\n",
                         List.map(
@@ -172,7 +172,7 @@ let to_c: t => string =
                             "    case '"
                             ++ Common.escaped_single_quote(char)
                             ++ "':",
-                          CharSet.elements(charset),
+                          CharSet.elements(char_set),
                         ),
                       )
                       ++ " s++; match = "
@@ -180,7 +180,7 @@ let to_c: t => string =
                       ++ "; goto state"
                       ++ Int32.to_string(dst)
                       ++ "; /* "
-                      ++ CharSet.to_string(charset)
+                      ++ CharSet.to_string(char_set)
                       ++ " */\n",
                     switch (
                       StateMap.find(src, group_by_charset(dfa.transitions))
@@ -322,31 +322,35 @@ let to_matrix: t => array(array(string)) =
     let states = Array.of_list(StateSet.elements(dfa.states));
     let dimx = Array.length(states);
     let grouped_transitions = group_by_charset(dfa.transitions);
-    let charsetset =
+    let char_set_set =
       StateMap.fold(
-        (_, char_set_map, charsetset) =>
+        (_, char_set_map, char_set_set) =>
           CharSetMap.fold(
-            (charset, _, charsetset) => CharSetSet.add(charset, charsetset),
+            (char_set, _, char_set_set) =>
+              CharSetSet.add(char_set, char_set_set),
             char_set_map,
-            charsetset,
+            char_set_set,
           ),
         grouped_transitions,
         CharSetSet.empty,
       );
-    let alphabet = Array.of_list(CharSetSet.elements(charsetset));
+    let alphabet = Array.of_list(CharSetSet.elements(char_set_set));
     let dimy = Array.length(alphabet);
     let matrix = Array.make_matrix(dimx + 1, dimy + 1, "");
     for (x in 1 to dimx) {
       let src = states[x - 1];
       matrix[x][0] = Int32.to_string(src);
       for (y in 1 to dimy) {
-        let charset = alphabet[y - 1];
+        let char_set = alphabet[y - 1];
         if (x == 1) {
-          matrix[0][y] = CharSet.to_string(charset);
+          matrix[0][y] = CharSet.to_string(char_set);
         };
         matrix[x][y] = (
           switch (
-            CharSetMap.find(charset, StateMap.find(src, grouped_transitions))
+            CharSetMap.find(
+              char_set,
+              StateMap.find(src, grouped_transitions),
+            )
           ) {
           | exception Not_found => ""
           | dst => Int32.to_string(dst)
