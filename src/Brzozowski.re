@@ -1,12 +1,18 @@
 /** Brzozowski's DFA minimization algorithm: */;
 
-/** Build an NFA by reversing a DFA, inverting transition arrows,
+/** Build an NFA by assining unique int32 for each DFA StateSet */;
+
+let dfa_to_nfa: Dfa.t => Nfa.t =
+  dfa =>
+  ;
+
+/** Build an reversed NFA by inverting transition arrows,
     turning finals states into start states, and the start state into
     the final state */
 
-let reverse: Dfa.t => Nfa.t =
-  dfa =>
-    Nfa.singleton(dfa.finals)
+let reverse: Nfa.t => Nfa.t =
+  nfa =>
+    Nfa.singleton(nfa.finals)
     |> StateMap.fold(
          (src, char_map, nfa) =>
            CharMap.fold(
@@ -14,9 +20,9 @@ let reverse: Dfa.t => Nfa.t =
              char_map,
              nfa,
            ),
-         dfa.transitions,
+         nfa.transitions,
        )
-    |> Nfa.set_finals(StateSet.singleton(dfa.start));
+    |> Nfa.set_finals(StateSet.singleton(nfa.start));
 
 /** Reverse DFA to build an NFA and determinize, then do the same again */
 

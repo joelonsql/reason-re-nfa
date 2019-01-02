@@ -217,7 +217,7 @@ let test = () => {
     |> add_transition((Int32.of_int(2), 'b', Int32.of_int(3)))
     |> add_transition((Int32.of_int(3), 'c', Int32.of_int(4)))
     |> add_transition((Int32.of_int(4), 'c', Int32.of_int(4)))
-    |> set_finals(StateSet.example([1, 3, 4]));
+    |> set_finals(StateSet.of_ints([1, 3, 4]));
   assert(accept(nfa, "a"));
   assert(accept(nfa, "abccccc"));
   assert(accept(nfa, "ab"));
