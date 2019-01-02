@@ -26,52 +26,44 @@ let set_finals = (finals: StateSetSet.t, dfa) => {
   transitions: dfa.transitions,
   start: dfa.start,
   finals:
+    /** Check all states are valid i.e. exists,
+        find will throw Not_found otherwise. */
     StateSetSet.(
-      elements(finals)
-      |> List.map(s => {
-           print_endline("final state: " ++ StateSet.to_string(s));
-           find(s, dfa.states);
-         })
-      |> of_list
+      elements(finals) |> List.map(s => find(s, dfa.states)) |> of_list
     ),
 };
 
 let add_transition: ((state, char, state), t) => t =
   ((src, char, dst), dfa) => {
-    print_endline(
-      "adding " ++ StateSet.to_string(src) ++ " " ++ StateSet.to_string(dst),
-    );
-    {
-      states: StateSetSet.(dfa.states |> add(src) |> add(dst)),
-      alphabet: CharSet.add(char, dfa.alphabet),
-      transitions:
-        StateSetMap.add(
-          src,
-          switch (StateSetMap.find(src, dfa.transitions)) {
-          | exception Not_found => CharMap.singleton(char, dst)
-          | char_map =>
-            switch (CharMap.find(char, char_map)) {
-            | exception Not_found => CharMap.add(char, dst, char_map)
-            | cur_dst =>
-              raise(
-                Non_deterministic(
-                  "cannot add transition from "
-                  ++ StateSet.to_string(src)
-                  ++ " for char "
-                  ++ String.make(1, char)
-                  ++ " to "
-                  ++ StateSet.to_string(dst)
-                  ++ " due to existing transition to "
-                  ++ StateSet.to_string(cur_dst),
-                ),
-              )
-            }
-          },
-          dfa.transitions,
-        ),
-      start: dfa.start,
-      finals: dfa.finals,
-    };
+    states: StateSetSet.(dfa.states |> add(src) |> add(dst)),
+    alphabet: CharSet.add(char, dfa.alphabet),
+    transitions:
+      StateSetMap.add(
+        src,
+        switch (StateSetMap.find(src, dfa.transitions)) {
+        | exception Not_found => CharMap.singleton(char, dst)
+        | char_map =>
+          switch (CharMap.find(char, char_map)) {
+          | exception Not_found => CharMap.add(char, dst, char_map)
+          | cur_dst =>
+            raise(
+              Non_deterministic(
+                "cannot add transition from "
+                ++ StateSet.to_string(src)
+                ++ " for char "
+                ++ String.make(1, char)
+                ++ " to "
+                ++ StateSet.to_string(dst)
+                ++ " due to existing transition to "
+                ++ StateSet.to_string(cur_dst),
+              ),
+            )
+          }
+        },
+        dfa.transitions,
+      ),
+    start: dfa.start,
+    finals: dfa.finals,
   };
 
 let group_by: transitions => StateSetMap.t(CharSetMap.t(state)) =
@@ -169,7 +161,7 @@ let to_c: t => string =
          List.map(
            src =>
              "  state"
-             ++ StateSet.to_string(src)
+             ++ StateSet.to_identifier(src)
              ++ ":\n"
              ++ "  switch (*s) {\n"
              ++ String.concat(
@@ -191,7 +183,7 @@ let to_c: t => string =
                         StateSetSet.mem(dst, dfa.finals) ? "true" : "false"
                       )
                       ++ "; goto state"
-                      ++ StateSet.to_string(dst)
+                      ++ StateSet.to_identifier(dst)
                       ++ "; /* \""
                       ++ CharSet.to_string(char_set)
                       ++ "\" */\n",
@@ -227,13 +219,13 @@ let to_llvm_ir: t => string =
     ++ (StateSetSet.mem(dfa.start, dfa.finals) ? "1" : "0")
     ++ ", i8* %match, align 1\n"
     ++ "  br label %state"
-    ++ StateSet.to_llvm_ir_identifier(dfa.start)
+    ++ StateSet.to_identifier(dfa.start)
     ++ "\n\n"
     ++ String.concat(
          "\n",
          List.map(
            src => {
-             let s = StateSet.to_llvm_ir_identifier(src);
+             let s = StateSet.to_identifier(src);
              "state"
              ++ s
              ++ ":\n"
@@ -267,7 +259,7 @@ let to_llvm_ir: t => string =
                       ++ ", label %state"
                       ++ s
                       ++ ".goto.state"
-                      ++ StateSet.to_llvm_ir_identifier(dst)
+                      ++ StateSet.to_identifier(dst)
                       ++ " ; \""
                       ++ Common.escaped(char)
                       ++ "\"\n",
@@ -288,12 +280,12 @@ let to_llvm_ir: t => string =
          "\n",
          List.map(
            ((src, char_set_map)) => {
-             let s = StateSet.to_llvm_ir_identifier(src);
+             let s = StateSet.to_identifier(src);
              String.concat(
                "\n",
                List.map(
                  ((_, dst)) => {
-                   let d = StateSet.to_llvm_ir_identifier(dst);
+                   let d = StateSet.to_identifier(dst);
                    "state"
                    ++ s
                    ++ ".goto.state"

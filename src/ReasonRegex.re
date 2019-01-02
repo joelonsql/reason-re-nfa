@@ -3,12 +3,21 @@ let analyze = regexp => {
   let glushkov = Glushkov.compile(parsed);
   let nfa = glushkov.nfa;
   let dfa = RabinScott.determinize(nfa);
-
-  /** let minimize = dfa => reverse(dfa) -> RabinScott.determinize -> reverse -> RabinScott.determinize; */
-  let reversed = Brzozowski.reverse(dfa);
-  let dfa2 = RabinScott.determinize(reversed);
-  let reversed2 = Brzozowski.reverse(dfa2);
-  let dfa_minimal = RabinScott.determinize(reversed2);
+  let nfa' = Brzozowski.dfa_to_nfa(dfa);
+  let nfa'' = Brzozowski.reverse(nfa');
+  let dfa' = RabinScott.determinize(nfa'');
+  let nfa''' = Brzozowski.dfa_to_nfa(dfa');
+  let nfa'''' = Brzozowski.reverse(nfa''');
+  let dfa'' = RabinScott.determinize(nfa'''');
+  let nfa''''' = Brzozowski.dfa_to_nfa(dfa'');
+  /*
+     let nfa' = Brzozowski.dfa_to_nfa(dfa);
+     let nfa'' = Brzozowski.reverse(nfa');
+     let dfa' = RabinScott.determinize(nfa'');
+     let nfa''' = Brzozowski.dfa_to_nfa(dfa');
+     let nfa'''' = Brzozowski.reverse(nfa''');
+     let dfa'' = RabinScott.determinize(nfa'''');
+   */
 
   (
     glushkov.nullable,
@@ -21,15 +30,21 @@ let analyze = regexp => {
     Nfa.to_matrix(nfa),
     Dfa.to_dot(dfa),
     Dfa.to_matrix(dfa),
-    Nfa.to_dot(reversed),
-    Nfa.to_matrix(reversed),
-    Dfa.to_dot(dfa2),
-    Dfa.to_matrix(dfa2),
-    Nfa.to_dot(reversed2),
-    Nfa.to_matrix(reversed2),
-    Dfa.to_dot(dfa_minimal),
-    Dfa.to_matrix(dfa_minimal),
-    Dfa.to_c(dfa_minimal),
-    Dfa.to_llvm_ir(dfa_minimal),
+    Nfa.to_dot(nfa'),
+    Nfa.to_matrix(nfa'),
+    Nfa.to_dot(nfa''),
+    Nfa.to_matrix(nfa''),
+    Dfa.to_dot(dfa'),
+    Dfa.to_matrix(dfa'),
+    Nfa.to_dot(nfa'''),
+    Nfa.to_matrix(nfa'''),
+    Nfa.to_dot(nfa''''),
+    Nfa.to_matrix(nfa''''),
+    Dfa.to_dot(dfa''),
+    Dfa.to_matrix(dfa''),
+    Nfa.to_dot(nfa'''''),
+    Nfa.to_matrix(nfa'''''),
+    Dfa.to_c(RabinScott.determinize(nfa''''')),
+    Dfa.to_llvm_ir(RabinScott.determinize(nfa''''')),
   );
 };

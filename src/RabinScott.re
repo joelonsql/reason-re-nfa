@@ -3,39 +3,42 @@
 let determinize: Nfa.t => Dfa.t =
   nfa => {
     let rec build: (StateSet.t, Dfa.t) => Dfa.t =
-      (dfa_src, dfa) => {
-        dfa
-        |> Dfa.set_finals(
-             if (!StateSet.is_empty(StateSet.inter(dfa_src, nfa.finals))) {
-               StateSetSet.add(dfa_src, dfa.finals);
-             } else {
-               dfa.finals;
-             },
-           )
-        |> CharMap.fold(
-             (char, dfa_dst, dfa) => {
-               let dfa = Dfa.add_transition((dfa_src, char, dfa_dst), dfa);
-               let dfa = build(dfa_dst, dfa);
-               dfa;
-             },
-             StateSet.fold(
-               (nfa_src, dfa_map) => {
-                 let nfa_map =
-                   try (StateMap.find(nfa_src, nfa.transitions)) {
-                   | Not_found => CharMap.empty
-                   };
-
-                 CharMap.union(
-                   (_, dst, dst') => Some(StateSet.union(dst, dst')),
-                   dfa_map,
-                   nfa_map,
-                 );
+      (dfa_src, dfa) =>
+        if (StateSetMap.mem(dfa_src, dfa.transitions)) {
+          dfa;
+        } else {
+          dfa
+          |> Dfa.set_finals(
+               if (!StateSet.is_empty(StateSet.inter(dfa_src, nfa.finals))) {
+                 StateSetSet.add(dfa_src, dfa.finals);
+               } else {
+                 dfa.finals;
                },
-               dfa_src,
-               CharMap.empty,
-             ),
-           );
-      };
+             )
+          |> CharMap.fold(
+               (char, dfa_dst, dfa) => {
+                 let dfa = Dfa.add_transition((dfa_src, char, dfa_dst), dfa);
+                 let dfa = build(dfa_dst, dfa);
+                 dfa;
+               },
+               StateSet.fold(
+                 (nfa_src, dfa_map) => {
+                   let nfa_map =
+                     try (StateMap.find(nfa_src, nfa.transitions)) {
+                     | Not_found => CharMap.empty
+                     };
+
+                   CharMap.union(
+                     (_, dst, dst') => Some(StateSet.union(dst, dst')),
+                     dfa_map,
+                     nfa_map,
+                   );
+                 },
+                 dfa_src,
+                 CharMap.empty,
+               ),
+             );
+        };
 
     build(nfa.start, Dfa.singleton(nfa.start));
   };
