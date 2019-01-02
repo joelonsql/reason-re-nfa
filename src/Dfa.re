@@ -64,7 +64,7 @@ let add_transition: ((state, char, state), t) => t =
     finals: dfa.finals,
   };
 
-let group_by_charset: transitions => StateMap.t(CharSetMap.t(state)) =
+let group_by: transitions => StateMap.t(CharSetMap.t(state)) =
   transitions =>
     StateMap.fold(
       (src, charmap, acc) =>
@@ -142,7 +142,7 @@ let to_dot: t => string =
                  CharSetMap.bindings(char_set_map),
                ),
              ),
-           StateMap.bindings(group_by_charset(dfa.transitions)),
+           StateMap.bindings(group_by(dfa.transitions)),
          ),
        )
     ++ "\n}\n";
@@ -179,12 +179,10 @@ let to_c: t => string =
                       ++ (StateSet.mem(dst, dfa.finals) ? "true" : "false")
                       ++ "; goto state"
                       ++ Int32.to_string(dst)
-                      ++ "; /* "
+                      ++ "; /* \""
                       ++ CharSet.to_string(char_set)
-                      ++ " */\n",
-                    switch (
-                      StateMap.find(src, group_by_charset(dfa.transitions))
-                    ) {
+                      ++ "\" */\n",
+                    switch (StateMap.find(src, group_by(dfa.transitions))) {
                     | exception Not_found => []
                     | char_set_map => CharSetMap.bindings(char_set_map)
                     },
@@ -257,9 +255,9 @@ let to_llvm_ir: t => string =
                       ++ s
                       ++ ".goto.state"
                       ++ Int32.to_string(dst)
-                      ++ " ; "
+                      ++ " ; \""
                       ++ Common.escaped(char)
-                      ++ "\n",
+                      ++ "\"\n",
                     switch (StateMap.find(src, dfa.transitions)) {
                     | exception Not_found => []
                     | char_map => CharMap.bindings(char_map)
@@ -302,7 +300,7 @@ let to_llvm_ir: t => string =
                ),
              );
            },
-           StateMap.bindings(group_by_charset(dfa.transitions)),
+           StateMap.bindings(group_by(dfa.transitions)),
          ),
        )
     ++ "\n"
@@ -321,7 +319,7 @@ let to_matrix: t => array(array(string)) =
   dfa => {
     let states = Array.of_list(StateSet.elements(dfa.states));
     let dimx = Array.length(states);
-    let grouped_transitions = group_by_charset(dfa.transitions);
+    let grouped_transitions = group_by(dfa.transitions);
     let char_set_set =
       StateMap.fold(
         (_, char_set_map, char_set_set) =>

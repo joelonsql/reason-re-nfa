@@ -1,26 +1,5 @@
 /** Conversion to DFA via the powerset construction */;
 
-let flatten_transitions: CharSetMap.t(StateSet.t) => CharMap.t(StateSet.t) =
-  char_map =>
-    CharSetMap.fold(
-      (char_set, state_set, char_map) =>
-        CharSet.fold(
-          (char, char_map) => {
-            let entry =
-              switch (CharMap.find(char, char_map)) {
-              | exception Not_found => StateSet.empty
-              | state_set => state_set
-              };
-
-            CharMap.add(char, StateSet.union(state_set, entry), char_map);
-          },
-          char_set,
-          char_map,
-        ),
-      char_map,
-      CharMap.empty,
-    );
-
 let determinize: Nfa.t => Dfa.t =
   nfa => {
     let fresh = {
@@ -54,11 +33,7 @@ let determinize: Nfa.t => Dfa.t =
             StateSet.fold(
               (s, m) => {
                 let m' =
-                  try (
-                    flatten_transitions(
-                      StateMap.find(s, nfa.Nfa.transitions),
-                    )
-                  ) {
+                  try (StateMap.find(s, nfa.Nfa.transitions)) {
                   | Not_found => CharMap.empty
                   };
 
@@ -89,31 +64,11 @@ let determinize: Nfa.t => Dfa.t =
 let test = () => {
   let nfa =
     Nfa.singleton(StateSet.singleton(Int32.zero))
-    |> Nfa.add_transition((
-         Int32.of_int(0),
-         CharSet.singleton('a'),
-         Int32.of_int(1),
-       ))
-    |> Nfa.add_transition((
-         Int32.of_int(0),
-         CharSet.singleton('a'),
-         Int32.of_int(2),
-       ))
-    |> Nfa.add_transition((
-         Int32.of_int(2),
-         CharSet.singleton('b'),
-         Int32.of_int(3),
-       ))
-    |> Nfa.add_transition((
-         Int32.of_int(3),
-         CharSet.singleton('c'),
-         Int32.of_int(4),
-       ))
-    |> Nfa.add_transition((
-         Int32.of_int(4),
-         CharSet.singleton('c'),
-         Int32.of_int(4),
-       ))
+    |> Nfa.add_transition((Int32.of_int(0), 'a', Int32.of_int(1)))
+    |> Nfa.add_transition((Int32.of_int(0), 'a', Int32.of_int(2)))
+    |> Nfa.add_transition((Int32.of_int(2), 'b', Int32.of_int(3)))
+    |> Nfa.add_transition((Int32.of_int(3), 'c', Int32.of_int(4)))
+    |> Nfa.add_transition((Int32.of_int(4), 'c', Int32.of_int(4)))
     |> Nfa.set_finals(StateSet.example([1, 3, 4]));
 
   let dfa = determinize(nfa);

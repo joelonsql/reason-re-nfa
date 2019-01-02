@@ -10,8 +10,7 @@ let reverse: Dfa.t => Nfa.t =
     |> StateMap.fold(
          (src, char_map, nfa) =>
            CharMap.fold(
-             (char, dst, nfa) =>
-               Nfa.add_transition((dst, CharSet.singleton(char), src), nfa),
+             (char, dst, nfa) => Nfa.add_transition((dst, char, src), nfa),
              char_map,
              nfa,
            ),

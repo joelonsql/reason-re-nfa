@@ -98,14 +98,20 @@ let compile: regex('c) => t =
       Nfa.singleton(StateSet.singleton(start))
       /* Transitions arise from the start state to the initial character sets ... */
       |> LetterSet.fold(
-           ((char_set, state), nfa) =>
-             Nfa.add_transition((start, char_set, state), nfa),
+           ((char_set, state)) =>
+             CharSet.fold(
+               char => Nfa.add_transition((start, char, state)),
+               char_set,
+             ),
            firsts,
          )
       /* .. and between factors (pairs of character sets with a transition between them) */
       |> Letter2Set.fold(
-           (((_, from_state), (char_set, to_state)), nfa) =>
-             Nfa.add_transition((from_state, char_set, to_state), nfa),
+           (((_, from_state), (char_set, to_state))) =>
+             CharSet.fold(
+               char => Nfa.add_transition((from_state, char, to_state)),
+               char_set,
+             ),
            factors,
          )
       /* The final states are the set of 'last' characters in r,

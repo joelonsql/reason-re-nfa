@@ -55,7 +55,7 @@ let add_transition: ((state, char, state), t) => t =
     finals: nfa.finals,
   };
 
-let group_by_charset: transitions => StateMap.t(CharSetMap.t(StateSet.t)) =
+let group_by: transitions => StateMap.t(CharSetMap.t(StateSet.t)) =
   transitions =>
     StateMap.fold(
       (src, charmap, acc) =>
@@ -133,7 +133,7 @@ let to_dot: t => string =
                  CharSetMap.bindings(char_set_map),
                ),
              ),
-           StateMap.bindings(group_by_charset(nfa.transitions)),
+           StateMap.bindings(group_by(nfa.transitions)),
          ),
        )
     ++ "\n}\n";
@@ -142,7 +142,7 @@ let to_matrix: t => array(array(string)) =
   nfa => {
     let states = Array.of_list(StateSet.elements(nfa.states));
     let dimx = Array.length(states);
-    let grouped_transitions = group_by_charset(nfa.transitions);
+    let grouped_transitions = group_by(nfa.transitions);
     let char_set_set =
       StateMap.fold(
         (_, char_set_map, char_set_set) =>
