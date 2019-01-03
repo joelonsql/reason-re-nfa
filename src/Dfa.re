@@ -2,6 +2,13 @@ type state = StateSet.t;
 
 type transitions = StateSetMap.t(CharMap.t(state));
 
+type grouped_transitions = StateSetMap.t(CharSetMap.t(state));
+
+type transitions_switch = {
+  cases: CharSetMap.t(state),
+  default: option((CharSet.t, state)),
+};
+
 exception Non_deterministic(string);
 
 type t = {
@@ -66,7 +73,7 @@ let add_transition: ((state, char, state), t) => t =
     finals: dfa.finals,
   };
 
-let group_by: transitions => StateSetMap.t(CharSetMap.t(state)) =
+let group_by: transitions => grouped_transitions =
   transitions =>
     StateSetMap.fold(
       (src, charmap, acc) =>
@@ -98,6 +105,135 @@ let group_by: transitions => StateSetMap.t(CharSetMap.t(state)) =
       transitions,
       StateSetMap.empty,
     );
+
+let build_transitions_switch:
+  grouped_transitions => StateSetMap.t(transitions_switch) =
+  state_set_map => {
+    StateSetMap.fold(
+      (state_set, char_set_map, state_set_map') => {
+        let (_, _, _, default) =
+          CharSetMap.fold(
+            (char_set, dst, (total, cur_max, cur_max_char_set_dst, default)) => {
+              let count = CharSet.cardinal(char_set);
+              let total = total + count;
+              let (cur_max, cur_max_char_set_dst) =
+                if (count > cur_max) {
+                  (count, Some((char_set, dst)));
+                } else {
+                  (cur_max, cur_max_char_set_dst);
+                };
+              let default =
+                if (total == 255) {
+                  cur_max_char_set_dst;
+                } else {
+                  default;
+                };
+              (total, cur_max, cur_max_char_set_dst, default);
+            },
+            char_set_map,
+            (0, 0, None, None),
+          );
+        StateSetMap.add(
+          state_set,
+          {
+            cases:
+              switch (default) {
+              | None => char_set_map
+              | Some((default_char_set, default_dst)) =>
+                CharSetMap.filter(
+                  (char_set, dst) =>
+                    !(
+                      CharSet.equal(char_set, default_char_set)
+                      && StateSet.equal(dst, default_dst)
+                    ),
+                  char_set_map,
+                )
+              },
+            default,
+          },
+          state_set_map',
+        );
+      },
+      state_set_map,
+      StateSetMap.empty,
+    );
+  };
+
+let to_c: t => string =
+  dfa => {
+    let case: (CharSet.t, StateSet.t) => string =
+      (char_set, dst) =>
+        "s++; match = "
+        ++ (StateSetSet.mem(dst, dfa.finals) ? "true" : "false")
+        ++ "; goto state"
+        ++ StateSet.to_identifier(dst)
+        ++ "; /* \""
+        ++ CharSet.to_string(char_set)
+        ++ "\" */";
+    "bool match_dfa(char *s) {\n"
+    ++ "  bool match = "
+    ++ (StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false")
+    ++ ";\n"
+    ++ String.concat(
+         "",
+         List.map(
+           src =>
+             "  state"
+             ++ StateSet.to_identifier(src)
+             ++ ":\n"
+             ++ "  switch (*s) {\n"
+             ++ (
+               switch (
+                 StateSetMap.find(
+                   src,
+                   build_transitions_switch(group_by(dfa.transitions)),
+                 )
+               ) {
+               | exception Not_found => ""
+               | transitions_switch =>
+                 String.concat(
+                   "\n",
+                   List.map(
+                     ((char_set, dst)) =>
+                       String.concat(
+                         "\n",
+                         List.map(
+                           char =>
+                             "    case '"
+                             ++ Common.escaped_single_quote(char)
+                             ++ "':",
+                           CharSet.elements(char_set),
+                         ),
+                       )
+                       ++ case(char_set, dst),
+                     CharSetMap.bindings(transitions_switch.cases),
+                   ),
+                 )
+                 ++ "\n"
+                 ++ "    case 0: goto done;\n"
+                 ++ "    default: "
+                 ++ (
+                   switch (transitions_switch.default) {
+                   | None => "match = false; goto done;"
+                   | Some((char_set, dst)) => case(char_set, dst)
+                   }
+                 )
+                 ++ "\n"
+               }
+             )
+             ++ "  }\n",
+           StateSetSet.elements(dfa.states),
+         ),
+       )
+    ++ "  done:\n"
+    ++ "  return match;\n"
+    ++ "}\n\n"
+    ++ "int main(int argc, char **argv) {\n"
+    ++ "  char *s = argv[1];\n"
+    ++ "  bool match = match_dfa(s);\n"
+    ++ "  return (int)match;\n"
+    ++ "}";
+  };
 
 let to_dot: t => string =
   dfa =>
@@ -149,65 +285,6 @@ let to_dot: t => string =
          ),
        )
     ++ "\n}\n";
-
-let to_c: t => string =
-  dfa =>
-    "bool match_dfa(char *s) {\n"
-    ++ "  bool match = "
-    ++ (StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false")
-    ++ ";\n"
-    ++ String.concat(
-         "\n",
-         List.map(
-           src =>
-             "  state"
-             ++ StateSet.to_identifier(src)
-             ++ ":\n"
-             ++ "  switch (*s) {\n"
-             ++ String.concat(
-                  "",
-                  List.map(
-                    ((char_set, dst)) =>
-                      String.concat(
-                        "\n",
-                        List.map(
-                          char =>
-                            "    case '"
-                            ++ Common.escaped_single_quote(char)
-                            ++ "':",
-                          CharSet.elements(char_set),
-                        ),
-                      )
-                      ++ " s++; match = "
-                      ++ (
-                        StateSetSet.mem(dst, dfa.finals) ? "true" : "false"
-                      )
-                      ++ "; goto state"
-                      ++ StateSet.to_identifier(dst)
-                      ++ "; /* \""
-                      ++ CharSet.to_string(char_set)
-                      ++ "\" */\n",
-                    switch (StateSetMap.find(src, group_by(dfa.transitions))) {
-                    | exception Not_found => []
-                    | char_set_map => CharSetMap.bindings(char_set_map)
-                    },
-                  ),
-                )
-             ++ "    case 0: goto done;\n"
-             ++ "    default: match = false; goto done;\n"
-             ++ "  }",
-           StateSetSet.elements(dfa.states),
-         ),
-       )
-    ++ "\n"
-    ++ "  done:\n"
-    ++ "  return match;\n"
-    ++ "}\n\n"
-    ++ "int main(int argc, char **argv) {\n"
-    ++ "  char *s = argv[1];\n"
-    ++ "  bool match = match_dfa(s);\n"
-    ++ "  return (int)match;\n"
-    ++ "}";
 
 let to_llvm_ir: t => string =
   dfa =>

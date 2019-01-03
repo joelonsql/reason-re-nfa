@@ -48,4 +48,4 @@ let range_ = (l, h) => {
 
 let range = (l, h) => Char(range_(l, h));
 
-let any = range(Char.chr(0), Char.chr(255));
+let any = range(Char.chr(1), Char.chr(255));

@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        document.getElementById("dfaMinimizedC").innerHTML = re[algoPos];;
+        document.getElementById("dfaMinimizedC").innerHTML = re[algoPos];
         document.getElementById("dfaMinimizedLLVMIR").innerHTML = re[algoPos + 1];
       } catch (e) {
         console.log(e);
