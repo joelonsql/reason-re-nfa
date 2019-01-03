@@ -24,21 +24,6 @@ function renderGraph(id) {
   return;
 }
 
-/*
-document.addEventListener('DOMContentLoaded',
-  function (event) {
-    let drawButtons = document.getElementsByClassName("draw");
-    let renderGraphHandler = function (event) {
-      let id = event.currentTarget.id;
-      renderGraph(id);
-      return;
-    };
-    Array.from(drawButtons).forEach(function (element) {
-      element.addEventListener("click", renderGraphHandler);
-    });
-  });
-*/
-
 let last_regexp_input = '';
 
 document.addEventListener('DOMContentLoaded',
@@ -63,8 +48,8 @@ document.addEventListener('DOMContentLoaded',
           document.getElementById(algoStep + "Dot").innerHTML = "";
           document.getElementById(algoStep + "Graph").innerHTML = "";
         }
-        document.getElementById("dfaMinimizedC").innerHTML = "";
-        document.getElementById("dfaMinimizedLLVMIR").innerHTML = "";
+        //        document.getElementById("dfaMinimizedC").innerHTML = "";
+        //        document.getElementById("dfaMinimizedLLVMIR").innerHTML = "";
         return;
       }
       try {
@@ -117,8 +102,8 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        document.getElementById("dfaMinimizedC").innerHTML = re[algoPos];
-        document.getElementById("dfaMinimizedLLVMIR").innerHTML = re[algoPos + 1];
+        //        document.getElementById("dfaMinimizedC").innerHTML = re[algoPos];
+        //        document.getElementById("dfaMinimizedLLVMIR").innerHTML = re[algoPos + 1];
       } catch (e) {
         console.log(e);
         document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";
