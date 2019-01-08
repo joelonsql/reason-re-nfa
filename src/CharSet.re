@@ -1,5 +1,8 @@
 include Set.Make(Char);
 
+/** range_extract and string_of_range taken from
+    https://www.rosettacode.org/wiki/Range_extraction#OCaml */
+
 let range_extract =
   fun
   | [] => []
@@ -10,6 +13,7 @@ let range_extract =
         } else {
           (k, k, [(i, j), ...ret]);
         };
+
       let (m, n, ret) = List.fold_left(f, (x, x, []), xs);
       List.rev([(m, n), ...ret]);
     };
@@ -25,6 +29,7 @@ let string_of_range = rng => {
         Common.escaped(Char.chr(b)),
       );
     };
+
   String.concat("", List.map(str, rng));
 };
 

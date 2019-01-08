@@ -36,7 +36,7 @@
             <table class="variables">
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="(a|b)*a" /> </td>
+                    <td colspan="2"><input type="text" id="regexp-input" value="(abc|def)g(hij|klm)" /> </td>
                 </tr>
                 <tr>
                     <td>r' </td>
@@ -171,22 +171,20 @@
             </td>
         </tr>
     </table>
-    <div>7. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> NFA:</div>
-    <div style="display: none;"><textarea id="nfa4Dot"></textarea></div>
+    <div>7. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> SFA:</div>
+    <div style="display: none;"><textarea id="sfaDot"></textarea></div>
     <table>
         <tr>
             <td>
-                <div><span id="nfa4Matrix" /></div>
+                <div><span id="sfaMatrix" /></div>
             </td>
             <td>
-                <div id="nfa4Graph"></div>
+                <div id="sfaGraph"></div>
             </td>
         </tr>
     </table>
-    <!--
     <pre id="dfaMinimizedC" class="prettyprint"></pre>
     <pre id="dfaMinimizedLLVMIR" class="code"></pre>
-    -->
 </body>
 
 </html>

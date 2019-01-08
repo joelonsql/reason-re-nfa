@@ -5,7 +5,7 @@ open Regex;
 
     (The modification: we label character sets rather than characters
      to prevent a state explosion.)
- */;
+*/;
 
 type t = {
   nfa: Nfa.t,

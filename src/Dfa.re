@@ -33,8 +33,8 @@ let set_finals = (finals: StateSetSet.t, dfa) => {
   transitions: dfa.transitions,
   start: dfa.start,
   finals:
-    /** Check all states are valid i.e. exists,
-        find will throw Not_found otherwise. */
+    /* Check all states are valid i.e. exists,
+       find will throw Not_found otherwise. */
     StateSetSet.(
       elements(finals) |> List.map(s => find(s, dfa.states)) |> of_list
     ),
@@ -76,7 +76,7 @@ let add_transition: ((state, char, state), t) => t =
 let group_by: transitions => grouped_transitions =
   transitions =>
     StateSetMap.fold(
-      (src, charmap, acc) =>
+      (src, char_map, acc) =>
         StateSetMap.fold(
           (dst, char_set, acc) =>
             StateSetMap.add(
@@ -97,7 +97,7 @@ let group_by: transitions => grouped_transitions =
                 },
                 dst_map,
               ),
-            charmap,
+            char_map,
             StateSetMap.empty,
           ),
           acc,
@@ -108,7 +108,7 @@ let group_by: transitions => grouped_transitions =
 
 let build_transitions_switch:
   grouped_transitions => StateSetMap.t(transitions_switch) =
-  state_set_map => {
+  state_set_map =>
     StateSetMap.fold(
       (state_set, char_set_map, state_set_map') => {
         let (_, _, _, default) =
@@ -122,17 +122,20 @@ let build_transitions_switch:
                 } else {
                   (cur_max, cur_max_char_set_dst);
                 };
+
               let default =
                 if (total == 255) {
                   cur_max_char_set_dst;
                 } else {
                   default;
                 };
+
               (total, cur_max, cur_max_char_set_dst, default);
             },
             char_set_map,
             (0, 0, None, None),
           );
+
         StateSetMap.add(
           state_set,
           {
@@ -157,7 +160,6 @@ let build_transitions_switch:
       state_set_map,
       StateSetMap.empty,
     );
-  };
 
 let to_c: t => string =
   dfa => {
@@ -170,6 +172,7 @@ let to_c: t => string =
         ++ "; /* \""
         ++ CharSet.to_string(char_set)
         ++ "\" */";
+
     "bool match_dfa(char *s) {\n"
     ++ "  bool match = "
     ++ (StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false")
@@ -189,7 +192,7 @@ let to_c: t => string =
                    build_transitions_switch(group_by(dfa.transitions)),
                  )
                ) {
-               | exception Not_found => ""
+               | exception Not_found => "    case 0: goto done;\n    default: match = false; goto done;\n"
                | transitions_switch =>
                  String.concat(
                    "\n",
@@ -299,7 +302,7 @@ let to_llvm_ir: t => string =
     ++ StateSet.to_identifier(dfa.start)
     ++ "\n\n"
     ++ String.concat(
-         "\n",
+         "",
          List.map(
            src => {
              let s = StateSet.to_identifier(src);
@@ -326,26 +329,54 @@ let to_llvm_ir: t => string =
              ++ ".s_ptr, i32 1\n"
              ++ "  switch i32 %state"
              ++ s
-             ++ ".chr_int, label %miss [\n"
-             ++ String.concat(
-                  "",
-                  List.map(
-                    ((char, dst)) =>
-                      "    i32 "
-                      ++ string_of_int(Char.code(char))
-                      ++ ", label %state"
-                      ++ s
-                      ++ ".goto.state"
-                      ++ StateSet.to_identifier(dst)
-                      ++ " ; \""
-                      ++ Common.escaped(char)
-                      ++ "\"\n",
-                    switch (StateSetMap.find(src, dfa.transitions)) {
-                    | exception Not_found => []
-                    | char_map => CharMap.bindings(char_map)
-                    },
-                  ),
-                )
+             ++ ".chr_int, "
+             ++ (
+               switch (
+                 StateSetMap.find(
+                   src,
+                   build_transitions_switch(group_by(dfa.transitions)),
+                 )
+               ) {
+               | exception Not_found => "label %miss [\n"
+               | transitions_switch =>
+                 (
+                   switch (transitions_switch.default) {
+                   | None => "label %miss [\n"
+                   | Some((char_set, dst)) =>
+                     "label %state"
+                     ++ s
+                     ++ ".goto.state"
+                     ++ StateSet.to_identifier(dst)
+                     ++ " [ ; "
+                     ++ CharSet.to_string(char_set)
+                     ++ "\n"
+                   }
+                 )
+                 ++ String.concat(
+                      "\n",
+                      List.map(
+                        ((char_set, dst)) =>
+                          String.concat(
+                            "\n",
+                            List.map(
+                              char =>
+                                "    i32 "
+                                ++ string_of_int(Char.code(char))
+                                ++ ", label %state"
+                                ++ s
+                                ++ ".goto.state"
+                                ++ StateSet.to_identifier(dst)
+                                ++ " ; \""
+                                ++ Common.escaped(char)
+                                ++ "\"\n",
+                              CharSet.elements(char_set),
+                            ),
+                          ),
+                        CharSetMap.bindings(transitions_switch.cases),
+                      ),
+                    )
+               }
+             )
              ++ "    i32 0, label %done\n"
              ++ "  ]\n";
            },
@@ -414,6 +445,7 @@ let to_matrix: t => array(array(string)) =
         grouped_transitions,
         CharSetSet.empty,
       );
+
     let alphabet = Array.of_list(CharSetSet.elements(char_set_set));
     let dimy = Array.length(alphabet);
     let matrix = Array.make_matrix(dimx + 1, dimy + 1, "");
@@ -468,6 +500,7 @@ let test = () => {
     |> add_transition((StateSet.of_ints([1]), 'x', StateSet.of_ints([0])))
     |> add_transition((StateSet.of_ints([1]), 'y', StateSet.of_ints([0])))
     |> set_finals(StateSetSet.singleton(StateSet.of_ints([0])));
+
   assert(accept(dfa, "ax"));
   assert(!accept(dfa, "axb"));
 };

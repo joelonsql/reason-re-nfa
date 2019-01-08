@@ -58,7 +58,7 @@ let add_transition: ((state, char, state), t) => t =
 let group_by: transitions => StateMap.t(CharSetMap.t(StateSet.t)) =
   transitions =>
     StateMap.fold(
-      (src, charmap, acc) =>
+      (src, char_map, acc) =>
         StateSetMap.fold(
           (dsts, char_set, acc) =>
             StateMap.add(
@@ -79,7 +79,7 @@ let group_by: transitions => StateMap.t(CharSetMap.t(StateSet.t)) =
                 },
                 dsts_map,
               ),
-            charmap,
+            char_map,
             StateSetMap.empty,
           ),
           acc,
@@ -155,6 +155,7 @@ let to_matrix: t => array(array(string)) =
         grouped_transitions,
         CharSetSet.empty,
       );
+
     let alphabet = Array.of_list(CharSetSet.elements(char_set_set));
     let dimy = Array.length(alphabet);
     let matrix = Array.make_matrix(dimx + 1, dimy + 1, "");
@@ -218,6 +219,7 @@ let test = () => {
     |> add_transition((Int32.of_int(3), 'c', Int32.of_int(4)))
     |> add_transition((Int32.of_int(4), 'c', Int32.of_int(4)))
     |> set_finals(StateSet.of_ints([1, 3, 4]));
+
   assert(accept(nfa, "a"));
   assert(accept(nfa, "abccccc"));
   assert(accept(nfa, "ab"));
