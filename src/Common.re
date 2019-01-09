@@ -13,7 +13,7 @@ let explode_string = s => {
     if (i < 0) {
       l;
     } else {
-      exp(i - 1, [String.make(1,s.[i]), ...l]);
+      exp(i - 1, [String.make(1, s.[i]), ...l]);
     };
   exp(String.length(s) - 1, []);
 };
@@ -31,17 +31,30 @@ let encode_string_as_int_or_vector = s => {
     if (pos < 0) {
       i;
     } else {
-      exp(pos - 1, Int64.add(i, Int64.shift_left(Int64.of_int(Char.code(s.[pos])), 8*pos)));
+      exp(
+        pos - 1,
+        Int64.add(
+          i,
+          Int64.shift_left(Int64.of_int(Char.code(s.[pos])), 8 * pos),
+        ),
+      );
     };
   let length = String.length(s);
   if (length <= 8) {
     Int64.to_string(exp(String.length(s) - 1, Int64.zero));
   } else {
-    "<" ++ String.concat(",",List.map((chr) => " i8 " ++ string_of_int(Char.code(chr)), explode(s))) ++ " >";
-  }
+    "<"
+    ++ String.concat(
+         ",",
+         List.map(
+           chr => " i8 " ++ string_of_int(Char.code(chr)),
+           explode(s),
+         ),
+       )
+    ++ " >";
+  };
 };
 
 let escape_string = s => {
-  String.concat("",List.map(escaped,explode(s)))
+  String.concat("", List.map(escaped, explode(s)));
 };
-
