@@ -11,6 +11,7 @@ let analyze = regexp => {
   let dfa'' = RabinScott.determinize(nfa'''');
   let sfa =
     Jakobsson.fold_linear_character_sequences(Brzozowski.dfa_to_sfa(dfa''));
+  let sfa2 = Jakobsson.align_strings(sfa);
 
   /*
      let nfa' = Brzozowski.dfa_to_nfa(dfa);
@@ -46,9 +47,9 @@ let analyze = regexp => {
     Dfa.to_matrix(dfa''),
     Sfa.to_dot(sfa),
     Sfa.to_matrix(sfa),
-    /*
-         Sfa.to_c(sfa),
-         Sfa.to_llvm_ir(sfa),
-     */
+    Sfa.to_dot(sfa2),
+    Sfa.to_matrix(sfa2),
+    Sfa.to_c(sfa2),
+    Sfa.to_llvm_ir(sfa2),
   );
 };

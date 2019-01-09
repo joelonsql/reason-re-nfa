@@ -203,7 +203,7 @@ let to_c: t => string =
                          List.map(
                            char =>
                              "    case '"
-                             ++ Common.escaped_single_quote(char)
+                             ++ Common.escaped(char)
                              ++ "':",
                            CharSet.elements(char_set),
                          ),

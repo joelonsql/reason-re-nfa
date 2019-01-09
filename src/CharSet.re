@@ -36,7 +36,7 @@ let string_of_range = rng => {
 let to_string = char_set =>
   switch (cardinal(char_set)) {
   | 0 => "ε"
-  | 1 => Common.escaped_double_quote(choose(char_set))
+  | 1 => Common.escaped(choose(char_set))
   | 256 => "."
   | _ =>
     "["

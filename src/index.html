@@ -36,7 +36,8 @@
             <table class="variables">
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="(a|b)*a" /> </td>
+                    <td colspan="2"><input type="text" id="regexp-input" value="vietnamese|ukraine|romain|ukaine|v" />
+                    </td>
                 </tr>
                 <tr>
                     <td>r' </td>
@@ -183,8 +184,20 @@
             </td>
         </tr>
     </table>
-    <pre id="dfaMinimizedC" class="prettyprint"></pre>
-    <pre id="dfaMinimizedLLVMIR" class="code"></pre>
+    <div>8. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> SFA:</div>
+    <div style="display: none;"><textarea id="sfa2Dot"></textarea></div>
+    <table>
+        <tr>
+            <td>
+                <div><span id="sfa2Matrix" /></div>
+            </td>
+            <td>
+                <div id="sfa2Graph"></div>
+            </td>
+        </tr>
+    </table>
+    <pre id="sfaMinimizedC" class="prettyprint"></pre>
+    <pre id="sfaMinimizedLLVMIR" class="code"></pre>
 </body>
 
 </html>

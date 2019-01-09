@@ -1,8 +1,14 @@
-exception Non_deterministic(string);
-
 type state = int32;
 
 type transitions = StateMap.t(StringMap.t(state));
+
+type grouped_transitions = StateMap.t(StringSetMap.t(state));
+
+type transitions_switch = {
+  cases: StringSetMap.t(state),
+  default: option((StringSet.t, state)),
+  length: int,
+};
 
 type t = {
   states: StateSet.t,
@@ -11,6 +17,10 @@ type t = {
   start: state,
   finals: StateSet.t,
 };
+
+exception Non_deterministic(string);
+exception Unexpected_num_chars(string);
+exception Bug(string);
 
 let singleton = (start: state) => {
   states: StateSet.singleton(start),
@@ -97,7 +107,7 @@ let count_children: (state, t) => int =
     );
   };
 
-let group_by: transitions => StateMap.t(StringSetMap.t(state)) =
+let group_by: transitions => grouped_transitions =
   transitions =>
     StateMap.fold(
       (src, string_map, acc) =>
@@ -225,6 +235,306 @@ let to_matrix: t => array(array(string)) =
       };
     };
     matrix;
+  };
+
+let build_transitions_switch:
+  grouped_transitions => StateMap.t(transitions_switch) =
+  state_map =>
+    StateMap.fold(
+      (state_map, string_set_map, state_map') => {
+        let (_, _, _, default, length) =
+          StringSetMap.fold(
+            (
+              string_set,
+              dst,
+              (total, cur_max, cur_max_string_set_dst, default, length),
+            ) => {
+              let count =
+                StringSet.cardinal(
+                  StringSet.filter(s => String.length(s) == 1, string_set) /* only count one character strings */
+                );
+              let total = total + count;
+              let (cur_max, cur_max_string_set_dst) =
+                if (count > cur_max) {
+                  (count, Some((string_set, dst)));
+                } else {
+                  (cur_max, cur_max_string_set_dst);
+                };
+
+              let default =
+                if (total == 255) {
+                  cur_max_string_set_dst;
+                } else {
+                  default;
+                };
+
+                let length' = String.length(StringSet.choose(string_set));
+                let length = switch (length) {
+                  | 0 => length'
+                  | l when l == length' => length'
+                  | _ => raise(Bug("Length values not same for all strings"))
+                };
+
+              (total, cur_max, cur_max_string_set_dst, default, length);
+            },
+            string_set_map,
+            (0, 0, None, None, 0),
+          );
+
+        StateMap.add(
+          state_map,
+          {
+            cases:
+              switch (default) {
+              | None => string_set_map
+              | Some((default_string_set, default_dst)) =>
+                StringSetMap.filter(
+                  (string_set, dst) =>
+                    !(
+                      StringSet.equal(string_set, default_string_set)
+                      && Int32.compare(dst, default_dst) == 0
+                    ),
+                  string_set_map,
+                )
+              },
+            default,
+            length,
+          },
+          state_map',
+        );
+      },
+      state_map,
+      StateMap.empty,
+    );
+
+let to_c: t => string =
+  dfa => {
+    let case: (StringSet.t, state) => string =
+      (string_set, dst) =>
+        "s++; match = "
+        ++ (StateSet.mem(dst, dfa.finals) ? "true" : "false")
+        ++ "; goto state"
+        ++ Int32.to_string(dst)
+        ++ "; /* \""
+        ++ Common.escape_string(StringSet.to_string(string_set))
+        ++ "\" */";
+
+    "bool match_dfa(string *s) {\n"
+    ++ "  bool match = "
+    ++ (StateSet.mem(dfa.start, dfa.finals) ? "true" : "false")
+    ++ ";\n"
+    ++ String.concat(
+         "",
+         List.map(
+           src =>
+             "  state"
+             ++ Int32.to_string(src)
+             ++ ":\n"
+             ++ "  switch (*s) {\n"
+             ++ (
+               switch (
+                 StateMap.find(
+                   src,
+                   build_transitions_switch(group_by(dfa.transitions)),
+                 )
+               ) {
+               | exception Not_found => "    case 0: goto done;\n    default: match = false; goto done;\n"
+               | transitions_switch =>
+                 String.concat(
+                   "\n",
+                   List.map(
+                     ((string_set, dst)) =>
+                       String.concat(
+                         "\n",
+                         List.map(
+                           string => "    case '" ++ Common.escape_string(string) ++ "': ",
+                           StringSet.elements(string_set),
+                         ),
+                       )
+                       ++ case(string_set, dst),
+                     StringSetMap.bindings(transitions_switch.cases),
+                   ),
+                 )
+                 ++ "\n"
+                 ++ "    case 0: goto done;\n"
+                 ++ "    default: "
+                 ++ (
+                   switch (transitions_switch.default) {
+                   | None => "match = false; goto done;"
+                   | Some((string_set, dst)) => case(string_set, dst)
+                   }
+                 )
+                 ++ "\n"
+               }
+             )
+             ++ "  }\n",
+           StateSet.elements(dfa.states),
+         ),
+       )
+    ++ "  done:\n"
+    ++ "  return match;\n"
+    ++ "}\n\n"
+    ++ "int main(int argc, string **argv) {\n"
+    ++ "  string *s = argv[1];\n"
+    ++ "  bool match = match_dfa(s);\n"
+    ++ "  return (int)match;\n"
+    ++ "}";
+  };
+
+let to_llvm_ir: t => string =
+  dfa => {
+    let state_map_transitions_switch = build_transitions_switch(group_by(dfa.transitions));
+    "define zeroext i1 @match_dfa(i8*) {\n"
+    ++ "  %s = alloca i8*, align 8\n"
+    ++ "  %match = alloca i8, align 1\n"
+    ++ "  store i8* %0, i8** %s, align 8\n"
+    ++ "  store i8 "
+    ++ (StateSet.mem(dfa.start, dfa.finals) ? "1" : "0")
+    ++ ", i8* %match, align 1\n"
+    ++ "  br label %state"
+    ++ Int32.to_string(dfa.start)
+    ++ "\n\n"
+    ++ String.concat(
+         "\n",
+         List.map(
+           src => {
+            let s = Int32.to_string(src);
+             "state" ++ s ++ ":\n"
+             ++ switch (
+                StateMap.find(
+                  src,
+                  state_map_transitions_switch,
+                )
+              ) {
+              | exception Not_found => "  br label %detect_end_of_string\n"
+              | transitions_switch => {
+                   let default_label = switch (transitions_switch.default) {
+                   | None => if (transitions_switch.length == 1) { "miss"; } else { "detect_end_of_string"; }
+                   | Some((_, dst)) => "state" ++ s ++ ".goto.state" ++ Int32.to_string(dst)
+                   };
+                  let itype = switch(transitions_switch.length) {
+                    | n when n > 8 => "<" ++ string_of_int(n) ++ " x i8>"
+                    | n => "i" ++ string_of_int(n*8)
+                  };
+                  let len = string_of_int(transitions_switch.length);
+                  "  %state" ++ s ++ ".s_ptr = load i8*, i8** %s, align 8\n"
+                  ++ "  %state" ++ s ++ ".s_next_ptr = getelementptr inbounds i8, i8* %state" ++ s ++ ".s_ptr, i32 " ++ string_of_int(transitions_switch.length) ++ "\n"
+                  ++ switch(transitions_switch.length) {
+                    | 1 => { "  %state" ++ s ++ ".chr = load i8, i8* %state" ++ s ++ ".s_ptr, align 1\n" }
+                    | n when n >= 2 && n <= 8 => {
+                        "  %state" ++ s ++ ".chr_ptr = bitcast i8* %state" ++ s ++ ".s_ptr to " ++ itype ++ "*\n"
+                        ++ "  %state" ++ s ++ ".chr = load " ++ itype ++ ", " ++ itype ++ "* %state" ++ s ++ ".chr_ptr, align 1\n"
+                    }
+                    | n when n > 8 => {
+                        "  %state" ++ s ++ ".vptr = bitcast i8* %state" ++ s ++ ".s_ptr to " ++ itype ++ "*\n"
+                        ++ "  %state" ++ s ++ ".rhs = load " ++ itype ++ ", " ++ itype ++ "* %state" ++ s ++ ".vptr, align 1\n"
+                    }
+                    | n => raise(Unexpected_num_chars(string_of_int(n)))
+                  }
+                  ++ switch(transitions_switch.length) {
+                    | n when n >= 1 && n <= 8 => {
+                      "  switch " ++ itype ++ " %state" ++ s ++ ".chr, label %" ++ default_label ++ " [\n"
+                    }
+                    | n when n > 8 => ""
+                    | n => raise(Unexpected_num_chars(string_of_int(n)))
+                  }
+                  ++ String.concat(
+                    "",
+                    List.map(
+                      ((string_set, dst)) => {
+                        let d = Int32.to_string(dst);
+                        String.concat(
+                          "",
+                          List.map(
+                            string => {
+                              if (transitions_switch.length != String.length(string)) {
+                                print_endline("transitions_switch.length: " ++ string_of_int(transitions_switch.length) ++ " != String.length(string): " ++ string_of_int(String.length(string)));
+                              }
+                              switch(transitions_switch.length) {
+                                | n when n >= 1 && n <= 8 => {
+                                  "    " ++ itype ++ " " ++ Common.encode_string_as_int_or_vector(string) ++ ", label %state" ++ s ++ ".goto.state" ++ d ++ " ; " ++ Common.escape_string(string) ++ "\n"
+                                }
+                                | n when n > 8 => {
+                                  "  %state" ++ s ++ ".cmp_mask = icmp eq " ++ itype ++ " %state" ++ s ++ ".rhs, " ++ Common.encode_string_as_int_or_vector(string) ++ " ; " ++ Common.escape_string(string) ++ "\n"
+                                  ++ "  %state" ++ s ++ ".cmp_int = bitcast <" ++ len ++ " x i1> %state" ++ s ++ ".cmp_mask to i" ++ len ++ "\n"
+                                  ++ "  %state" ++ s ++ ".is_equal = icmp eq i" ++ len ++ " %state" ++ s ++ ".cmp_int, -1 ; 0b" ++ String.make(transitions_switch.length, '1') ++ "\n"
+                                  ++ "  br i1 %state" ++ s ++ ".is_equal, label %state" ++ s ++ ".goto.state" ++ d ++ ", label %detect_end_of_string\n"
+                                }
+                                | n => raise(Unexpected_num_chars(string_of_int(n)))
+                              }
+                            },
+                            StringSet.elements(string_set),
+                          ),
+                        )
+                      },
+                      StringSetMap.bindings(transitions_switch.cases),
+                    ),
+                  )
+                  ++ switch(transitions_switch.length) {
+                    | n when n == 1 => {
+                        "    " ++ itype ++ " 0, label %done\n"
+                        ++ "  ]\n"
+                    }
+                    | n when n >= 2 && n <= 8 => {
+                        "  ]\n"
+                    }
+                    | n when n > 8 => ""
+                    
+                    | n => raise(Unexpected_num_chars(string_of_int(n)))
+                  }
+                }
+              }
+           },
+           StateSet.elements(dfa.states),
+         )
+       )
+    ++ "\n"
+    ++ String.concat(
+         "\n",
+         List.map(
+           ((src, string_set_map)) => {
+             let s = Int32.to_string(src);
+             String.concat(
+               "\n",
+               List.map(
+                 ((_, dst)) => {
+                   let d = Int32.to_string(dst);
+                   "state" ++ s ++ ".goto.state" ++ d ++ ":\n"
+                   ++ "  store i8* %state" ++ s ++ ".s_next_ptr, i8** %s, align 8\n"
+                   ++ "  store i8 " ++ (StateSet.mem(dst, dfa.finals) ? "1" : "0") ++ ", i8* %match, align 1\n"
+                   ++ "  br label %state" ++ d ++ "\n";
+                 },
+                 StringSetMap.bindings(string_set_map),
+               ),
+             );
+           },
+           StateMap.bindings(group_by(dfa.transitions)),
+         ),
+       )
+    ++ "\n"
+    ++ "detect_end_of_string:\n"
+    ++ "  %s_ptr = load i8*, i8** %s, align 8\n"
+    ++ "  %chr = load i8, i8* %s_ptr, align 1\n"
+    ++ "  %chr_is_zero = icmp eq i8 %chr, 0\n"
+    ++ "  br i1 %chr_is_zero, label %done, label %miss\n"
+    ++ "\n"
+    ++ "miss:\n"
+    ++ "  store i8 0, i8* %match, align 1\n"
+    ++ "  br label %done\n"
+    ++ "\n"
+    ++ "done:\n"
+    ++ "  %match_val = load i8, i8* %match, align 1\n"
+    ++ "  %ret = trunc i8 %match_val to i1\n"
+    ++ "  ret i1 %ret\n"
+    ++ "}\n"
+    ++ "\n"
+    ++ "define i32 @main(i32, i8** nocapture readonly) {\n"
+    ++ "  %argv = getelementptr inbounds i8*, i8** %1, i64 1\n"
+    ++ "  %input_string = load i8*, i8** %argv, align 8\n"
+    ++ "  %matched = tail call zeroext i1 @match_dfa(i8* %input_string)\n"
+    ++ "  %ret = zext i1 %matched to i32\n"
+    ++ "  ret i32 %ret\n"
+    ++  "}\n"
   };
 
 let accept: (t, string) => bool =
