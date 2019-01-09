@@ -49,7 +49,6 @@ let analyze = regexp => {
     Sfa.to_matrix(sfa),
     Sfa.to_dot(sfa2),
     Sfa.to_matrix(sfa2),
-    Sfa.to_c(sfa2),
     Sfa.to_llvm_ir(sfa2),
   );
 };

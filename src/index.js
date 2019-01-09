@@ -102,8 +102,7 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        document.getElementById("sfaMinimizedC").innerHTML = re[algoPos];
-        document.getElementById("sfaMinimizedLLVMIR").innerHTML = re[algoPos + 1];
+        document.getElementById("sfaMinimizedLLVMIR").innerHTML = re[algoPos];
       } catch (e) {
         console.log(e);
         document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";
