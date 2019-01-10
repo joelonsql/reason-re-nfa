@@ -15,9 +15,10 @@ let determinize: Nfa.t => Dfa.t =
                  dfa.finals;
                },
              )
-          |> CharMap.fold(
-               (char, dfa_dst, dfa) => {
-                 let dfa = Dfa.add_transition((dfa_src, char, dfa_dst), dfa);
+          |> StringMap.fold(
+               (string, dfa_dst, dfa) => {
+                 let dfa =
+                   Dfa.add_transition((dfa_src, string, dfa_dst), dfa);
                  let dfa = build(dfa_dst, dfa);
                  dfa;
                },
@@ -25,17 +26,17 @@ let determinize: Nfa.t => Dfa.t =
                  (nfa_src, dfa_map) => {
                    let nfa_map =
                      try (StateMap.find(nfa_src, nfa.transitions)) {
-                     | Not_found => CharMap.empty
+                     | Not_found => StringMap.empty
                      };
 
-                   CharMap.union(
+                   StringMap.union(
                      (_, dst, dst') => Some(StateSet.union(dst, dst')),
                      dfa_map,
                      nfa_map,
                    );
                  },
                  dfa_src,
-                 CharMap.empty,
+                 StringMap.empty,
                ),
              );
         };
@@ -46,11 +47,11 @@ let determinize: Nfa.t => Dfa.t =
 let test = () => {
   let nfa =
     Nfa.singleton(StateSet.singleton(Int32.zero))
-    |> Nfa.add_transition((Int32.of_int(0), 'a', Int32.of_int(1)))
-    |> Nfa.add_transition((Int32.of_int(0), 'a', Int32.of_int(2)))
-    |> Nfa.add_transition((Int32.of_int(2), 'b', Int32.of_int(3)))
-    |> Nfa.add_transition((Int32.of_int(3), 'c', Int32.of_int(4)))
-    |> Nfa.add_transition((Int32.of_int(4), 'c', Int32.of_int(4)))
+    |> Nfa.add_transition((Int32.of_int(0), "a", Int32.of_int(1)))
+    |> Nfa.add_transition((Int32.of_int(0), "a", Int32.of_int(2)))
+    |> Nfa.add_transition((Int32.of_int(2), "b", Int32.of_int(3)))
+    |> Nfa.add_transition((Int32.of_int(3), "c", Int32.of_int(4)))
+    |> Nfa.add_transition((Int32.of_int(4), "c", Int32.of_int(4)))
     |> Nfa.set_finals(StateSet.of_ints([1, 3, 4]));
 
   let dfa = determinize(nfa);

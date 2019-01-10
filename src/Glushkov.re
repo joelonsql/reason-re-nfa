@@ -100,7 +100,8 @@ let compile: regex('c) => t =
       |> LetterSet.fold(
            ((char_set, state)) =>
              CharSet.fold(
-               char => Nfa.add_transition((start, char, state)),
+               char =>
+                 Nfa.add_transition((start, String.make(1, char), state)),
                char_set,
              ),
            firsts,
@@ -109,7 +110,12 @@ let compile: regex('c) => t =
       |> Letter2Set.fold(
            (((_, from_state), (char_set, to_state))) =>
              CharSet.fold(
-               char => Nfa.add_transition((from_state, char, to_state)),
+               char =>
+                 Nfa.add_transition((
+                   from_state,
+                   String.make(1, char),
+                   to_state,
+                 )),
                char_set,
              ),
            factors,

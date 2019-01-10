@@ -7,6 +7,7 @@ type regex('c) =
   | Star(regex('c)): regex('c);
 
 type t = regex(CharSet.t);
+type charset = CharSet.t;
 
 /** Various basic and derived regex combinators */
 
@@ -35,6 +36,12 @@ let opt = t => alt(t, eps);
 
 let empty = Empty;
 
+let oneof = cs =>
+  switch (CharSet.cardinal(cs)) {
+  | 0 => Empty
+  | _ => Char(cs)
+  };
+
 let range_ = (l, h) => {
   let rec loop = (i, h, acc) =>
     if (i == h) {
@@ -48,4 +55,6 @@ let range_ = (l, h) => {
 
 let range = (l, h) => Char(range_(l, h));
 
-let any = range(Char.chr(1), Char.chr(255));
+let any_ = range_(Char.chr(0), Char.chr(255));
+
+let any = Char(any_);

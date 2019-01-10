@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded',
         return;
       }
       last_regexp_input = regex_input;
-      let algoSteps = ['nfa', 'dfa', 'nfa2', 'nfa2rev', 'dfa2', 'nfa3', 'nfa3rev', 'dfaMinimized', 'sfa', 'sfa2'];
+      let algoSteps = ['nfa', 'dfa', 'nfa2', 'nfa2rev', 'dfa2', 'nfa3', 'nfa3rev', 'dfaMinimized'];
       if (regex_input.length == 0) {
         document.getElementById("annotated").innerHTML = "";
         document.getElementById("nullability").innerHTML = "";
@@ -48,8 +48,7 @@ document.addEventListener('DOMContentLoaded',
           document.getElementById(algoStep + "Dot").innerHTML = "";
           document.getElementById(algoStep + "Graph").innerHTML = "";
         }
-        document.getElementById("sfaMinimizedC").innerHTML = "";
-        //        document.getElementById("sfaMinimizedLLVMIR").innerHTML = "";
+        document.getElementById("LLVMIR").innerHTML = "";
         return;
       }
       try {
@@ -102,7 +101,7 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        document.getElementById("sfaMinimizedLLVMIR").innerHTML = re[algoPos];
+        document.getElementById("LLVMIR").innerHTML = re[algoPos];
       } catch (e) {
         console.log(e);
         document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";
