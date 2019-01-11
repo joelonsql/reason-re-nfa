@@ -55,6 +55,6 @@ let range_ = (l, h) => {
 
 let range = (l, h) => Char(range_(l, h));
 
-let any_ = range_(Char.chr(0), Char.chr(255));
+let any_ = range_(Char.chr(1), Char.chr(255));
 
 let any = Char(any_);

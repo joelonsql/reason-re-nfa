@@ -144,7 +144,7 @@ let unparse = (~complement=false, set: CharSet.t) => {
     pr(
       "[%s%c-%c]",
       if (complement) {""} else {"^"},
-      Char.chr(0),
+      Char.chr(1),
       Char.chr(255),
     )
   };
