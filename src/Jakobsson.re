@@ -1,5 +1,5 @@
-let fold_linear_character_sequences: Nfa.t => Nfa.t =
-  input_nfa => {
+let fold_linear_character_sequences: (Nfa.t, int) => Nfa.t =
+  (input_nfa, max_word_size) => {
     let rec fold_linear_character_sequences:
       (Nfa.state, string, Nfa.state, Nfa.t) => Nfa.t =
       (src, string, dst, nfa) =>
@@ -9,7 +9,7 @@ let fold_linear_character_sequences: Nfa.t => Nfa.t =
           let (next_string, next_dsts) =
             StringMap.choose(StateMap.find(dst, input_nfa.transitions));
           let (src, string, nfa) =
-            if (String.length(string) == 8) {
+            if (String.length(string) == max_word_size) {
               (dst, "", Nfa.add_transition((src, string, dst), nfa));
             } else {
               (src, string, nfa);

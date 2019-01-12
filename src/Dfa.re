@@ -327,66 +327,77 @@ let build_transitions_switch:
       StateSetMap.empty,
     );
 
-let ll_match_dfa_head = (accept_empty, start_state) => {j|
-  define zeroext i1 @match_dfa(i8*) {
-    %s = alloca i8*, align 8
-    %match = alloca i8, align 1
-    store i8* %0, i8** %s, align 8
-    store i8 $accept_empty, i8* %match, align 1
-    br label %$start_state
-  |j};
+let ll_match_dfa = (accept_empty, start_state, states) => {j|
+define zeroext i1 @match_dfa(i8*) {
+  %s = alloca i8*, align 8
+  %match = alloca i8, align 1
+  store i8* %0, i8** %s, align 8
+  store i8 $accept_empty, i8* %match, align 1
+  br label %$start_state
 
-let ll_match_dfa_foot = () => {j|
-  detect_end_of_string:
-    %s_ptr = load i8*, i8** %s, align 8
-    %chr = load i8, i8* %s_ptr, align 1
-    %chr_is_zero = icmp eq i8 %chr, 0
-    br i1 %chr_is_zero, label %done, label %miss
+$states
 
-  miss:
-    store i8 0, i8* %match, align 1
-    br label %done
+detect_end_of_string:
+  %s_ptr = load i8*, i8** %s, align 8
+  %chr = load i8, i8* %s_ptr, align 1
+  %chr_is_zero = icmp eq i8 %chr, 0
+  br i1 %chr_is_zero, label %done, label %miss
 
-  done:
-    %match_val = load i8, i8* %match, align 1
-    %ret = trunc i8 %match_val to i1
-    ret i1 %ret
-  }
+miss:
+  store i8 0, i8* %match, align 1
+  br label %done
 
-  define i32 @main(i32, i8** nocapture readonly) {
-    %argv = getelementptr inbounds i8*, i8** %1, i64 1
-    %input_string = load i8*, i8** %argv, align 8
-    %matched = tail call zeroext i1 @match_dfa(i8* %input_string)
-    %ret = zext i1 %matched to i32
-    ret i32 %ret
-  };
-  |j};
+done:
+  %match_val = load i8, i8* %match, align 1
+  %ret = trunc i8 %match_val to i1
+  ret i1 %ret
+}
+
+define i32 @main(i32, i8** nocapture readonly) {
+  %argv = getelementptr inbounds i8*, i8** %1, i64 1
+  %input_string = load i8*, i8** %argv, align 8
+  %matched = tail call zeroext i1 @match_dfa(i8* %input_string)
+  %ret = zext i1 %matched to i32
+  ret i32 %ret
+}
+|j};
+
+let ll_states = (src_state, str_lens) => {j|
+$src_state:
+  %$src_state.s_ptr = load i8*, i8** %s, align 8
+  $str_lens
+  br label %detect_end_of_string
+|j};
 
 let ll_load = (str_len, itype, src_state) =>
   switch (str_len) {
   | 1 => {j|
-    %$src_state.$str_len.chr = load i8, i8* %$src_state.s_ptr, align 1
+  %$src_state.$str_len.chr = load i8, i8* %$src_state.s_ptr, align 1
+  %$src_state.$str_len.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
     |j}
-  | n when n > 1 && n < 8 => {j|
-    %$src_state.$str_len.chr_ptr = bitcast i8* %$src_state.s_ptr to $itype*
-    %$src_state.$str_len.chr = load $itype, $itype* %$src_state.$str_len.chr_ptr, align 1
+  | n when n > 1 && n <= 8 => {j|
+  %$src_state.$str_len.chr_ptr = bitcast i8* %$src_state.s_ptr to $itype*
+  %$src_state.$str_len.chr = load $itype, $itype* %$src_state.$str_len.chr_ptr, align 1
+  %$src_state.$str_len.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
     |j}
-  | n when n >= 8 => {j|
-    %$src_state.$str_len.vptr = bitcast i8* %$src_state.s_ptr to $itype*
-    %$src_state.$str_len.rhs = load $itype, $itype* %$src_state.$str_len.vptr, align 1
+  | n when n > 8 => {j|
+  %$src_state.$str_len.vptr = bitcast i8* %$src_state.s_ptr to $itype*
+  %$src_state.$str_len.rhs = load $itype, $itype* %$src_state.$str_len.vptr, align 1
+  %$src_state.$str_len.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
 
-let ll_switch = (str_len, cases, itype, src_state) =>
+let ll_switch = (str_len, cases, itype, src_state, goto_dsts) =>
   switch (str_len) {
-  | n when n >= 1 && n < 8 => {j|
-    switch $itype %$src_state.$str_len.chr, label %$src_state.$str_len.default [
-      $cases
-    ]
-    $src_state.$str_len.default:
+  | n when n >= 1 && n <= 8 => {j|
+  switch $itype %$src_state.$str_len.chr, label %$src_state.$str_len.default [
+    $cases
+  ]
+$goto_dsts
+$src_state.$str_len.default:
     |j}
-  | n when n >= 8 => {j|
+  | n when n > 8 => {j|
     $cases
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
@@ -395,18 +406,32 @@ let ll_switch = (str_len, cases, itype, src_state) =>
 let ll_switch_case =
     (i, str_len, itype, ival, src_state, dst_state, string_escaped, bits) =>
   switch (str_len) {
-  | n when n >= 1 && n < 8 => {j|
-      $itype $ival, label %$src_state.goto.$dst_state ; $string_escaped
+  | n when n >= 1 && n <= 8 => {j|
+    $itype $ival, label %$src_state.$str_len.goto.$dst_state ; $string_escaped
     |j}
-  | n when n >= 8 => {j|
-      %$src_state.$str_len.$i.cmp_mask = icmp eq $itype %$src_state.$str_len.rhs, $ival ; $string_escaped
-      %$src_state.$str_len.$i.cmp_int = bitcast <$str_len x i1> %$src_state.$str_len.$i.cmp_mask to i$str_len
-      %$src_state.$str_len.$i.is_equal = icmp eq i$str_len %$src_state.$str_len.$i.cmp_int, -1 ; 0b$bits
-      br i1 %$src_state.$str_len.$i.is_equal, label %$src_state.goto.$dst_state, label %$src_state.$str_len.$i.try_next
-      $src_state.$str_len.$i.try_next:
+  | n when n > 8 => {j|
+  %$src_state.$str_len.$i.cmp_mask = icmp eq $itype %$src_state.$str_len.rhs, $ival ; $string_escaped
+  %$src_state.$str_len.$i.cmp_int = bitcast <$str_len x i1> %$src_state.$str_len.$i.cmp_mask to i$str_len
+  %$src_state.$str_len.$i.is_equal = icmp eq i$str_len %$src_state.$str_len.$i.cmp_int, -1 ; 0b$bits
+  br i1 %$src_state.$str_len.$i.is_equal, label %$src_state.$str_len.goto.$dst_state, label %$src_state.$str_len.$i.try_next
+$src_state.$str_len.$i.try_next:
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
+
+let ll_goto_state = (str_len, src_state, dst_state, in_accepting_state) => {j|
+$src_state.$str_len.goto.$dst_state:
+  store i8* %$src_state.$str_len.next_ptr, i8** %s, align 8
+  store i8 $in_accepting_state, i8* %match, align 1
+  br label %$dst_state
+    |j};
+
+let ll_state_goto_handlers = goto_dsts => {
+  String.concat(
+    "",
+    List.map(((_, llvmir)) => llvmir, StateSetMap.bindings(goto_dsts)),
+  );
+};
 
 let to_llvm_ir: t => string =
   dfa => {
@@ -429,9 +454,9 @@ let to_llvm_ir: t => string =
                     } else {
                       "i" ++ string_of_int(str_len * 8);
                     };
-                  let (_, cases) =
+                  let (_, cases, goto_dsts) =
                     StringMap.fold(
-                      (string, dst, (i, acc)) => {
+                      (string, dst, (i, acc, goto_dsts)) => {
                         assert(String.length(string) == str_len);
                         let dst_state = StateSet.to_identifier(dst);
                         let ival =
@@ -453,18 +478,35 @@ let to_llvm_ir: t => string =
                             ),
                             ...acc,
                           ],
+                          if (StateSetMap.mem(dst, goto_dsts)) {
+                            goto_dsts;
+                          } else {
+                            let in_accepting_state =
+                              StateSetSet.mem(dst, dfa.finals) ? "1" : "0";
+                            StateSetMap.add(
+                              dst,
+                              ll_goto_state(
+                                str_len,
+                                src_state,
+                                dst_state,
+                                in_accepting_state,
+                              ),
+                              goto_dsts,
+                            );
+                          },
                         );
                       },
                       string_map,
-                      (0, []),
+                      (0, [], StateSetMap.empty),
                     );
                   [
                     ll_load(str_len, itype, src_state)
                     ++ ll_switch(
                          str_len,
-                         String.concat("", cases),
+                         String.concat("", List.rev(cases)),
                          itype,
                          src_state,
+                         ll_state_goto_handlers(goto_dsts),
                        ),
                     ...acc,
                   ];
@@ -474,21 +516,13 @@ let to_llvm_ir: t => string =
                 },
                 [],
               );
-            "\n"
-            ++ src_state
-            ++ ":\n"
-            ++ String.concat("", str_lens)
-            ++ "\n    br label %detect_end_of_string\n";
+            ll_states(src_state, String.concat("", str_lens));
           },
           StateSetSet.elements(dfa.states),
         ),
       );
-    ll_match_dfa_head(accept_empty, start_state)
-    ++ match_dfa_body
-    ++ ll_match_dfa_foot();
+    ll_match_dfa(accept_empty, start_state, match_dfa_body);
   };
-
-let ll_state_goto_handlers = transitions => {};
 
 let accept: (t, string) => bool =
   (dfa, input) => {
