@@ -362,11 +362,12 @@ define i32 @main(i32, i8** nocapture readonly) {
 }
 |j};
 
-let ll_states = (src_state, str_lens) => {j|
+let ll_states = (src_state, switch_state, goto_dsts) => {j|
 $src_state:
   %$src_state.s_ptr = load i8*, i8** %s, align 8
-  $str_lens
-  br label %detect_end_of_string
+  $switch_state
+   br label %detect_end_of_string
+   $goto_dsts
 |j};
 
 let ll_load = (str_len, itype, src_state) =>
@@ -388,17 +389,16 @@ let ll_load = (str_len, itype, src_state) =>
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
 
-let ll_switch = (str_len, cases, itype, src_state, goto_dsts) =>
+let ll_switch = (str_len, cases, itype, src_state) =>
   switch (str_len) {
   | n when n >= 1 && n <= 8 => {j|
   switch $itype %$src_state.$str_len.chr, label %$src_state.$str_len.default [
     $cases
   ]
-$goto_dsts
 $src_state.$str_len.default:
     |j}
   | n when n > 8 => {j|
-    $cases
+$cases
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
@@ -444,9 +444,9 @@ let to_llvm_ir: t => string =
         List.map(
           src => {
             let src_state = StateSet.to_identifier(src);
-            let str_lens =
+            let (switch_states, list_goto_dsts) =
               StrLenMap.fold(
-                (str_len, string_map, acc) => {
+                (str_len, string_map, (switch_states, list_goto_dsts)) => {
                   let str_len = Int32.to_int(str_len);
                   let itype =
                     if (str_len > 8) {
@@ -499,24 +499,30 @@ let to_llvm_ir: t => string =
                       string_map,
                       (0, [], StateSetMap.empty),
                     );
-                  [
-                    ll_load(str_len, itype, src_state)
-                    ++ ll_switch(
-                         str_len,
-                         String.concat("", List.rev(cases)),
-                         itype,
-                         src_state,
-                         ll_state_goto_handlers(goto_dsts),
-                       ),
-                    ...acc,
-                  ];
+                  (
+                    [
+                      ll_load(str_len, itype, src_state)
+                      ++ ll_switch(
+                           str_len,
+                           String.concat("", List.rev(cases)),
+                           itype,
+                           src_state,
+                         ),
+                      ...switch_states,
+                    ],
+                    [ll_state_goto_handlers(goto_dsts), ...list_goto_dsts],
+                  );
                 },
                 try (StateSetMap.find(src, transitions)) {
                 | Not_found => StrLenMap.empty
                 },
-                [],
+                ([], []),
               );
-            ll_states(src_state, String.concat("", str_lens));
+            ll_states(
+              src_state,
+              String.concat("", switch_states),
+              String.concat("", list_goto_dsts),
+            );
           },
           StateSetSet.elements(dfa.states),
         ),

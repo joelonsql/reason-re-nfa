@@ -1,27 +1,20 @@
-let fold_linear_character_sequences: (Nfa.t, int) => Nfa.t =
-  (input_nfa, max_word_size) => {
+let fold_linear_character_sequences: Nfa.t => Nfa.t =
+  input_nfa => {
     let rec fold_linear_character_sequences:
-      (Nfa.state, string, Nfa.state, Nfa.t) => Nfa.t =
-      (src, string, dst, nfa) =>
+      (Nfa.state, string, Nfa.state) => (Nfa.state, string, Nfa.state) =
+      (src, string, dst) =>
         if (Nfa.count_parents(dst, input_nfa) == 1
             && Nfa.count_children(dst, input_nfa) == 1
             && !StateSet.mem(dst, input_nfa.finals)) {
-          let (next_string, next_dsts) =
+          let (next_string, next_dst) =
             StringMap.choose(StateMap.find(dst, input_nfa.transitions));
-          let (src, string, nfa) =
-            if (String.length(string) == max_word_size) {
-              (dst, "", Nfa.add_transition((src, string, dst), nfa));
-            } else {
-              (src, string, nfa);
-            };
           fold_linear_character_sequences(
             src,
             string ++ next_string,
-            StateSet.choose_strict(next_dsts),
-            nfa,
+            StateSet.choose_strict(next_dst),
           );
         } else {
-          Nfa.add_transition((src, string, dst), nfa);
+          (src, string, dst);
         };
 
     let output_nfa =
@@ -37,7 +30,10 @@ let fold_linear_character_sequences: (Nfa.t, int) => Nfa.t =
                  (string, dsts, nfa) =>
                    StateSet.fold(
                      (dst, nfa) =>
-                       fold_linear_character_sequences(src, string, dst, nfa),
+                       Nfa.add_transition(
+                         fold_linear_character_sequences(src, string, dst),
+                         nfa,
+                       ),
                      dsts,
                      nfa,
                    ),

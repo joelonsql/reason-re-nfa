@@ -32,6 +32,11 @@ let choose_strict: t => int32 =
     | 0 => raise(NoElement("Expected 1 element, got 0"))
     | n =>
       raise(
-        MultipleElements("Expected 1 element, got " ++ string_of_int(n)),
+        MultipleElements(
+          "Expected 1 element, got "
+          ++ string_of_int(n)
+          ++ " : "
+          ++ to_string(state_set),
+        ),
       )
     };
