@@ -1,8 +1,8 @@
-import * as Test from "./Test.bs.js";
+import * as WebAssemblyText from "./wast.js";
 
 document.addEventListener('DOMContentLoaded',
-function(event){
-    Test.test();
-});
+    function (event) {
+        console.log("foo");
+    });
 
-export {}
+export { }

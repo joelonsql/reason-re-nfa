@@ -12,16 +12,6 @@
     <script src="../treant-js-master/Treant.js"></script>
     <script src="../treant-js-master/vendor/jquery.min.js"></script>
     <script src="../treant-js-master/vendor/jquery.easing.js"></script>
-    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
-    <title>Convert regular expressions to NFAs</title>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-129105223-1"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', 'UA-129105223-1');
-    </script>
 </head>
 
 <body>
@@ -35,8 +25,14 @@
         <form id="regexp-to-nfa-form" autocomplete="off">
             <table class="variables">
                 <tr>
+                    <td>input</td>
+                    <td colspan="2"><input type="text" id="text-input" value="aaaaaa" />
+                        <span id="regexp-result" />
+                    </td>
+                </tr>
+                <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="(dooooooc|doooooocx|xml)*" />
+                    <td colspan="2"><input type="text" id="regexp-input" value="a?a?a?a?a?a?aaaaaa" />
                     </td>
                 </tr>
                 <tr>
@@ -197,6 +193,8 @@
         </tr>
     </table>
     <pre id="LLVMIR" class="code"></pre>
+    <pre id="JS" class="code"></pre>
+    <div style="display: none;"><textarea id="match_dfa"></textarea></div>
 </body>
 
 </html>

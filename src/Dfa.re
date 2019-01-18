@@ -362,29 +362,54 @@ define i32 @main(i32, i8** nocapture readonly) {
 }
 |j};
 
+let js_match_dfa = (accept_empty, start_state, states) => {j|
+  let i = 0;
+  let state = $start_state;
+  let match = $accept_empty;
+  let length = s.length;
+  while (true) {
+    loop_switch:
+    switch (state) {
+      case -1:
+        if (i >= length) {
+          /* end of string reached */
+          return match;
+        } else {
+          /* string did not match */
+          return false;
+        }
+$states
+    }
+  }
+|j};
+
 let ll_states = (src_state, switch_state, goto_dsts) => {j|
 $src_state:
   %$src_state.s_ptr = load i8*, i8** %s, align 8
   $switch_state
-   br label %detect_end_of_string
-   $goto_dsts
+  $goto_dsts
+|j};
+
+let js_states = (src_state, switch_state) => {j|
+case $src_state:
+$switch_state
 |j};
 
 let ll_load = (str_len, itype, src_state) =>
   switch (str_len) {
   | 1 => {j|
-  %$src_state.$str_len.chr = load i8, i8* %$src_state.s_ptr, align 1
-  %$src_state.$str_len.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
+  %$src_state.chr = load i8, i8* %$src_state.s_ptr, align 1
+  %$src_state.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
     |j}
   | n when n > 1 && n <= 8 => {j|
-  %$src_state.$str_len.chr_ptr = bitcast i8* %$src_state.s_ptr to $itype*
-  %$src_state.$str_len.chr = load $itype, $itype* %$src_state.$str_len.chr_ptr, align 1
-  %$src_state.$str_len.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
+  %$src_state.chr_ptr = bitcast i8* %$src_state.s_ptr to $itype*
+  %$src_state.chr = load $itype, $itype* %$src_state.chr_ptr, align 1
+  %$src_state.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
     |j}
   | n when n > 8 => {j|
-  %$src_state.$str_len.vptr = bitcast i8* %$src_state.s_ptr to $itype*
-  %$src_state.$str_len.rhs = load $itype, $itype* %$src_state.$str_len.vptr, align 1
-  %$src_state.$str_len.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
+  %$src_state.vptr = bitcast i8* %$src_state.s_ptr to $itype*
+  %$src_state.rhs = load $itype, $itype* %$src_state.vptr, align 1
+  %$src_state.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
@@ -392,41 +417,82 @@ let ll_load = (str_len, itype, src_state) =>
 let ll_switch = (str_len, cases, itype, src_state) =>
   switch (str_len) {
   | n when n >= 1 && n <= 8 => {j|
-  switch $itype %$src_state.$str_len.chr, label %$src_state.$str_len.default [
+  switch $itype %$src_state.chr, label %detect_end_of_string [
     $cases
   ]
-$src_state.$str_len.default:
     |j}
   | n when n > 8 => {j|
 $cases
+br label %detect_end_of_string
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
+
+let js_switch = (str_len, cases) => {
+  let exp =
+    switch (str_len) {
+    | 1 => "s.charCodeAt(i++)"
+    | n when n > 1 => {j|s.substring(i, i += $str_len)|j}
+    | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
+    };
+  {j|
+        switch ($exp) {
+          $cases
+          default:
+            state = -1;
+            break loop_switch;
+        }
+  |j};
+};
 
 let ll_switch_case =
     (i, str_len, itype, ival, src_state, dst_state, string_escaped, bits) =>
   switch (str_len) {
   | n when n >= 1 && n <= 8 => {j|
-    $itype $ival, label %$src_state.$str_len.goto.$dst_state ; $string_escaped
+    $itype $ival, label %$src_state.goto.$dst_state ; $string_escaped
     |j}
   | n when n > 8 => {j|
-  %$src_state.$str_len.$i.cmp_mask = icmp eq $itype %$src_state.$str_len.rhs, $ival ; $string_escaped
-  %$src_state.$str_len.$i.cmp_int = bitcast <$str_len x i1> %$src_state.$str_len.$i.cmp_mask to i$str_len
-  %$src_state.$str_len.$i.is_equal = icmp eq i$str_len %$src_state.$str_len.$i.cmp_int, -1 ; 0b$bits
-  br i1 %$src_state.$str_len.$i.is_equal, label %$src_state.$str_len.goto.$dst_state, label %$src_state.$str_len.$i.try_next
-$src_state.$str_len.$i.try_next:
+  %$src_state.$i.cmp_mask = icmp eq $itype %$src_state.rhs, $ival ; $string_escaped
+  %$src_state.$i.cmp_int = bitcast <$str_len x i1> %$src_state.$i.cmp_mask to i$str_len
+  %$src_state.$i.is_equal = icmp eq i$str_len %$src_state.$i.cmp_int, -1 ; 0b$bits
+  br i1 %$src_state.$i.is_equal, label %$src_state.goto.$dst_state, label %$src_state.$i.try_next
+$src_state.$i.try_next:
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
 
-let ll_goto_state = (str_len, src_state, dst_state, in_accepting_state) => {j|
-$src_state.$str_len.goto.$dst_state:
-  store i8* %$src_state.$str_len.next_ptr, i8** %s, align 8
+let js_switch_case =
+    (
+      ival,
+      src_state,
+      dst_state,
+      string_escaped,
+      in_accepting_state,
+      inline_or_goto,
+    ) => {j|
+          case $ival:
+            /* $src_state -($string_escaped)-> $dst_state */
+            match = $in_accepting_state;
+            $inline_or_goto
+    |j};
+
+let js_switch_case_state = (src_state, code) => {j|
+      case $src_state: $code
+|j};
+
+let js_goto_state = dst_state => {j|
+            state = $dst_state;
+            break loop_switch;
+|j};
+
+let ll_goto_state = (src_state, dst_state, in_accepting_state) => {j|
+$src_state.goto.$dst_state:
+  store i8* %$src_state.next_ptr, i8** %s, align 8
   store i8 $in_accepting_state, i8* %match, align 1
   br label %$dst_state
     |j};
 
-let ll_state_goto_handlers = goto_dsts => {
+let state_goto_handlers = goto_dsts => {
   String.concat(
     "",
     List.map(((_, llvmir)) => llvmir, StateSetMap.bindings(goto_dsts)),
@@ -486,7 +552,6 @@ let to_llvm_ir: t => string =
                             StateSetMap.add(
                               dst,
                               ll_goto_state(
-                                str_len,
                                 src_state,
                                 dst_state,
                                 in_accepting_state,
@@ -510,7 +575,7 @@ let to_llvm_ir: t => string =
                          ),
                       ...switch_states,
                     ],
-                    [ll_state_goto_handlers(goto_dsts), ...list_goto_dsts],
+                    [state_goto_handlers(goto_dsts), ...list_goto_dsts],
                   );
                 },
                 try (StateSetMap.find(src, transitions)) {
@@ -528,6 +593,116 @@ let to_llvm_ir: t => string =
         ),
       );
     ll_match_dfa(accept_empty, start_state, match_dfa_body);
+  };
+
+let to_js: t => string =
+  dfa => {
+    let transitions = group_by_str_len(dfa.transitions);
+    let rec build_state: (state, StateSetSet.t) => (string, StateSetSet.t) =
+      (src, todo) => {
+        let src_state = Int32.to_string(StateSet.choose_strict(src));
+        if (!StateSetMap.mem(src, transitions)) {
+          (
+            {j|
+            state = -1;
+            break loop_switch;
+            |j},
+            todo,
+          );
+        } else {
+          let (str_len, string_map) =
+            StrLenMap.choose_strict(StateSetMap.find(src, transitions));
+          let str_len = Int32.to_int(str_len);
+          let (cases, todo) =
+            StringMap.fold(
+              (string, dst, (cases, todo)) => {
+                assert(String.length(string) == str_len);
+                let ival =
+                  str_len == 1 ?
+                    string_of_int(Char.code(string.[0])) : {j|"$string"|j};
+                let string_escaped = Common.escape_string(string);
+                let dst_state = Int32.to_string(StateSet.choose_strict(dst));
+                let in_accepting_state =
+                  StateSetSet.mem(dst, dfa.finals) ? "true" : "false";
+                let (inline_or_goto, todo) =
+                  if (count_parents(dst, dfa) == 1
+                      && !StateSet.equal(dst, dfa.start)) {
+                    build_state(dst, todo);
+                  } else {
+                    (js_goto_state(dst_state), StateSetSet.add(dst, todo));
+                  };
+                (
+                  [
+                    js_switch_case(
+                      ival,
+                      src_state,
+                      dst_state,
+                      string_escaped,
+                      in_accepting_state,
+                      inline_or_goto,
+                    ),
+                    ...cases,
+                  ],
+                  todo,
+                );
+              },
+              string_map,
+              ([], todo),
+            );
+          (js_switch(str_len, String.concat("", List.rev(cases))), todo);
+        };
+      };
+    let rec work:
+      (StateSetSet.t, StateSetMap.t(string)) =>
+      (StateSetSet.t, StateSetMap.t(string)) =
+      (todo, states) =>
+        if (StateSetSet.is_empty(todo)) {
+          (todo, states);
+        } else {
+          StateSetSet.fold(
+            (src, (todo, states)) =>
+              if (StateSetMap.mem(src, states)) {
+                (todo, states);
+              } else {
+                let (code, todo') = build_state(src, StateSetSet.empty);
+                let src_state = Int32.to_string(StateSet.choose_strict(src));
+                let states =
+                  StateSetMap.add(
+                    src,
+                    js_switch_case_state(src_state, code),
+                    states,
+                  );
+                let processed =
+                  StateSetSet.of_list(
+                    List.map(
+                      ((state, _)) => state,
+                      StateSetMap.bindings(states),
+                    ),
+                  );
+                let todo =
+                  StateSetSet.diff(
+                    StateSetSet.union(todo, todo'),
+                    processed,
+                  );
+                work(todo, states);
+              },
+            todo,
+            (StateSetSet.empty, states),
+          );
+        };
+    let (_, states) =
+      work(StateSetSet.singleton(dfa.start), StateSetMap.empty);
+
+    let states =
+      String.concat(
+        "",
+        List.map(((_, code)) => code, StateSetMap.bindings(states)),
+      );
+    let accept_empty =
+      StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false";
+    let start_state = Int32.to_string(StateSet.choose_strict(dfa.start));
+
+    js_match_dfa(accept_empty, start_state, states);
   };
 
 let accept: (t, string) => bool =
