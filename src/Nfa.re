@@ -177,7 +177,7 @@ let to_matrix: t => array(array(string)) =
   nfa => {
     let states = Array.of_list(StateSet.elements(nfa.states));
     let dimx = Array.length(states);
-    let grouped_transitions = group_by(nfa.transitions);
+    let string_set_transitions = group_by(nfa.transitions);
     let string_set_set =
       StateMap.fold(
         (_, string_set_map, string_set_set) =>
@@ -187,7 +187,7 @@ let to_matrix: t => array(array(string)) =
             string_set_map,
             string_set_set,
           ),
-        grouped_transitions,
+        string_set_transitions,
         StringSetSet.empty,
       );
 
@@ -206,7 +206,7 @@ let to_matrix: t => array(array(string)) =
           switch (
             StringSetMap.find(
               string_set,
-              StateMap.find(src, grouped_transitions),
+              StateMap.find(src, string_set_transitions),
             )
           ) {
           | exception Not_found => ""

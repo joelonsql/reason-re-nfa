@@ -40,7 +40,7 @@ let analyze = regexp => {
     Nfa.to_dot(sfa'),
     Nfa.to_matrix(sfa'),
     Dfa.to_llvm_ir(RabinScott.determinize(sfa')),
-    Dfa.to_js(RabinScott.determinize(sfa')),
+    Dfa.to_js(~inline=true, RabinScott.determinize(sfa')),
     /*
      Dfa.to_llvm_ir(dfa''),
      Dfa.to_llvm_ir(RabinScott.determinize(sfa')),

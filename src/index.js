@@ -41,20 +41,19 @@ document.addEventListener('DOMContentLoaded',
       if (js_code == "") {
         return;
       }
-      console.log(js_code);
       let match_dfa = new Function("s", js_code);
-      let r = new RegExp("^" + document.getElementById("regexp-input").value + "$");
+      let r = new RegExp("^(" + document.getElementById("regexp-input").value + ")$");
       let expect_match;
       if (match_dfa(text_input)) {
         regexp_result = "MATCH";
         if (!r.test(text_input)) {
-          regexp_result += " Bug! V8 MISS";
+          regexp_result += " Unexpected, Re0 matched but NativeJS missed";
         }
         expect_match = true;
       } else {
         regexp_result = "MISS";
         if (r.test(text_input)) {
-          regexp_result += " Bug! V8 MATCH";
+          regexp_result += " Unexpected, Re0 missed but NativeJS matched";
         }
         expect_match = false;
       }
@@ -63,16 +62,16 @@ document.addEventListener('DOMContentLoaded',
       let iters = 1000000;
       for (let i = 0; i < iters; i++) {
         if (r.test(text_input) != expect_match) {
-          throw "Bug V8!";
+          throw ("Unexpected, r.test(text_input) " + r.test(text_input) + " r " + r + " text_input " + text_input + " expect_match " + expect_match);
         }
       }
       let t = (new Date()).getTime();
-      regexp_result += " " + iters + " ops: V8 " + (t - t0) + " ms";
+      regexp_result += " " + iters + " ops: NativeJS " + (t - t0) + " ms";
 
       t0 = (new Date()).getTime();
       for (let i = 0; i < iters; i++) {
         if (match_dfa(text_input) != expect_match) {
-          throw "Bug Re0!";
+          throw ("Unexpected, r.test(text_input) " + r.test(text_input) + " r " + r + " text_input " + text_input + " expect_match " + expect_match);
         }
       }
       t = (new Date()).getTime();
