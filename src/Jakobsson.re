@@ -112,3 +112,74 @@ let align_strings: Nfa.t => Nfa.t =
 
     output_nfa;
   };
+
+let inline: Nfa.t => Nfa.t =
+  input_nfa => {
+    let rec fold_linear_character_sequences:
+      (Nfa.state, string, Nfa.state, list(Nfa.state), string, Nfa.t) => Nfa.t =
+      (src, string, dst, srcs, strings, nfa) =>
+        if (!List.mem(dst, srcs) && !StateSet.mem(dst, input_nfa.finals)) {
+          print_endline(
+            "if src "
+            ++ Int32.to_string(src)
+            ++ " dst "
+            ++ Int32.to_string(dst)
+            ++ " srcs "
+            ++ String.concat(",", List.map(s => Int32.to_string(s), srcs)),
+          );
+          StringMap.fold(
+            (string', dsts, nfa) => {
+              let dst' = StateSet.choose_strict(dsts);
+              fold_linear_character_sequences(
+                src,
+                strings ++ string ++ string',
+                dst',
+                [dst, ...srcs],
+                "",
+                nfa,
+              );
+            },
+            StateMap.find(dst, input_nfa.transitions), /* find will succeed since we know dst is not a final state */
+            nfa,
+          );
+        } else {
+          print_endline(
+            "else src "
+            ++ Int32.to_string(src)
+            ++ " dst "
+            ++ Int32.to_string(dst),
+          );
+          let nfa = Nfa.add_transition((src, strings ++ string, dst), nfa);
+          let src = dst;
+          StringMap.fold(
+            (string, dsts, nfa) =>
+              fold_linear_character_sequences(
+                src,
+                string,
+                StateSet.choose_strict(dsts),
+                [src],
+                "",
+                nfa,
+              ),
+            try (StateMap.find(src, input_nfa.transitions)) {
+            | Not_found => StringMap.empty
+            },
+            nfa,
+          );
+        };
+
+    let src = StateSet.choose_strict(input_nfa.start);
+    StringMap.fold(
+      (string, dsts, nfa) =>
+        fold_linear_character_sequences(
+          src,
+          string,
+          StateSet.choose_strict(dsts),
+          [src],
+          "",
+          nfa,
+        ),
+      StateMap.find(src, input_nfa.transitions),
+      Nfa.singleton(input_nfa.start),
+    );
+  };

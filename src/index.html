@@ -26,13 +26,13 @@
             <table class="variables">
                 <tr>
                     <td>input</td>
-                    <td colspan="2"><input type="text" id="text-input" value="abd" />
+                    <td colspan="2"><input type="text" id="text-input" value="fooapa" />
                         <span id="regexp-result" />
                     </td>
                 </tr>
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="a[bc]d" />
+                    <td colspan="2"><input type="text" id="regexp-input" value="(foo|bar)*" />
                     </td>
                 </tr>
                 <tr>
@@ -168,7 +168,7 @@
             </td>
         </tr>
     </table>
-    <div>7. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> SFA:</div>
+    <div>7. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> Inlined:</div>
     <div style="display: none;"><textarea id="sfaDot"></textarea></div>
     <table>
         <tr>
@@ -180,7 +180,7 @@
             </td>
         </tr>
     </table>
-    <div>8. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> SFA:</div>
+    <div>8. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> Inlined -> Aligned:</div>
     <div style="display: none;"><textarea id="sfa2Dot"></textarea></div>
     <table>
         <tr>
@@ -189,6 +189,18 @@
             </td>
             <td>
                 <div id="sfa2Graph"></div>
+            </td>
+        </tr>
+    </table>
+    <div>8. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> Inlined -> Aligned -> DFA:</div>
+    <div style="display: none;"><textarea id="sfa3Dot"></textarea></div>
+    <table>
+        <tr>
+            <td>
+                <div><span id="sfa3Matrix" /></div>
+            </td>
+            <td>
+                <div id="sfa3Graph"></div>
             </td>
         </tr>
     </table>

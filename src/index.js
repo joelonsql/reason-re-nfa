@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded',
         return;
       }
       last_regexp_input = regex_input;
-      let algoSteps = ['nfa', 'dfa', 'nfa2', 'nfa2rev', 'dfa2', 'nfa3', 'nfa3rev', 'dfaMinimized', 'sfa', 'sfa2'];
+      let algoSteps = ['nfa', 'dfa', 'nfa2', 'nfa2rev', 'dfa2', 'nfa3', 'nfa3rev', 'dfaMinimized', 'sfa', 'sfa2', 'sfa3'];
       if (regex_input.length == 0) {
         document.getElementById("annotated").innerHTML = "";
         document.getElementById("nullability").innerHTML = "";
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        document.getElementById("LLVMIR").innerHTML = re[algoPos];
+        //        document.getElementById("LLVMIR").innerHTML = re[algoPos];
         let js_code = re[algoPos + 1];
         document.getElementById("JS").innerHTML = js_code;
         document.getElementById("match_dfa").value = js_code;
