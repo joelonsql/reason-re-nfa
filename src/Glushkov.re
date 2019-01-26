@@ -86,6 +86,53 @@ let positions: LetterSet.t => StateSet.t =
   letter_set =>
     StateSet.of_list(List.map(snd, LetterSet.elements(letter_set)));
 
+let split: CharSetSet.t => CharSetSet.t =
+  input => {
+    let aux: (CharSet.t, CharSetSet.t) => CharSetSet.t =
+      (l, acc) => {
+        let l_rest =
+          CharSetSet.fold((r, l_rest) => CharSet.diff(l_rest, r), acc, l);
+        CharSetSet.add(l_rest, acc);
+      };
+    CharSetSet.fold((l, acc) => aux(l, acc), input, CharSetSet.empty);
+  };
+
+let factor_char_set_set: CharSetSet.t => CharSetSet.t =
+  input => {
+    let aux: (CharSet.t, CharSetSet.t) => CharSetSet.t =
+      (l, acc) => {
+        /** Remove characters in common with existing set of atom-charsets,
+        this will give us the new characters not present in the current set */
+        let l_diff =
+          CharSetSet.fold((r, l_diff) => CharSet.diff(l_diff, r), acc, l);
+        /** Get the characters we already had in common,
+            which is the difference of the difference */
+        let l_inter = CharSet.diff(l, l_diff);
+        /** Of these, are there any existing atom-charsets which are not fully covered by us
+            if so, these must be split into smaller atoms */
+        let acc =
+          CharSetSet.fold(
+            (r, acc) => {
+              let r_diff = CharSet.diff(r, l_inter);
+              if (CharSet.is_empty(r_diff)) {
+                acc;
+              } else {
+                let acc = CharSetSet.remove(r, acc);
+                let r_inter = CharSet.inter(r, l_inter);
+                let acc = CharSetSet.add(r_diff, acc);
+                let acc = CharSetSet.add(r_inter, acc);
+                acc;
+              };
+            },
+            acc,
+            acc,
+          );
+        let acc = CharSetSet.add(l_diff, acc);
+        /** Add these new characters to the set */ acc;
+      };
+    CharSetSet.fold((l, acc) => aux(l, acc), input, CharSetSet.empty);
+  };
+
 let compile: regex('c) => t =
   r => {
     let start: Nfa.state = Int32.zero;
@@ -94,21 +141,69 @@ let compile: regex('c) => t =
     let firsts = p(annotated);
     let lasts = d(annotated);
     let factors = f_(annotated);
+
+    let char_set_set =
+      LetterSet.fold(
+        ((char_set, _), char_set_set) =>
+          CharSetSet.add(char_set, char_set_set),
+        firsts,
+        CharSetSet.empty,
+      )
+      |> Letter2Set.fold(
+           (((_, _), (char_set, _)), char_set_set) =>
+             CharSetSet.add(char_set, char_set_set),
+           factors,
+         );
+    print_endline(CharSetSet.to_string(char_set_set));
+    let gcd = CharSetSet.greatest_common_divisors(char_set_set);
+
+    print_endline("gcd: " ++ CharSetSet.to_string(gcd));
+
+    let factorize_map = CharSetSet.build_factorize_map(char_set_set);
+
+    print_endline("factorize_map: ");
+    CharSetMap.iter(
+      (char_set, char_set_set) =>
+        print_endline(
+          CharSet.to_string(char_set)
+          ++ " : "
+          ++ CharSetSet.to_string(char_set_set),
+        ),
+      factorize_map,
+    );
+
     let nfa =
       Nfa.singleton(StateSet.singleton(start))
       /* Transitions arise from the start state to the initial character sets ... */
       |> LetterSet.fold(
-           ((char_set, state)) =>
+           ((char_set, state)) => {
+             print_endline(
+               "Glushkov initial: "
+               ++ Int32.to_string(start)
+               ++ " "
+               ++ CharSet.to_string(char_set)
+               ++ " "
+               ++ Int32.to_string(state),
+             );
              CharSet.fold(
                char =>
                  Nfa.add_transition((start, String.make(1, char), state)),
                char_set,
-             ),
+             );
+           },
            firsts,
          )
       /* .. and between factors (pairs of character sets with a transition between them) */
       |> Letter2Set.fold(
-           (((_, from_state), (char_set, to_state))) =>
+           (((_, from_state), (char_set, to_state))) => {
+             print_endline(
+               "Glushkov factors: "
+               ++ Int32.to_string(from_state)
+               ++ " "
+               ++ CharSet.to_string(char_set)
+               ++ " "
+               ++ Int32.to_string(to_state),
+             );
              CharSet.fold(
                char =>
                  Nfa.add_transition((
@@ -117,7 +212,8 @@ let compile: regex('c) => t =
                    to_state,
                  )),
                char_set,
-             ),
+             );
+           },
            factors,
          )
       /* The final states are the set of 'last' characters in r,
