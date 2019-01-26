@@ -176,44 +176,40 @@ let compile: regex('c) => t =
       Nfa.singleton(StateSet.singleton(start))
       /* Transitions arise from the start state to the initial character sets ... */
       |> LetterSet.fold(
-           ((char_set, state)) => {
-             print_endline(
-               "Glushkov initial: "
-               ++ Int32.to_string(start)
-               ++ " "
-               ++ CharSet.to_string(char_set)
-               ++ " "
-               ++ Int32.to_string(state),
-             );
-             CharSet.fold(
-               char =>
-                 Nfa.add_transition((start, String.make(1, char), state)),
-               char_set,
-             );
-           },
+           ((char_set, state)) =>
+             CharSetSet.fold(
+               char_set => {
+                 print_endline(
+                   "Glushkov initial: "
+                   ++ Int32.to_string(start)
+                   ++ " "
+                   ++ CharSet.to_string(char_set)
+                   ++ " "
+                   ++ Int32.to_string(state),
+                 );
+                 Nfa.add_transition((start, [char_set], state));
+               },
+               CharSetMap.find(char_set, factorize_map),
+             ),
            firsts,
          )
       /* .. and between factors (pairs of character sets with a transition between them) */
       |> Letter2Set.fold(
-           (((_, from_state), (char_set, to_state))) => {
-             print_endline(
-               "Glushkov factors: "
-               ++ Int32.to_string(from_state)
-               ++ " "
-               ++ CharSet.to_string(char_set)
-               ++ " "
-               ++ Int32.to_string(to_state),
-             );
-             CharSet.fold(
-               char =>
-                 Nfa.add_transition((
-                   from_state,
-                   String.make(1, char),
-                   to_state,
-                 )),
-               char_set,
-             );
-           },
+           (((_, from_state), (char_set, to_state))) =>
+             CharSetSet.fold(
+               char_set => {
+                 print_endline(
+                   "Glushkov factors: "
+                   ++ Int32.to_string(from_state)
+                   ++ " "
+                   ++ CharSet.to_string(char_set)
+                   ++ " "
+                   ++ Int32.to_string(to_state),
+                 );
+                 Nfa.add_transition((from_state, [char_set], to_state));
+               },
+               CharSetMap.find(char_set, factorize_map),
+             ),
            factors,
          )
       /* The final states are the set of 'last' characters in r,

@@ -11,7 +11,10 @@ let analyze = regexp => {
   let dfa3 = RabinScott.determinize(nfa5);
   let dfa4 = dfa3;
   /*  let dfa4 = Dfa.inline(dfa3); */
-  let nfa6 = Jakobsson.align_strings(Brzozowski.dfa_to_nfa(dfa4));
+  let nfa6 = Brzozowski.dfa_to_nfa(dfa4);
+  /*
+     let nfa6 = Jakobsson.align_strings(Brzozowski.dfa_to_nfa(dfa4));
+   */
   let dfa5 =
     RabinScott.determinize(
       Brzozowski.dfa_to_nfa(RabinScott.determinize(nfa6)),
@@ -45,8 +48,8 @@ let analyze = regexp => {
     Nfa.to_matrix(nfa6),
     Dfa.to_dot(dfa5),
     Dfa.to_matrix(dfa5),
-    Dfa.to_llvm_ir(dfa5),
-    Dfa.to_js(Dfa.SingleEntry, dfa5),
+    "",
+    "",
     /*
      "",
      "",

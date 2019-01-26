@@ -1,10 +1,10 @@
 type state = int32;
 
-type transitions = StateMap.t(StringMap.t(StateSet.t));
+type transitions = StateMap.t(CharSetListMap.t(StateSet.t));
 
 type t = {
   states: StateSet.t,
-  alphabet: StringSet.t,
+  alphabet: CharSetListSet.t,
   transitions,
   start: StateSet.t,
   finals: StateSet.t,
@@ -12,7 +12,7 @@ type t = {
 
 let singleton = (start: StateSet.t) => {
   states: start,
-  alphabet: StringSet.empty,
+  alphabet: CharSetListSet.empty,
   transitions: StateMap.empty,
   start,
   finals: StateSet.empty,
@@ -29,20 +29,20 @@ let set_finals = (finals: StateSet.t, nfa) => {
     ),
 };
 
-let add_transition: ((state, string, state), t) => t =
+let add_transition: ((state, CharSetList.t, state), t) => t =
   ((src, string, dst), nfa) => {
     states: StateSet.(nfa.states |> add(src) |> add(dst)),
-    alphabet: StringSet.add(string, nfa.alphabet),
+    alphabet: CharSetListSet.add(string, nfa.alphabet),
     transitions:
       StateMap.add(
         src,
         switch (StateMap.find(src, nfa.transitions)) {
         | exception Not_found =>
-          StringMap.singleton(string, StateSet.singleton(dst))
+          CharSetListMap.singleton(string, StateSet.singleton(dst))
         | string_map =>
-          StringMap.add(
+          CharSetListMap.add(
             string,
-            switch (StringMap.find(string, string_map)) {
+            switch (CharSetListMap.find(string, string_map)) {
             | exception Not_found => StateSet.singleton(dst)
             | dsts => StateSet.add(dst, dsts)
             },
@@ -59,7 +59,7 @@ let count_parents: (state, t) => int =
   (state, nfa) => {
     StateMap.fold(
       (_, string_map, count) =>
-        StringMap.fold(
+        CharSetListMap.fold(
           (_, dsts, count) =>
             if (StateSet.mem(state, dsts)) {
               count + 1;
@@ -79,7 +79,7 @@ let count_children: (state, t) => int =
     StateMap.fold(
       (src, string_map, count) =>
         if (Int32.compare(src, state) == 0) {
-          StringMap.cardinal(string_map) + count;
+          CharSetListMap.cardinal(string_map) + count;
         } else {
           count;
         },
@@ -88,7 +88,7 @@ let count_children: (state, t) => int =
     );
   };
 
-let group_by: transitions => StateMap.t(StringSetMap.t(StateSet.t)) =
+let group_by: transitions => StateMap.t(CharSetListSetMap.t(StateSet.t)) =
   transitions =>
     StateMap.fold(
       (src, string_map, acc) =>
@@ -98,19 +98,19 @@ let group_by: transitions => StateMap.t(StringSetMap.t(StateSet.t)) =
               src,
               switch (StateMap.find(src, acc)) {
               | exception Not_found =>
-                StringSetMap.singleton(string_set, dsts)
+                CharSetListSetMap.singleton(string_set, dsts)
               | string_set_map =>
-                StringSetMap.add(string_set, dsts, string_set_map)
+                CharSetListSetMap.add(string_set, dsts, string_set_map)
               },
               acc,
             ),
-          StringMap.fold(
+          CharSetListMap.fold(
             (string, dsts, dsts_map) =>
               StateSetMap.add(
                 dsts,
                 switch (StateSetMap.find(dsts, dsts_map)) {
-                | exception Not_found => StringSet.singleton(string)
-                | string_set => StringSet.add(string, string_set)
+                | exception Not_found => CharSetListSet.singleton(string)
+                | string_set => CharSetListSet.add(string, string_set)
                 },
                 dsts_map,
               ),
@@ -163,9 +163,9 @@ let to_dot: t => string =
                    ++ "->"
                    ++ StateSet.to_string(dsts)
                    ++ " [label=\""
-                   ++ StringSet.to_string(string_set)
+                   ++ CharSetListSet.to_string(string_set)
                    ++ "\"];",
-                 StringSetMap.bindings(string_set_map),
+                 CharSetListSetMap.bindings(string_set_map),
                ),
              ),
            StateMap.bindings(group_by(nfa.transitions)),
@@ -181,17 +181,17 @@ let to_matrix: t => array(array(string)) =
     let string_set_set =
       StateMap.fold(
         (_, string_set_map, string_set_set) =>
-          StringSetMap.fold(
+          CharSetListSetMap.fold(
             (string_set, _, string_set_set) =>
-              StringSetSet.add(string_set, string_set_set),
+              CharSetListSetSet.add(string_set, string_set_set),
             string_set_map,
             string_set_set,
           ),
         string_set_transitions,
-        StringSetSet.empty,
+        CharSetListSetSet.empty,
       );
 
-    let alphabet = Array.of_list(StringSetSet.elements(string_set_set));
+    let alphabet = Array.of_list(CharSetListSetSet.elements(string_set_set));
     let dimy = Array.length(alphabet);
     let matrix = Array.make_matrix(dimx + 1, dimy + 1, "");
     for (x in 1 to dimx) {
@@ -200,11 +200,11 @@ let to_matrix: t => array(array(string)) =
       for (y in 1 to dimy) {
         let string_set = alphabet[y - 1];
         if (x == 1) {
-          matrix[0][y] = StringSet.to_string(string_set);
+          matrix[0][y] = CharSetListSet.to_string(string_set);
         };
         matrix[x][y] = (
           switch (
-            StringSetMap.find(
+            CharSetListSetMap.find(
               string_set,
               StateMap.find(src, string_set_transitions),
             )
@@ -218,9 +218,19 @@ let to_matrix: t => array(array(string)) =
     matrix;
   };
 
+let explode_charsetlist = s => {
+  let rec exp = (i, l) =>
+    if (i < 0) {
+      l;
+    } else {
+      exp(i - 1, [[CharSet.singleton(s.[i])], ...l]);
+    };
+  exp(String.length(s) - 1, []);
+};
+
 let accept: (t, string) => bool =
   (nfa, input) => {
-    let rec step: (StateSet.t, list(string)) => bool =
+    let rec step: (StateSet.t, list(CharSetList.t)) => bool =
       cur_states =>
         fun
         | [] => StateSet.(!is_empty(inter(cur_states, nfa.finals)))
@@ -231,7 +241,7 @@ let accept: (t, string) => bool =
                 StateSet.union(
                   try (
                     StateMap.find(src, nfa.transitions)
-                    |> StringMap.find(cur_string)
+                    |> CharSetListMap.find(cur_string)
                   ) {
                   | Not_found => StateSet.empty
                   },
@@ -242,17 +252,37 @@ let accept: (t, string) => bool =
             rest,
           );
 
-    step(nfa.start, Common.explode_string(input));
+    step(nfa.start, explode_charsetlist(input));
   };
 
 let test = () => {
   let nfa =
     singleton(StateSet.singleton(Int32.zero))
-    |> add_transition((Int32.of_int(0), "a", Int32.of_int(1)))
-    |> add_transition((Int32.of_int(0), "a", Int32.of_int(2)))
-    |> add_transition((Int32.of_int(2), "b", Int32.of_int(3)))
-    |> add_transition((Int32.of_int(3), "c", Int32.of_int(4)))
-    |> add_transition((Int32.of_int(4), "c", Int32.of_int(4)))
+    |> add_transition((
+         Int32.of_int(0),
+         CharSetList.of_string("a"),
+         Int32.of_int(1),
+       ))
+    |> add_transition((
+         Int32.of_int(0),
+         CharSetList.of_string("a"),
+         Int32.of_int(2),
+       ))
+    |> add_transition((
+         Int32.of_int(2),
+         CharSetList.of_string("b"),
+         Int32.of_int(3),
+       ))
+    |> add_transition((
+         Int32.of_int(3),
+         CharSetList.of_string("c"),
+         Int32.of_int(4),
+       ))
+    |> add_transition((
+         Int32.of_int(4),
+         CharSetList.of_string("c"),
+         Int32.of_int(4),
+       ))
     |> set_finals(StateSet.of_ints([1, 3, 4]));
 
   assert(accept(nfa, "a"));

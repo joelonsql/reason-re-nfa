@@ -20,7 +20,7 @@ let dfa_to_nfa: Dfa.t => Nfa.t =
     )
     |> StateSetMap.fold(
          (dfa_src, string_map, nfa) =>
-           StringMap.fold(
+           CharSetListMap.fold(
              (string, dfa_dst, nfa) =>
                Nfa.add_transition(
                  (
@@ -57,7 +57,7 @@ let reverse: Nfa.t => Nfa.t =
     Nfa.singleton(nfa.finals)
     |> StateMap.fold(
          (src, string_map, nfa) =>
-           StringMap.fold(
+           CharSetListMap.fold(
              (string, dsts, nfa) =>
                StateSet.fold(
                  (dst, nfa) => Nfa.add_transition((dst, string, src), nfa),

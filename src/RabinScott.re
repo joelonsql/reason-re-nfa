@@ -15,14 +15,14 @@ let determinize: Nfa.t => Dfa.t =
                  dfa.finals;
                },
              )
-          |> StringMap.fold(
+          |> CharSetListMap.fold(
                (string, dfa_dst, dfa) => {
                  print_endline(
                    indent
                    ++ "add_transition: "
                    ++ StateSet.to_string(dfa_src)
                    ++ " "
-                   ++ Common.escape_string(string)
+                   ++ Common.escape_string(CharSetList.to_string(string))
                    ++ " "
                    ++ StateSet.to_string(dfa_dst),
                  );
@@ -36,17 +36,17 @@ let determinize: Nfa.t => Dfa.t =
                  (nfa_src, dfa_map) => {
                    let nfa_map =
                      try (StateMap.find(nfa_src, nfa.transitions)) {
-                     | Not_found => StringMap.empty
+                     | Not_found => CharSetListMap.empty
                      };
 
-                   StringMap.union(
+                   CharSetListMap.union(
                      (_, dst, dst') => Some(StateSet.union(dst, dst')),
                      dfa_map,
                      nfa_map,
                    );
                  },
                  dfa_src,
-                 StringMap.empty,
+                 CharSetListMap.empty,
                ),
              );
         };
@@ -58,11 +58,31 @@ let determinize: Nfa.t => Dfa.t =
 let test = () => {
   let nfa =
     Nfa.singleton(StateSet.singleton(Int32.zero))
-    |> Nfa.add_transition((Int32.of_int(0), "a", Int32.of_int(1)))
-    |> Nfa.add_transition((Int32.of_int(0), "a", Int32.of_int(2)))
-    |> Nfa.add_transition((Int32.of_int(2), "b", Int32.of_int(3)))
-    |> Nfa.add_transition((Int32.of_int(3), "c", Int32.of_int(4)))
-    |> Nfa.add_transition((Int32.of_int(4), "c", Int32.of_int(4)))
+    |> Nfa.add_transition((
+         Int32.of_int(0),
+         CharSetList.of_string("a"),
+         Int32.of_int(1),
+       ))
+    |> Nfa.add_transition((
+         Int32.of_int(0),
+         CharSetList.of_string("a"),
+         Int32.of_int(2),
+       ))
+    |> Nfa.add_transition((
+         Int32.of_int(2),
+         CharSetList.of_string("b"),
+         Int32.of_int(3),
+       ))
+    |> Nfa.add_transition((
+         Int32.of_int(3),
+         CharSetList.of_string("c"),
+         Int32.of_int(4),
+       ))
+    |> Nfa.add_transition((
+         Int32.of_int(4),
+         CharSetList.of_string("c"),
+         Int32.of_int(4),
+       ))
     |> Nfa.set_finals(StateSet.of_ints([1, 3, 4]));
 
   let dfa = determinize(nfa);
