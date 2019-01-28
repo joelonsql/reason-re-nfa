@@ -105,17 +105,3 @@ let parse = s =>
     | (_, [_, ..._]) => raise(Parse_error(s))
     },
   );
-
-let unparse_charset = s => {
-  let pos = RegexBracket.unparse(~complement=false, s)
-  and neg =
-    RegexBracket.unparse(
-      ~complement=true,
-      CharSet.diff(RangeSet.to_char_set(any_), s),
-    );
-  if (String.length(pos) <= String.length(neg)) {
-    pos;
-  } else {
-    neg;
-  };
-};

@@ -1,10 +1,8 @@
 type state = StateSet.t;
 
 type transitions = StateSetMap.t(RangeSetMap.t(state));
-type transitions_inlined = StateSetMap.t(StringMap.t(state));
-type transitions_inlined_grouped = StateSetMap.t(StringSetMap.t(state));
 
-type string_set_transitions = StateSetMap.t(RangeSetSetMap.t(state));
+type ranges_set_transitions = StateSetMap.t(RangeSetSetMap.t(state));
 
 type t = {
   states: StateSetSet.t,
@@ -182,7 +180,7 @@ let count_children: (state, t) => int =
    };
  */
 
-let union_char_sets: t => t =
+let merge_ranges: t => t =
   input_dfa => {
     let group_by: transitions => transitions =
       transitions => {
@@ -347,7 +345,7 @@ let union_char_sets: t => t =
    };
  */
 
-let group_by: transitions => string_set_transitions =
+let group_by: transitions => ranges_set_transitions =
   transitions => {
     let fold_string_map: RangeSetMap.t(state) => StateSetMap.t(RangeSetSet.t) =
       string_map =>
@@ -442,7 +440,7 @@ let to_matrix: t => array(array(string)) =
   dfa => {
     let states = Array.of_list(StateSetSet.elements(dfa.states));
     let dimx = Array.length(states);
-    let string_set_transitions = group_by(dfa.transitions);
+    let ranges_set_transitions = group_by(dfa.transitions);
     let string_set_set =
       StateSetMap.fold(
         (_, string_set_map, string_set_set) =>
@@ -452,7 +450,7 @@ let to_matrix: t => array(array(string)) =
             string_set_map,
             string_set_set,
           ),
-        string_set_transitions,
+        ranges_set_transitions,
         RangeSetSetSet.empty,
       );
 
@@ -471,7 +469,7 @@ let to_matrix: t => array(array(string)) =
           switch (
             RangeSetSetMap.find(
               string_set,
-              StateSetMap.find(src, string_set_transitions),
+              StateSetMap.find(src, ranges_set_transitions),
             )
           ) {
           | exception Not_found => ""
@@ -933,16 +931,6 @@ let state_goto_handlers = goto_dsts => {
  };
 
  */
-
-let explode_charsetlist = s => {
-  let rec exp = (i, l) =>
-    if (i < 0) {
-      l;
-    } else {
-      exp(i - 1, [[CharSet.singleton(s.[i])], ...l]);
-    };
-  exp(String.length(s) - 1, []);
-};
 
 let accept: (t, string) => bool =
   (dfa, input) => {

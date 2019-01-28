@@ -26,13 +26,13 @@
             <table class="variables">
                 <tr>
                     <td>input</td>
-                    <td colspan="2"><input type="text" id="text-input" value="ac" />
+                    <td colspan="2"><input type="text" id="text-input" value="aaab" />
                         <span id="regexp-result" />
                     </td>
                 </tr>
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="[a-c]b" />
+                    <td colspan="2"><input type="text" id="regexp-input" value="a.*b" />
                     </td>
                 </tr>
                 <tr>
@@ -80,6 +80,7 @@
             </td>
         </tr>
     </table>
+    <hr />
     <div><a href="https://en.wikipedia.org/wiki/Powerset_construction">Rabin–Scott powerset construction (NFA to DFA)</a></div>
     <div><a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">Deterministic finite automaton (DFA):</a></div>
     <div style="display: none;"><textarea id="dfaDot"></textarea></div>
@@ -93,10 +94,11 @@
             </td>
         </tr>
     </table>
+    <hr />
     <div><a href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm
             (DFA
             minimization):</a></div>
-    <div>1. DFA -> NFA:</div>
+    <div>nfa<sub>2</sub> = dfa_to_nfa(dfa)</div>
     <div style="display: none;"><textarea id="nfa2Dot"></textarea></div>
     <table>
         <tr>
@@ -108,31 +110,8 @@
             </td>
         </tr>
     </table>
-    <div>2. DFA -> NFA -> reverse:</div>
-    <div style="display: none;"><textarea id="nfa2revDot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfa2revMatrix" /></div>
-            </td>
-            <td>
-                <div id="nfa2revGraph"></div>
-            </td>
-        </tr>
-    </table>
-    <div>3. DFA -> NFA -> reverse -> DFA:</div>
-    <div style="display: none;"><textarea id="dfa2Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfa2Matrix" /></div>
-            </td>
-            <td>
-                <div id="dfa2Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <div>4. DFA -> NFA -> reverse -> DFA -> NFA:</div>
+    <hr />
+    <div>nfa<sub>3</sub> = reverse(nfa<sub>2</sub>)</div>
     <div style="display: none;"><textarea id="nfa3Dot"></textarea></div>
     <table>
         <tr>
@@ -144,63 +123,68 @@
             </td>
         </tr>
     </table>
-    <div>5. DFA -> NFA -> reverse -> DFA -> NFA -> reverse:</div>
-    <div style="display: none;"><textarea id="nfa3revDot"></textarea></div>
+    <hr />
+    <div>dfa<sub>2</sub> = determinize(nfa<sub>3</sub>)</div>
+    <div style="display: none;"><textarea id="dfa2Dot"></textarea></div>
     <table>
         <tr>
             <td>
-                <div><span id="nfa3revMatrix" /></div>
+                <div><span id="dfa2Matrix" /></div>
             </td>
             <td>
-                <div id="nfa3revGraph"></div>
+                <div id="dfa2Graph"></div>
             </td>
         </tr>
     </table>
-    <div>6. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA:</div>
-    <div style="display: none;"><textarea id="dfaMinimizedDot"></textarea></div>
+    <hr />
+    <div>nfa<sub>4</sub> = dfa_to_nfa(dfa<sub>2</sub>)</div>
+    <div style="display: none;"><textarea id="nfa4Dot"></textarea></div>
     <table>
         <tr>
             <td>
-                <div><span id="dfaMinimizedMatrix" /></div>
+                <div><span id="nfa4Matrix" /></div>
             </td>
             <td>
-                <div id="dfaMinimizedGraph"></div>
+                <div id="nfa4Graph"></div>
             </td>
         </tr>
     </table>
-    <div>7. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> Inlined:</div>
-    <div style="display: none;"><textarea id="sfaDot"></textarea></div>
+    <hr />
+    <div>nfa<sub>5</sub> = reverse(nfa<sub>4</sub>)</div>
+    <div style="display: none;"><textarea id="nfa5Dot"></textarea></div>
     <table>
         <tr>
             <td>
-                <div><span id="sfaMatrix" /></div>
+                <div><span id="nfa5Matrix" /></div>
             </td>
             <td>
-                <div id="sfaGraph"></div>
+                <div id="nfa5Graph"></div>
             </td>
         </tr>
     </table>
-    <div>8. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> Inlined -> Aligned:</div>
-    <div style="display: none;"><textarea id="sfa2Dot"></textarea></div>
+    <hr />
+    <div>dfa<sub>3</sub> = determinize(nfa<sub>5</sub>)</div>
+    <div style="display: none;"><textarea id="dfa3Dot"></textarea></div>
     <table>
         <tr>
             <td>
-                <div><span id="sfa2Matrix" /></div>
+                <div><span id="dfa3Matrix" /></div>
             </td>
             <td>
-                <div id="sfa2Graph"></div>
+                <div id="dfa3Graph"></div>
             </td>
         </tr>
     </table>
-    <div>8. DFA -> NFA -> reverse -> DFA -> NFA -> reverse -> DFA -> Inlined -> Aligned -> DFA:</div>
-    <div style="display: none;"><textarea id="sfa3Dot"></textarea></div>
+    <hr />
+    <div>nfa<sub>6</sub> = dfa_to_nfa(merge_ranges(dfa<sub>3</sub>))</div>
+    <div style="display: none;"><textarea id="nfa6Dot"></textarea></div>
     <table>
         <tr>
             <td>
-                <div><span id="sfa3Matrix" /></div>
+                <div><span id="nfa6Matrix" /></div>
             </td>
             <td>
-                <div id="sfa3Graph"></div>
+                <div id="nfa6Graph"></div>
             </td>
         </tr>
     </table>

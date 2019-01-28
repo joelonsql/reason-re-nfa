@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded',
         return;
       }
       last_regexp_input = regex_input;
-      let algoSteps = ['nfa', 'dfa', 'nfa2', 'nfa2rev', 'dfa2', 'nfa3', 'nfa3rev', 'dfaMinimized', 'sfa', 'sfa2', 'sfa3'];
+      let algoSteps = ["nfa", "dfa", "nfa2", "nfa3", "dfa2", "nfa4", "nfa5", "dfa3", "nfa6"];
       if (regex_input.length == 0) {
         document.getElementById("annotated").innerHTML = "";
         document.getElementById("nullability").innerHTML = "";
