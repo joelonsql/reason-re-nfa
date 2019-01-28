@@ -30,7 +30,7 @@ let last_text_input = '';
 document.addEventListener('DOMContentLoaded',
   function (event) {
     let tester = function (event) {
-      let text_input = document.getElementById("text-input").value;
+      let text_input = ''; // document.getElementById("text-input").value;
       if (text_input == last_text_input) {
         // unchanged
         return;
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded',
       }
     };
     document.getElementById("regexp-input").addEventListener("keyup", visualize);
-    document.getElementById("text-input").addEventListener("keyup", tester);
+    //    document.getElementById("text-input").addEventListener("keyup", tester);
     visualize();
     tester();
   });

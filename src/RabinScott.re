@@ -2,8 +2,8 @@
 
 let determinize: Nfa.t => Dfa.t =
   nfa => {
-    let rec build: (StateSet.t, Dfa.t, string) => Dfa.t =
-      (dfa_src, dfa, indent) =>
+    let rec build: (StateSet.t, Dfa.t) => Dfa.t =
+      (dfa_src, dfa) =>
         if (StateSetMap.mem(dfa_src, dfa.transitions)) {
           dfa;
         } else {
@@ -16,20 +16,9 @@ let determinize: Nfa.t => Dfa.t =
                },
              )
           |> RangeSetMap.fold(
-               (ranges, dfa_dst, dfa) => {
-                 print_endline(
-                   "Adding "
-                   ++ StateSet.to_string(dfa_src)
-                   ++ " "
-                   ++ RangeSet.to_string(ranges)
-                   ++ " "
-                   ++ StateSet.to_string(dfa_dst),
-                 );
-                 let dfa =
-                   Dfa.add_transition((dfa_src, ranges, dfa_dst), dfa);
-                 let dfa = build(dfa_dst, dfa, indent ++ "  ");
-                 dfa;
-               },
+               (ranges, dfa_dst, dfa) =>
+                 Dfa.add_transition((dfa_src, ranges, dfa_dst), dfa)
+                 |> build(dfa_dst),
                StateSet.fold(
                  (nfa_src, dfa_map) => {
                    let nfa_map =
@@ -48,9 +37,7 @@ let determinize: Nfa.t => Dfa.t =
                ),
              );
         };
-    let dfa = build(nfa.start, Dfa.singleton(nfa.start), "");
-    print_endline("done");
-    dfa;
+    build(nfa.start, Dfa.singleton(nfa.start));
   };
 
 let test = () => {

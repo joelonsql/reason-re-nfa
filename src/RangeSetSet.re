@@ -40,7 +40,6 @@ let factorize: (RangeSet.t, t) => t =
         if (RangeSet.is_empty(RangeSet.inter(factor, ranges))) {
           acc;
         } else {
-          print_endline("factor:" ++ RangeSet.to_string(factor));
           add(RangeSet.set_allow_overlap(false, factor), acc);
         },
       factors,
