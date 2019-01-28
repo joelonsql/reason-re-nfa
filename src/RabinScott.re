@@ -15,18 +15,18 @@ let determinize: Nfa.t => Dfa.t =
                  dfa.finals;
                },
              )
-          |> CharSetListMap.fold(
-               (string, dfa_dst, dfa) => {
+          |> RangeSetMap.fold(
+               (ranges, dfa_dst, dfa) => {
                  print_endline(
                    "Adding "
                    ++ StateSet.to_string(dfa_src)
                    ++ " "
-                   ++ CharSetList.to_string(string)
+                   ++ RangeSet.to_string(ranges)
                    ++ " "
                    ++ StateSet.to_string(dfa_dst),
                  );
                  let dfa =
-                   Dfa.add_transition((dfa_src, string, dfa_dst), dfa);
+                   Dfa.add_transition((dfa_src, ranges, dfa_dst), dfa);
                  let dfa = build(dfa_dst, dfa, indent ++ "  ");
                  dfa;
                },
@@ -34,17 +34,17 @@ let determinize: Nfa.t => Dfa.t =
                  (nfa_src, dfa_map) => {
                    let nfa_map =
                      try (StateMap.find(nfa_src, nfa.transitions)) {
-                     | Not_found => CharSetListMap.empty
+                     | Not_found => RangeSetMap.empty
                      };
 
-                   CharSetListMap.union(
+                   RangeSetMap.union(
                      (_, dst, dst') => Some(StateSet.union(dst, dst')),
                      dfa_map,
                      nfa_map,
                    );
                  },
                  dfa_src,
-                 CharSetListMap.empty,
+                 RangeSetMap.empty,
                ),
              );
         };
@@ -58,27 +58,27 @@ let test = () => {
     Nfa.singleton(StateSet.singleton(Int32.zero))
     |> Nfa.add_transition((
          Int32.of_int(0),
-         CharSetList.of_string("a"),
+         RangeSet.of_char('a'),
          Int32.of_int(1),
        ))
     |> Nfa.add_transition((
          Int32.of_int(0),
-         CharSetList.of_string("a"),
+         RangeSet.of_char('a'),
          Int32.of_int(2),
        ))
     |> Nfa.add_transition((
          Int32.of_int(2),
-         CharSetList.of_string("b"),
+         RangeSet.of_char('b'),
          Int32.of_int(3),
        ))
     |> Nfa.add_transition((
          Int32.of_int(3),
-         CharSetList.of_string("c"),
+         RangeSet.of_char('c'),
          Int32.of_int(4),
        ))
     |> Nfa.add_transition((
          Int32.of_int(4),
-         CharSetList.of_string("c"),
+         RangeSet.of_char('c'),
          Int32.of_int(4),
        ))
     |> Nfa.set_finals(StateSet.of_ints([1, 3, 4]));

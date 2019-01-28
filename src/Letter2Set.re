@@ -38,10 +38,17 @@ let example = (letter1, letter2) => singleton((letter1, letter2));
 
 let test = () => {
   let abc =
-    example(Letter.example(['a'], 0), Letter.example(['b', 'c'], 1));
+    singleton((
+      (RangeSet.of_char('a'), Int32.zero),
+      (RangeSet.singleton(Range.singleton('b', 'c')), Int32.of_int(1)),
+    ));
   assert(to_string(abc) == "a<sub>0</sub>[bc]<sub>1</sub>");
-  let a = LetterSet.example(['a'], 0);
-  let bc = LetterSet.example(['b', 'c'], 1);
+  let a = LetterSet.singleton((RangeSet.of_char('a'), Int32.zero));
+  let bc =
+    LetterSet.singleton((
+      RangeSet.singleton(Range.singleton('b', 'c')),
+      Int32.of_int(1),
+    ));
   let abc' = a <*> bc;
   assert(equal(abc, abc'));
   let abc'' = a >>= (x => bc >>= (y => singleton((x, y))));

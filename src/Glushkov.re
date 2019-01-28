@@ -86,53 +86,6 @@ let positions: LetterSet.t => StateSet.t =
   letter_set =>
     StateSet.of_list(List.map(snd, LetterSet.elements(letter_set)));
 
-let split: CharSetSet.t => CharSetSet.t =
-  input => {
-    let aux: (CharSet.t, CharSetSet.t) => CharSetSet.t =
-      (l, acc) => {
-        let l_rest =
-          CharSetSet.fold((r, l_rest) => CharSet.diff(l_rest, r), acc, l);
-        CharSetSet.add(l_rest, acc);
-      };
-    CharSetSet.fold((l, acc) => aux(l, acc), input, CharSetSet.empty);
-  };
-
-let factor_char_set_set: CharSetSet.t => CharSetSet.t =
-  input => {
-    let aux: (CharSet.t, CharSetSet.t) => CharSetSet.t =
-      (l, acc) => {
-        /** Remove characters in common with existing set of atom-charsets,
-        this will give us the new characters not present in the current set */
-        let l_diff =
-          CharSetSet.fold((r, l_diff) => CharSet.diff(l_diff, r), acc, l);
-        /** Get the characters we already had in common,
-            which is the difference of the difference */
-        let l_inter = CharSet.diff(l, l_diff);
-        /** Of these, are there any existing atom-charsets which are not fully covered by us
-            if so, these must be split into smaller atoms */
-        let acc =
-          CharSetSet.fold(
-            (r, acc) => {
-              let r_diff = CharSet.diff(r, l_inter);
-              if (CharSet.is_empty(r_diff)) {
-                acc;
-              } else {
-                let acc = CharSetSet.remove(r, acc);
-                let r_inter = CharSet.inter(r, l_inter);
-                let acc = CharSetSet.add(r_diff, acc);
-                let acc = CharSetSet.add(r_inter, acc);
-                acc;
-              };
-            },
-            acc,
-            acc,
-          );
-        let acc = CharSetSet.add(l_diff, acc);
-        /** Add these new characters to the set */ acc;
-      };
-    CharSetSet.fold((l, acc) => aux(l, acc), input, CharSetSet.empty);
-  };
-
 let compile: regex('c) => t =
   r => {
     let start: Nfa.state = Int32.zero;
@@ -142,32 +95,31 @@ let compile: regex('c) => t =
     let lasts = d(annotated);
     let factors = f_(annotated);
 
-    let char_set_set =
+    let ranges_set =
       LetterSet.fold(
-        ((char_set, _), char_set_set) =>
-          CharSetSet.add(char_set, char_set_set),
+        ((ranges, _), ranges_set) => RangeSetSet.add(ranges, ranges_set),
         firsts,
-        CharSetSet.empty,
+        RangeSetSet.empty,
       )
       |> Letter2Set.fold(
-           (((_, _), (char_set, _)), char_set_set) =>
-             CharSetSet.add(char_set, char_set_set),
+           (((_, _), (ranges, _)), ranges_set) =>
+             RangeSetSet.add(ranges, ranges_set),
            factors,
          );
-    print_endline(CharSetSet.to_string(char_set_set));
-    let gcd = CharSetSet.greatest_common_divisors(char_set_set);
+    print_endline(RangeSetSet.to_string(ranges_set));
+    let gcd = RangeSetSet.greatest_common_divisors(ranges_set);
 
-    print_endline("gcd: " ++ CharSetSet.to_string(gcd));
+    print_endline("gcd: " ++ RangeSetSet.to_string(gcd));
 
-    let factorize_map = CharSetSet.build_factorize_map(char_set_set);
+    let factorize_map = RangeSetSet.build_factorize_map(ranges_set);
 
     print_endline("factorize_map: ");
-    CharSetMap.iter(
-      (char_set, char_set_set) =>
+    RangeSetMap.iter(
+      (ranges, ranges_set) =>
         print_endline(
-          CharSet.to_string(char_set)
+          RangeSet.to_string(ranges)
           ++ " : "
-          ++ CharSetSet.to_string(char_set_set),
+          ++ RangeSetSet.to_string(ranges_set),
         ),
       factorize_map,
     );
@@ -176,20 +128,19 @@ let compile: regex('c) => t =
       Nfa.singleton(StateSet.singleton(start))
       /* Transitions arise from the start state to the initial character sets ... */
       |> LetterSet.fold(
-           ((char_set, state)) =>
-             CharSetSet.fold(
-               char_set => Nfa.add_transition((start, [char_set], state)),
-               CharSetMap.find(char_set, factorize_map),
+           ((ranges, state)) =>
+             RangeSetSet.fold(
+               ranges => Nfa.add_transition((start, ranges, state)),
+               RangeSetMap.find(ranges, factorize_map),
              ),
            firsts,
          )
       /* .. and between factors (pairs of character sets with a transition between them) */
       |> Letter2Set.fold(
-           (((_, from_state), (char_set, to_state))) =>
-             CharSetSet.fold(
-               char_set =>
-                 Nfa.add_transition((from_state, [char_set], to_state)),
-               CharSetMap.find(char_set, factorize_map),
+           (((_, from_state), (ranges, to_state))) =>
+             RangeSetSet.fold(
+               ranges => Nfa.add_transition((from_state, ranges, to_state)),
+               RangeSetMap.find(ranges, factorize_map),
              ),
            factors,
          )

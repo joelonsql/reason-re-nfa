@@ -32,6 +32,8 @@ let string_of_range = rng => {
   String.concat("", List.map(str, rng));
 };
 
+let of_char: char => t = char => singleton(Range.singleton(char, char));
+
 let of_char_set: CharSet.t => t =
   char_set =>
     List.fold_right(
@@ -53,6 +55,16 @@ let to_string = range_set =>
   "["
   ++ String.concat("", List.map(Range.to_string, elements(range_set)))
   ++ "]";
+
+let explode = s => {
+  let rec exp = (i, l) =>
+    if (i < 0) {
+      l;
+    } else {
+      exp(i - 1, [of_char(s.[i]), ...l]);
+    };
+  exp(String.length(s) - 1, []);
+};
 
 let test = () => {
   let range_set = singleton(Range.singleton('a', 'c'));

@@ -19,18 +19,18 @@ let dfa_to_nfa: Dfa.t => Nfa.t =
       StateSet.singleton(StateSetMap.find(dfa.start, dfa_to_nfa_map)),
     )
     |> StateSetMap.fold(
-         (dfa_src, string_map, nfa) =>
-           CharSetListMap.fold(
-             (string, dfa_dst, nfa) =>
+         (dfa_src, ranges_map, nfa) =>
+           RangeSetMap.fold(
+             (ranges, dfa_dst, nfa) =>
                Nfa.add_transition(
                  (
                    StateSetMap.find(dfa_src, dfa_to_nfa_map),
-                   string,
+                   ranges,
                    StateSetMap.find(dfa_dst, dfa_to_nfa_map),
                  ),
                  nfa,
                ),
-             string_map,
+             ranges_map,
              nfa,
            ),
          dfa.transitions,
@@ -56,15 +56,15 @@ let reverse: Nfa.t => Nfa.t =
   nfa =>
     Nfa.singleton(nfa.finals)
     |> StateMap.fold(
-         (src, string_map, nfa) =>
-           CharSetListMap.fold(
-             (string, dsts, nfa) =>
+         (src, ranges_map, nfa) =>
+           RangeSetMap.fold(
+             (ranges, dsts, nfa) =>
                StateSet.fold(
-                 (dst, nfa) => Nfa.add_transition((dst, string, src), nfa),
+                 (dst, nfa) => Nfa.add_transition((dst, ranges, src), nfa),
                  dsts,
                  nfa,
                ),
-             string_map,
+             ranges_map,
              nfa,
            ),
          nfa.transitions,

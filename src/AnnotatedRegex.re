@@ -45,6 +45,6 @@ let rec to_string = annotated =>
   | Char(x) =>
     switch (x) {
     | (c, i) =>
-      CharSet.to_string(c) ++ "<sub>" ++ Int32.to_string(i) ++ "</sub>"
+      RangeSet.to_string(c) ++ "<sub>" ++ Int32.to_string(i) ++ "</sub>"
     }
   };

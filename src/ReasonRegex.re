@@ -11,12 +11,13 @@ let analyze = regexp => {
   let dfa3 = RabinScott.determinize(nfa5);
   let dfa4 = Dfa.union_char_sets(dfa3);
   /*
-     let dfa4 = dfa3;
-     let dfa4 = Dfa.inline(dfa3);
-    let dfa5 = Dfa.inline(dfa4);
-   let nfa6 = Brzozowski.dfa_to_nfa(dfa5);
-     */
-  let dfa5 = Dfa.inline(dfa4);
+      let dfa4 = dfa3;
+      let dfa4 = Dfa.inline(dfa3);
+     let dfa5 = Dfa.inline(dfa4);
+    let nfa6 = Brzozowski.dfa_to_nfa(dfa5);
+   let dfa5 = Dfa.inline(dfa4);
+      */
+  let dfa5 = dfa4;
   let nfa6 = nfa5;
   /*
      let nfa6 = Jakobsson.align_strings(Brzozowski.dfa_to_nfa(dfa4));

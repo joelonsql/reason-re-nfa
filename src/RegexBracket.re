@@ -25,13 +25,13 @@ let interpret = ({negated, elements}) => {
   let s =
     List.fold_right(
       fun
-      | Char(c) => CharSet.add(c)
-      | Range(c1, c2) => CharSet.union(range_(c1, c2)),
+      | Char(c) => RangeSet.add(Range.singleton(c, c))
+      | Range(c1, c2) => RangeSet.union(range_(c1, c2)),
       elements,
-      CharSet.empty,
+      RangeSet.empty,
     );
   if (negated) {
-    CharSet.diff(any_, s);
+    RangeSet.diff(any_, s);
   } else {
     s;
   };
@@ -68,7 +68,7 @@ type result = {
   hyphen: bool,
   caret: bool,
   lbracket: bool,
-  ranges: list((char, char)),
+  ranges: RangeSet.t,
 };
 let ranges = (set: CharSet.t) => {
   let adjacent = (c1, c2) => abs(Char.code(c1) - Char.code(c2)) == 1;
@@ -83,15 +83,23 @@ let ranges = (set: CharSet.t) => {
         | (c, Some((c1, c2))) when adjacent(c, c2) => (Some((c1, c)), r)
         | (c, Some((c1, c2))) => (
             Some((c, c)),
-            {...r, ranges: [(c1, c2), ...r.ranges]},
+            {...r, ranges: RangeSet.add(Range.singleton(c1, c2), r.ranges)},
           )
         },
       set,
-      (None, {hyphen: false, caret: false, lbracket: false, ranges: []}),
+      (
+        None,
+        {
+          hyphen: false,
+          caret: false,
+          lbracket: false,
+          ranges: RangeSet.empty,
+        },
+      ),
     )
   ) {
-  | (None, r) => {...r, ranges: List.rev(r.ranges)}
-  | (Some(p), r) => {...r, ranges: List.rev([p, ...r.ranges])}
+  | (None, r) => {...r, ranges: r.ranges}
+  | (Some(p), r) => {...r, ranges: RangeSet.add(p, r.ranges)}
   };
 };
 
@@ -117,11 +125,14 @@ let unparse = (~complement=false, set: CharSet.t) => {
     } else {
       pr("[%s]", s);
     };
-  switch (r.ranges, r.lbracket, r.caret, r.hyphen) {
+  switch (RangeSet.elements(r.ranges), r.lbracket, r.caret, r.hyphen) {
   | ([(x, y)], false, false, false)
       /* If we have a single non-special character then
          there's no need for a range expression */
-      when x == y && !complement && !String.contains(regex_specials, x) =>
+      when
+        Char.compare(x, y) == 0
+        && !complement
+        && !String.contains(regex_specials, x) =>
     pr("%c", x)
   | ([_, ..._] as rs, lbracket, caret, hyphen) =>
     /* If we have some non-special characters then we don't need to
