@@ -25,7 +25,7 @@ let interpret = ({negated, elements}) => {
   let s =
     List.fold_right(
       fun
-      | Char(c) => RangeSet.add(Range.singleton(c, c))
+      | Char(c) => RangeSet.add(Range.singleton(~allow_overlap=true, c, c))
       | Range(c1, c2) => RangeSet.union(range_(c1, c2)),
       elements,
       RangeSet.empty,
@@ -83,7 +83,14 @@ let ranges = (set: CharSet.t) => {
         | (c, Some((c1, c2))) when adjacent(c, c2) => (Some((c1, c)), r)
         | (c, Some((c1, c2))) => (
             Some((c, c)),
-            {...r, ranges: RangeSet.add(Range.singleton(c1, c2), r.ranges)},
+            {
+              ...r,
+              ranges:
+                RangeSet.add(
+                  Range.singleton(~allow_overlap=true, c1, c2),
+                  r.ranges,
+                ),
+            },
           )
         },
       set,
@@ -99,7 +106,11 @@ let ranges = (set: CharSet.t) => {
     )
   ) {
   | (None, r) => {...r, ranges: r.ranges}
-  | (Some(p), r) => {...r, ranges: RangeSet.add(p, r.ranges)}
+  | (Some((c1, c2)), r) => {
+      ...r,
+      ranges:
+        RangeSet.add(Range.singleton(~allow_overlap=true, c1, c2), r.ranges),
+    }
   };
 };
 
@@ -110,11 +121,11 @@ let unparse = (~complement=false, set: CharSet.t) => {
   let r = ranges(set);
   let conc =
     List.fold_left(
-      (s, (x, y)) =>
-        if (x == y) {
-          pr("%c%s", x, s);
+      (s, range) =>
+        if (range.Range.from_char == range.to_char) {
+          pr("%c%s", range.from_char, s);
         } else {
-          pr("%c-%c%s", x, y, s);
+          pr("%c-%c%s", range.from_char, range.to_char, s);
         },
       "",
     );
@@ -126,14 +137,14 @@ let unparse = (~complement=false, set: CharSet.t) => {
       pr("[%s]", s);
     };
   switch (RangeSet.elements(r.ranges), r.lbracket, r.caret, r.hyphen) {
-  | ([(x, y)], false, false, false)
+  | ([range], false, false, false)
       /* If we have a single non-special character then
          there's no need for a range expression */
       when
-        Char.compare(x, y) == 0
+        Char.compare(range.from_char, range.to_char) == 0
         && !complement
-        && !String.contains(regex_specials, x) =>
-    pr("%c", x)
+        && !String.contains(regex_specials, range.from_char) =>
+    pr("%c", range.from_char)
   | ([_, ..._] as rs, lbracket, caret, hyphen) =>
     /* If we have some non-special characters then we don't need to
        take extra care to avoid accidentally positioning special

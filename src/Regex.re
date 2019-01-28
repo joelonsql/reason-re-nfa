@@ -30,14 +30,15 @@ let plus = t => seq(t, star(t));
 
 let eps = Eps;
 
-let chr = c => Char(RangeSet.singleton(Range.singleton(c, c)));
+let chr = c =>
+  Char(RangeSet.singleton(Range.singleton(~allow_overlap=true, c, c)));
 
 let opt = t => alt(t, eps);
 
 let empty = Empty;
 
 let range_ = (l, h) => {
-  RangeSet.singleton(Range.singleton(l, h));
+  RangeSet.singleton(Range.singleton(~allow_overlap=true, l, h));
 };
 
 let range = (l, h) => Char(range_(l, h));

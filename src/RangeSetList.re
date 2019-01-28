@@ -20,13 +20,12 @@ let to_string: t => string =
     String.concat("", List.map(RangeSet.to_string, range_set_list));
   };
 
-let of_string: string => t =
-  s => {
-    List.map(
-      c => RangeSet.singleton(Range.singleton(c, c)),
-      Common.explode(s),
-    );
-  };
+let of_string = (~allow_overlap=false, s) => {
+  List.map(
+    c => RangeSet.singleton(Range.singleton(~allow_overlap, c, c)),
+    Common.explode(s),
+  );
+};
 
 let test = () => {
   let r1 = of_string("abc");
