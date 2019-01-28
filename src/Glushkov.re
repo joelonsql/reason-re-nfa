@@ -178,17 +178,7 @@ let compile: regex('c) => t =
       |> LetterSet.fold(
            ((char_set, state)) =>
              CharSetSet.fold(
-               char_set => {
-                 print_endline(
-                   "Glushkov initial: "
-                   ++ Int32.to_string(start)
-                   ++ " "
-                   ++ CharSet.to_string(char_set)
-                   ++ " "
-                   ++ Int32.to_string(state),
-                 );
-                 Nfa.add_transition((start, [char_set], state));
-               },
+               char_set => Nfa.add_transition((start, [char_set], state)),
                CharSetMap.find(char_set, factorize_map),
              ),
            firsts,
@@ -197,17 +187,8 @@ let compile: regex('c) => t =
       |> Letter2Set.fold(
            (((_, from_state), (char_set, to_state))) =>
              CharSetSet.fold(
-               char_set => {
-                 print_endline(
-                   "Glushkov factors: "
-                   ++ Int32.to_string(from_state)
-                   ++ " "
-                   ++ CharSet.to_string(char_set)
-                   ++ " "
-                   ++ Int32.to_string(to_state),
-                 );
-                 Nfa.add_transition((from_state, [char_set], to_state));
-               },
+               char_set =>
+                 Nfa.add_transition((from_state, [char_set], to_state)),
                CharSetMap.find(char_set, factorize_map),
              ),
            factors,

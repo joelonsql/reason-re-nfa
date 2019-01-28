@@ -1,6 +1,8 @@
 type state = StateSet.t;
 
 type transitions = StateSetMap.t(CharSetListMap.t(state));
+type transitions_inlined = StateSetMap.t(StringMap.t(state));
+type transitions_inlined_grouped = StateSetMap.t(StringSetMap.t(state));
 
 type string_set_transitions = StateSetMap.t(CharSetListSetMap.t(state));
 
@@ -120,7 +122,14 @@ let count_children: (state, t) => int =
 
 let inline: t => t =
   input_dfa => {
-    let rec inline = (src, string, dst, visited, dfa) =>
+    let rec inline = (src, string, dst, visited, dfa) => {
+      print_endline(
+        StateSet.to_string(src)
+        ++ " "
+        ++ CharSetList.to_string(string)
+        ++ " "
+        ++ StateSet.to_string(dst),
+      );
       if (exists_transition((src, string, dst), dfa)) {
         dfa;
       } else {
@@ -133,18 +142,103 @@ let inline: t => t =
             (dst, [], StateSet.union(visited, dst), dfa);
           };
         CharSetListMap.fold(
-          (string', dst', dfa) =>
-            inline(src, List.concat([string, string']), dst', visited, dfa),
+          (string', dst', dfa) => {
+            assert(List.length(string') == 1);
+            let char_set = List.hd(string');
+            print_endline(
+              "string' "
+              ++ CharSet.to_string(char_set)
+              ++ " dst "
+              ++ StateSet.to_string(dst),
+            );
+            CharSet.fold(
+              (char, dfa) =>
+                inline(
+                  src,
+                  List.concat([string, [CharSet.singleton(char)]]),
+                  dst',
+                  visited,
+                  dfa,
+                ),
+              char_set,
+              dfa,
+            );
+          },
           try (StateSetMap.find(dst, input_dfa.transitions)) {
           | Not_found => CharSetListMap.empty
           },
           dfa,
         );
       };
+    };
     CharSetListMap.fold(
       (string, dst, dfa) =>
         inline(input_dfa.start, string, dst, StateSet.empty, dfa),
       StateSetMap.find(input_dfa.start, input_dfa.transitions),
+      singleton(input_dfa.start),
+    )
+    |> set_finals(input_dfa.finals);
+  };
+
+let union_char_sets: t => t =
+  input_dfa => {
+    let group_by: transitions => transitions =
+      transitions => {
+        let fold_char_set_list_map:
+          CharSetListMap.t(state) => StateSetMap.t(CharSetList.t) =
+          char_set_list_map =>
+            CharSetListMap.fold(
+              (char_set_list, dst, dst_map) => {
+                assert(List.length(char_set_list) == 1);
+                StateSetMap.add(
+                  dst,
+                  switch (StateSetMap.find(dst, dst_map)) {
+                  | exception Not_found => char_set_list
+                  | char_set_list' => [
+                      CharSet.union(
+                        List.hd(char_set_list),
+                        List.hd(char_set_list'),
+                      ),
+                    ]
+                  },
+                  dst_map,
+                );
+              },
+              char_set_list_map,
+              StateSetMap.empty,
+            );
+
+        StateSetMap.fold(
+          (src, char_set_list_map, acc) =>
+            StateSetMap.fold(
+              (dst, char_set_list, acc) =>
+                StateSetMap.add(
+                  src,
+                  switch (StateSetMap.find(src, acc)) {
+                  | exception Not_found =>
+                    CharSetListMap.singleton(char_set_list, dst)
+                  | char_set_list_map =>
+                    CharSetListMap.add(char_set_list, dst, char_set_list_map)
+                  },
+                  acc,
+                ),
+              fold_char_set_list_map(char_set_list_map),
+              acc,
+            ),
+          transitions,
+          StateSetMap.empty,
+        );
+      };
+
+    StateSetMap.fold(
+      (src, char_set_list_map, dfa) =>
+        CharSetListMap.fold(
+          (char_set_list, dst, dfa) =>
+            add_transition((src, char_set_list, dst), dfa),
+          char_set_list_map,
+          dfa,
+        ),
+      group_by(input_dfa.transitions),
       singleton(input_dfa.start),
     )
     |> set_finals(input_dfa.finals);
@@ -596,101 +690,105 @@ let state_goto_handlers = goto_dsts => {
 
 /*
 
- let to_llvm_ir: t => string =
-   dfa => {
-     let transitions = group_by_str_len(dfa.transitions);
-     let accept_empty = StateSetSet.mem(dfa.start, dfa.finals) ? "1" : "0";
-     let start_state = StateSet.to_identifier(dfa.start);
-     let match_dfa_body =
-       String.concat(
-         "",
-         List.map(
-           src => {
-             let src_state = StateSet.to_identifier(src);
-             let (switch_states, list_goto_dsts) =
-               StrLenMap.fold(
-                 (str_len, string_map, (switch_states, list_goto_dsts)) => {
-                   let str_len = Int32.to_int(str_len);
-                   let itype =
-                     if (str_len > 8) {
-                       "<" ++ string_of_int(str_len) ++ " x i8>";
-                     } else {
-                       "i" ++ string_of_int(str_len * 8);
-                     };
-                   let (_, cases, goto_dsts) =
-                     CharSetListMap.fold(
-                       (string, dst, (i, acc, goto_dsts)) => {
-                         assert(List.length(string) == str_len);
-                         let dst_state = StateSet.to_identifier(dst);
-                         let ival =
-                           Common.encode_string_as_int_or_vector(string);
-                         let string_escaped = Common.escape_string(string);
-                         let bits = String.make(str_len, '1');
-                         (
-                           i + 1,
-                           [
-                             ll_switch_case(
-                               string_of_int(i),
-                               str_len,
-                               itype,
-                               ival,
-                               src_state,
-                               dst_state,
-                               string_escaped,
-                               bits,
-                             ),
-                             ...acc,
-                           ],
-                           if (StateSetMap.mem(dst, goto_dsts)) {
-                             goto_dsts;
-                           } else {
-                             let in_accepting_state =
-                               StateSetSet.mem(dst, dfa.finals) ? "1" : "0";
-                             StateSetMap.add(
-                               dst,
-                               ll_goto_state(
-                                 src_state,
-                                 dst_state,
-                                 in_accepting_state,
-                               ),
-                               goto_dsts,
-                             );
-                           },
-                         );
-                       },
-                       string_map,
-                       (0, [], StateSetMap.empty),
-                     );
-                   (
-                     [
-                       ll_load(str_len, itype, src_state)
-                       ++ ll_switch(
-                            str_len,
-                            String.concat("", List.rev(cases)),
-                            itype,
-                            src_state,
-                          ),
-                       ...switch_states,
-                     ],
-                     [state_goto_handlers(goto_dsts), ...list_goto_dsts],
-                   );
-                 },
-                 try (StateSetMap.find(src, transitions)) {
-                 | Not_found => StrLenMap.empty
-                 },
-                 ([], []),
-               );
-             ll_states(
-               src_state,
-               String.concat("", switch_states),
-               String.concat("", list_goto_dsts),
-             );
-           },
-           StateSetSet.elements(dfa.states),
-         ),
-       );
-     ll_match_dfa(accept_empty, start_state, match_dfa_body);
-   };
+  let to_llvm_ir: t => string =
+    dfa => {
+      let transitions = group_by_str_len(dfa.transitions);
+      let accept_empty = StateSetSet.mem(dfa.start, dfa.finals) ? "1" : "0";
+      let start_state = StateSet.to_identifier(dfa.start);
+      let match_dfa_body =
+        String.concat(
+          "",
+          List.map(
+            src => {
+              let src_state = StateSet.to_identifier(src);
+              let (switch_states, list_goto_dsts) =
+                StrLenMap.fold(
+                  (str_len, string_map, (switch_states, list_goto_dsts)) => {
+                    let str_len = Int32.to_int(str_len);
+                    let itype =
+                      if (str_len > 8) {
+                        "<" ++ string_of_int(str_len) ++ " x i8>";
+                      } else {
+                        "i" ++ string_of_int(str_len * 8);
+                      };
+                    let (_, cases, goto_dsts) =
+                      CharSetListMap.fold(
+                        (string, dst, (i, acc, goto_dsts)) => {
+                          assert(List.length(string) == str_len);
+                          let dst_state = StateSet.to_identifier(dst);
+                          let ival =
+                            Common.encode_string_as_int_or_vector(string);
+                          let string_escaped = Common.escape_string(string);
+                          let bits = String.make(str_len, '1');
+                          (
+                            i + 1,
+                            [
+                              ll_switch_case(
+                                string_of_int(i),
+                                str_len,
+                                itype,
+                                ival,
+                                src_state,
+                                dst_state,
+                                string_escaped,
+                                bits,
+                              ),
+                              ...acc,
+                            ],
+                            if (StateSetMap.mem(dst, goto_dsts)) {
+                              goto_dsts;
+                            } else {
+                              let in_accepting_state =
+                                StateSetSet.mem(dst, dfa.finals) ? "1" : "0";
+                              StateSetMap.add(
+                                dst,
+                                ll_goto_state(
+                                  src_state,
+                                  dst_state,
+                                  in_accepting_state,
+                                ),
+                                goto_dsts,
+                              );
+                            },
+                          );
+                        },
+                        string_map,
+                        (0, [], StateSetMap.empty),
+                      );
+                    (
+                      [
+                        ll_load(str_len, itype, src_state)
+                        ++ ll_switch(
+                             str_len,
+                             String.concat("", List.rev(cases)),
+                             itype,
+                             src_state,
+                           ),
+                        ...switch_states,
+                      ],
+                      [state_goto_handlers(goto_dsts), ...list_goto_dsts],
+                    );
+                  },
+                  try (StateSetMap.find(src, transitions)) {
+                  | Not_found => StrLenMap.empty
+                  },
+                  ([], []),
+                );
+              ll_states(
+                src_state,
+                String.concat("", switch_states),
+                String.concat("", list_goto_dsts),
+              );
+            },
+            StateSetSet.elements(dfa.states),
+          ),
+        );
+      ll_match_dfa(accept_empty, start_state, match_dfa_body);
+    };
+
+ */
+
+/*
 
  let to_js = (inline, dfa) => {
    let transitions = group_by_str_len'(dfa.transitions);
@@ -702,9 +800,9 @@ let state_goto_handlers = goto_dsts => {
        if (!StateSetMap.mem(src, transitions)) {
          (
            {j|
-             state = -1;
-             break loop_switch;
-             |j},
+              state = -1;
+              break loop_switch;
+              |j},
            todo,
          );
        } else {
@@ -715,7 +813,7 @@ let state_goto_handlers = goto_dsts => {
            CharSetListSetMap.fold(
              (string_set, dst, (cases, todo)) => {
                CharSetListSet.iter(
-                 string => assert(CharSetList.length(string) == str_len),
+                 string => assert(List.length(string) == str_len),
                  string_set,
                );
                let cases_to_same_dst =

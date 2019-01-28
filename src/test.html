@@ -9,6 +9,13 @@
 <body>
     <div id="test-table">
     </div>
+    <script>
+        let memory = new WebAssembly.Memory({ initial: 10, maximum: 100 });
+        let encodedString = new TextEncoder('utf-8').encode("€");
+        let s = new Uint8Array(memory.buffer);
+        s.set(encodedString);
+        console.log(s);
+    </script>
 </body>
 
 </html>

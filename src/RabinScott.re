@@ -18,15 +18,13 @@ let determinize: Nfa.t => Dfa.t =
           |> CharSetListMap.fold(
                (string, dfa_dst, dfa) => {
                  print_endline(
-                   indent
-                   ++ "add_transition: "
+                   "Adding "
                    ++ StateSet.to_string(dfa_src)
                    ++ " "
-                   ++ Common.escape_string(CharSetList.to_string(string))
+                   ++ CharSetList.to_string(string)
                    ++ " "
                    ++ StateSet.to_string(dfa_dst),
                  );
-
                  let dfa =
                    Dfa.add_transition((dfa_src, string, dfa_dst), dfa);
                  let dfa = build(dfa_dst, dfa, indent ++ "  ");
