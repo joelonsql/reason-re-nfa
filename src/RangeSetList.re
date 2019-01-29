@@ -1,5 +1,8 @@
 type t = list(RangeSet.t);
 
+exception NoElement(string);
+exception MultipleElements(string);
+
 let compare = (l, r) => {
   let rec cmp = (l, r) =>
     switch (l, r) {
@@ -26,6 +29,17 @@ let of_string = (~allow_overlap=false, s) => {
     Common.explode(s),
   );
 };
+
+let choose_strict: t => RangeSet.t =
+  r =>
+    switch (List.length(r)) {
+    | 1 => List.hd(r)
+    | 0 => raise(NoElement("Expected 1 element, got 0"))
+    | n =>
+      raise(
+        MultipleElements("Expected 1 element, got " ++ string_of_int(n)),
+      )
+    };
 
 let test = () => {
   let r1 = of_string("abc");

@@ -34,7 +34,7 @@
             -->
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="a.*b" />
+                    <td colspan="2"><input type="text" id="regexp-input" value="([a-c]b12(34|56)7)*" />
                     </td>
                 </tr>
                 <tr>
@@ -71,7 +71,7 @@
             (Regex to NFA)</a></div>
     <div><a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">Nondeterministic finite automaton
             (NFA):</a></div>
-    <div style="display: none;"><textarea id="nfaDot"></textarea></div>
+    <div><textarea id="nfaDot"></textarea></div>
     <table>
         <tr>
             <td>
@@ -178,7 +178,33 @@
         </tr>
     </table>
     <hr />
-    <div>nfa<sub>6</sub> = dfa_to_nfa(merge_ranges(dfa<sub>3</sub>))</div>
+    <div>dfa<sub>4</sub> = merge_ranges(dfa<sub>3</sub>)</div>
+    <div style="display: none;"><textarea id="dfa4Dot"></textarea></div>
+    <table>
+        <tr>
+            <td>
+                <div><span id="dfa4Matrix" /></div>
+            </td>
+            <td>
+                <div id="dfa4Graph"></div>
+            </td>
+        </tr>
+    </table>
+    <hr />
+    <div>dfa<sub>5</sub> = merge_linear(dfa<sub>4</sub>)</div>
+    <div style="display: none;"><textarea id="dfa5Dot"></textarea></div>
+    <table>
+        <tr>
+            <td>
+                <div><span id="dfa5Matrix" /></div>
+            </td>
+            <td>
+                <div id="dfa5Graph"></div>
+            </td>
+        </tr>
+    </table>
+    <hr />
+    <div>nfa<sub>6</sub> = dfa_to_nfa(dfa<sub>5</sub>)</div>
     <div style="display: none;"><textarea id="nfa6Dot"></textarea></div>
     <table>
         <tr>

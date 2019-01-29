@@ -15,7 +15,7 @@ let determinize: Nfa.t => Dfa.t =
                  dfa.finals;
                },
              )
-          |> RangeSetMap.fold(
+          |> RangeSetListSetMap.fold(
                (ranges, dfa_dst, dfa) =>
                  Dfa.add_transition((dfa_src, ranges, dfa_dst), dfa)
                  |> build(dfa_dst),
@@ -23,17 +23,17 @@ let determinize: Nfa.t => Dfa.t =
                  (nfa_src, dfa_map) => {
                    let nfa_map =
                      try (StateMap.find(nfa_src, nfa.transitions)) {
-                     | Not_found => RangeSetMap.empty
+                     | Not_found => RangeSetListSetMap.empty
                      };
 
-                   RangeSetMap.union(
+                   RangeSetListSetMap.union(
                      (_, dst, dst') => Some(StateSet.union(dst, dst')),
                      dfa_map,
                      nfa_map,
                    );
                  },
                  dfa_src,
-                 RangeSetMap.empty,
+                 RangeSetListSetMap.empty,
                ),
              );
         };
@@ -45,27 +45,27 @@ let test = () => {
     Nfa.singleton(StateSet.singleton(Int32.zero))
     |> Nfa.add_transition((
          Int32.of_int(0),
-         RangeSet.of_char('a'),
+         RangeSetListSet.of_char('a'),
          Int32.of_int(1),
        ))
     |> Nfa.add_transition((
          Int32.of_int(0),
-         RangeSet.of_char('a'),
+         RangeSetListSet.of_char('a'),
          Int32.of_int(2),
        ))
     |> Nfa.add_transition((
          Int32.of_int(2),
-         RangeSet.of_char('b'),
+         RangeSetListSet.of_char('b'),
          Int32.of_int(3),
        ))
     |> Nfa.add_transition((
          Int32.of_int(3),
-         RangeSet.of_char('c'),
+         RangeSetListSet.of_char('c'),
          Int32.of_int(4),
        ))
     |> Nfa.add_transition((
          Int32.of_int(4),
-         RangeSet.of_char('c'),
+         RangeSetListSet.of_char('c'),
          Int32.of_int(4),
        ))
     |> Nfa.set_finals(StateSet.of_ints([1, 3, 4]));

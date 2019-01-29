@@ -21,7 +21,7 @@
      let output_nfa =
        Nfa.singleton(input_nfa.start)
        |> StateMap.fold(
-            (src, string_map, nfa) =>
+            (src, ranges_map, nfa) =>
               if (Nfa.count_parents(src, input_nfa) == 1
                   && Nfa.count_children(src, input_nfa) == 1
                   && !StateSet.mem(src, input_nfa.finals)) {
@@ -38,7 +38,7 @@
                       dsts,
                       nfa,
                     ),
-                  string_map,
+                  ranges_map,
                   nfa,
                 );
               },
@@ -54,7 +54,7 @@
      let output_nfa =
        Nfa.singleton(input_nfa.start)
        |> StateMap.fold(
-            (src, string_map, nfa) => {
+            (src, ranges_map, nfa) => {
               let min_width =
                 StringMap.fold(
                   (string, _, min_width) =>
@@ -63,7 +63,7 @@
                     } else {
                       min_width;
                     },
-                  string_map,
+                  ranges_map,
                   0,
                 );
               StringMap.fold(
@@ -103,7 +103,7 @@
                     dsts,
                     nfa,
                   ),
-                string_map,
+                ranges_map,
                 nfa,
               );
             },

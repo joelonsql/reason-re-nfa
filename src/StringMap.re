@@ -15,9 +15,9 @@ let union = (type a, f: (string, a, a) => option(a)) => {
   merge(f);
 };
 
-let choose_strict = string_map =>
-  switch (cardinal(string_map)) {
-  | 1 => choose(string_map)
+let choose_strict = ranges_map =>
+  switch (cardinal(ranges_map)) {
+  | 1 => choose(ranges_map)
   | 0 => raise(NoElement("Expected 1 element, got 0"))
   | n =>
     raise(MultipleElements("Expected 1 element, got " ++ string_of_int(n)))

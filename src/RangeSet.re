@@ -121,7 +121,7 @@ let unparse = (~complement=false, set: CharSet.t) => {
     } else {
       pr("[%s]", s);
     };
-  switch (elements(r.ranges), r.lbracket, r.caret, r.hyphen) {
+  switch (List.rev(elements(r.ranges)), r.lbracket, r.caret, r.hyphen) {
   | ([range], false, false, false)
       /* If we have a single non-special character then
          there's no need for a range expression */
@@ -178,16 +178,6 @@ let unparse_charset = s => {
 let to_string = range_set =>
   Common.escape_string(unparse_charset(to_char_set(range_set)));
 
-let explode = s => {
-  let rec exp = (i, l) =>
-    if (i < 0) {
-      l;
-    } else {
-      exp(i - 1, [of_char(s.[i]), ...l]);
-    };
-  exp(String.length(s) - 1, []);
-};
-
 let set_allow_overlap = (allow_overlap, range_set) => {
   List.fold_right(
     (range, range_set) => add({...range, allow_overlap}, range_set),
@@ -201,8 +191,7 @@ let test = () => {
   let range_set = add(Range.singleton('e', 'g'), range_set);
   let range_set = add(Range.singleton('d', 'd'), range_set);
   let str = to_string(range_set);
-  print_endline(str);
-  assert(str == "[a-cde-g]");
+  assert(str == "[a-g]");
   let char_set = CharSet.of_list(['e', 'f', 'c', 'a', 'b', 'h']);
   let range_set = of_char_set(char_set);
   let range_set = add(Range.singleton('j', 'm'), range_set);
@@ -210,9 +199,9 @@ let test = () => {
   assert(str == "[a-ce-fhj-m]");
   let range_set = add(Range.singleton('d', 'd'), range_set);
   let str = to_string(range_set);
-  print_endline(str);
+  assert(str == "[a-fhj-m]");
   let char_set = to_char_set(range_set);
-  print_endline(CharSet.to_string(char_set));
   let range_set = of_char_set(char_set);
-  print_endline(to_string(range_set));
+  let str = to_string(range_set);
+  assert(str == "[a-fhj-m]");
 };

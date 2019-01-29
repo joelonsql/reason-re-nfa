@@ -1,9 +1,10 @@
-include Map.Make(RangeSet);
+include Map.Make(RangeSetListSet);
 
 exception NoElement(string);
 exception MultipleElements(string);
 
-let union = (f: (RangeSet.t, StateSet.t, StateSet.t) => option(StateSet.t)) => {
+let union =
+    (f: (RangeSetListSet.t, StateSet.t, StateSet.t) => option(StateSet.t)) => {
   let f = (k, x, y) =>
     switch (x, y) {
     | (None, None) => None

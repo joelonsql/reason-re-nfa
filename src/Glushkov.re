@@ -130,7 +130,12 @@ let compile: regex('c) => t =
       |> LetterSet.fold(
            ((ranges, state)) =>
              RangeSetSet.fold(
-               ranges => Nfa.add_transition((start, ranges, state)),
+               ranges =>
+                 Nfa.add_transition((
+                   start,
+                   RangeSetListSet.singleton([ranges]),
+                   state,
+                 )),
                RangeSetMap.find(ranges, factorize_map),
              ),
            firsts,
@@ -139,7 +144,12 @@ let compile: regex('c) => t =
       |> Letter2Set.fold(
            (((_, from_state), (ranges, to_state))) =>
              RangeSetSet.fold(
-               ranges => Nfa.add_transition((from_state, ranges, to_state)),
+               ranges =>
+                 Nfa.add_transition((
+                   from_state,
+                   RangeSetListSet.singleton([ranges]),
+                   to_state,
+                 )),
                RangeSetMap.find(ranges, factorize_map),
              ),
            factors,
