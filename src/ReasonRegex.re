@@ -11,7 +11,16 @@ let analyze = regexp => {
   let dfa3 = RabinScott.determinize(nfa5);
   let dfa4 = Dfa.merge_ranges(dfa3);
   let dfa5 = Dfa.merge_linear(dfa4);
-  let nfa6 = Brzozowski.dfa_to_nfa(dfa5);
+  let dfa6 = Dfa.merge_branches(dfa5);
+  let dfa7 = Dfa.merge_linear(dfa6);
+  /*
+    let dfa6 = dfa5;
+   let dfa5 = dfa4;
+   let dfa4 = Dfa.merge_ranges(dfa3);
+   let dfa5 = Dfa.merge_linear(dfa4);
+       let dfa6 = Dfa.merge_branches(dfa5);
+     */
+  let nfa6 = Brzozowski.dfa_to_nfa(dfa7);
   (
     glushkov.nullable,
     glushkov.firsts,
@@ -39,6 +48,10 @@ let analyze = regexp => {
     Dfa.to_matrix(dfa4),
     Dfa.to_dot(dfa5),
     Dfa.to_matrix(dfa5),
+    Dfa.to_dot(dfa6),
+    Dfa.to_matrix(dfa6),
+    Dfa.to_dot(dfa7),
+    Dfa.to_matrix(dfa7),
     Nfa.to_dot(nfa6),
     Nfa.to_matrix(nfa6),
     "",

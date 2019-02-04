@@ -120,55 +120,167 @@ let count_children: (state, t) => int =
 
 let merge_linear: t => t =
   input_dfa => {
-    let rec merge_linear = (src, ranges, dst, dfa) =>
-      if (List.length(ranges) > 0
-          && exists_transition(
-               (src, RangeSetListSet.singleton(List.rev(ranges)), dst),
-               dfa,
-             )) {
+    let rec merge_linear = (src, ranges, dst, dfa, lengths) =>
+      if (List.length(RangeSetListSet.choose(ranges)) > 0
+          && exists_transition((src, ranges, dst), dfa)) {
         dfa;
       } else {
-        print_endline(
-          "src "
-          ++ StateSet.to_string(src)
-          ++ " ranges "
-          ++ RangeSetList.to_string(ranges)
-          ++ " dst "
-          ++ StateSet.to_string(dst),
-        );
         let (src, ranges, dfa) =
           if (!StateSetSet.mem(dst, input_dfa.finals)
               && count_parents(dst, input_dfa) == 1
-              && count_children(dst, input_dfa) == 1) {
+              && count_children(dst, input_dfa) == 1
+              && (
+                RangeSetListSet.cardinal(ranges) == 1
+                || (
+                  try (
+                    {
+                      let (k, _) =
+                        RangeSetListSetMap.choose(
+                          StateSetMap.find(dst, input_dfa.transitions),
+                        );
+                      RangeSetListSet.cardinal(k) == 1;
+                    }
+                  ) {
+                  | Not_found => false
+                  }
+                )
+              )
+              && (
+                switch (StateSetMap.find(src, lengths)) {
+                | exception Not_found => true
+                | length =>
+                  List.length(RangeSetListSet.choose(ranges)) < length
+                }
+              )) {
             (src, ranges, dfa);
           } else {
-            let dfa =
-              add_transition(
-                (src, RangeSetListSet.singleton(List.rev(ranges)), dst),
-                dfa,
-              );
-            (dst, [], dfa);
+            let dfa = add_transition((src, ranges, dst), dfa);
+            (dst, RangeSetListSet.empty, dfa);
           };
         RangeSetListSetMap.fold(
-          (ranges', dst', dfa) => {
-            let ranges' = RangeSetListSet.choose_strict(ranges');
-            merge_linear(src, [ranges', ...ranges], dst', dfa);
-          },
+          (ranges', dst', dfa) =>
+            merge_linear(
+              src,
+              RangeSetListSet.merge(ranges, ranges'),
+              dst',
+              dfa,
+              lengths,
+            ),
           try (StateSetMap.find(dst, input_dfa.transitions)) {
           | Not_found => RangeSetListSetMap.empty
           },
           dfa,
         );
       };
+
+    let length_dfa =
+      RangeSetListSetMap.fold(
+        (ranges, dst, dfa) =>
+          merge_linear(input_dfa.start, ranges, dst, dfa, StateSetMap.empty),
+        StateSetMap.find(input_dfa.start, input_dfa.transitions),
+        singleton(input_dfa.start),
+      )
+      |> set_finals(input_dfa.finals);
+
+    let length_map =
+      StateSetMap.fold(
+        (src, ranges, length_map) =>
+          RangeSetListSetMap.fold(
+            (ranges, _, length_map) => {
+              let length = List.length(RangeSetListSet.choose(ranges));
+              let cur_length =
+                try (StateSetMap.find(src, length_map)) {
+                | Not_found => length
+                };
+              StateSetMap.add(src, min(length, cur_length), length_map);
+            },
+            ranges,
+            length_map,
+          ),
+        length_dfa.transitions,
+        StateSetMap.empty,
+      );
+
     RangeSetListSetMap.fold(
       (ranges, dst, dfa) =>
-        merge_linear(
-          input_dfa.start,
-          [RangeSetListSet.choose_strict(ranges)],
-          dst,
+        merge_linear(input_dfa.start, ranges, dst, dfa, length_map),
+      StateSetMap.find(input_dfa.start, input_dfa.transitions),
+      singleton(input_dfa.start),
+    )
+    |> set_finals(input_dfa.finals);
+  };
+
+let merge_branches: t => t =
+  input_dfa => {
+    let group_by: transitions => transitions =
+      transitions => {
+        let fold_ranges_map:
+          RangeSetListSetMap.t(state) => StateSetMap.t(RangeSetListSet.t) =
+          ranges_map =>
+            RangeSetListSetMap.fold(
+              (ranges, dst, dst_map) => {
+                let ranges' =
+                  switch (StateSetMap.find(dst, dst_map)) {
+                  | exception Not_found => ranges
+                  | ranges' =>
+                    let length = List.length(RangeSetListSet.choose(ranges));
+                    let ranges' =
+                      switch (RangeSetListSet.cardinal(ranges')) {
+                      | 1 => RangeSetListSet.choose(ranges')
+                      | _ => raise(Bug("Expected exactly one element"))
+                      };
+                    let length' = List.length(ranges');
+                    if (length' == length) {
+                      ();
+                    } else {
+                      raise(
+                        Bug(
+                          "Different lengths "
+                          ++ string_of_int(length')
+                          ++ " != "
+                          ++ string_of_int(length),
+                        ),
+                      );
+                    };
+                    RangeSetListSet.add(ranges', ranges);
+                  };
+                let dst_map = StateSetMap.add(dst, ranges', dst_map);
+                dst_map;
+              },
+              ranges_map,
+              StateSetMap.empty,
+            );
+
+        StateSetMap.fold(
+          (src, ranges_map, acc) =>
+            StateSetMap.fold(
+              (dst, ranges, acc) =>
+                StateSetMap.add(
+                  src,
+                  switch (StateSetMap.find(src, acc)) {
+                  | exception Not_found =>
+                    RangeSetListSetMap.singleton(ranges, dst)
+                  | ranges_map =>
+                    RangeSetListSetMap.add(ranges, dst, ranges_map)
+                  },
+                  acc,
+                ),
+              fold_ranges_map(ranges_map),
+              acc,
+            ),
+          transitions,
+          StateSetMap.empty,
+        );
+      };
+
+    StateSetMap.fold(
+      (src, ranges_map, dfa) =>
+        RangeSetListSetMap.fold(
+          (ranges, dst, dfa) => add_transition((src, ranges, dst), dfa),
+          ranges_map,
           dfa,
         ),
-      StateSetMap.find(input_dfa.start, input_dfa.transitions),
+      group_by(input_dfa.transitions),
       singleton(input_dfa.start),
     )
     |> set_finals(input_dfa.finals);

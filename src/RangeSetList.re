@@ -2,9 +2,15 @@ type t = list(RangeSet.t);
 
 exception NoElement(string);
 exception MultipleElements(string);
+exception DifferentLengths(string);
+
+let to_string: t => string =
+  range_set_list => {
+    String.concat("", List.map(RangeSet.to_string, range_set_list));
+  };
 
 let compare = (l, r) => {
-  let rec cmp = (l, r) =>
+  let rec cmp = (l, r) => {
     switch (l, r) {
     | ([], []) => 0
     | ([], _) => (-1)
@@ -15,13 +21,9 @@ let compare = (l, r) => {
       | n => n
       }
     };
+  };
   cmp(l, r);
 };
-
-let to_string: t => string =
-  range_set_list => {
-    String.concat("", List.map(RangeSet.to_string, range_set_list));
-  };
 
 let of_string = (~allow_overlap=false, s) => {
   List.map(
