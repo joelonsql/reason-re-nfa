@@ -13,6 +13,7 @@ let analyze = regexp => {
   let dfa5 = Dfa.merge_linear(dfa4);
   let dfa6 = Dfa.merge_branches(dfa5);
   let dfa7 = Dfa.merge_linear(dfa6);
+  let dfa8 = Dfa.merge_branches(dfa7);
   /*
     let dfa6 = dfa5;
    let dfa5 = dfa4;
@@ -20,7 +21,7 @@ let analyze = regexp => {
    let dfa5 = Dfa.merge_linear(dfa4);
        let dfa6 = Dfa.merge_branches(dfa5);
      */
-  let nfa6 = Brzozowski.dfa_to_nfa(dfa7);
+  let nfa6 = Brzozowski.dfa_to_nfa(dfa8);
   (
     glushkov.nullable,
     glushkov.firsts,
@@ -52,6 +53,8 @@ let analyze = regexp => {
     Dfa.to_matrix(dfa6),
     Dfa.to_dot(dfa7),
     Dfa.to_matrix(dfa7),
+    Dfa.to_dot(dfa8),
+    Dfa.to_matrix(dfa8),
     Nfa.to_dot(nfa6),
     Nfa.to_matrix(nfa6),
     "",

@@ -127,7 +127,6 @@ let merge_linear: t => t =
       } else {
         let (src, ranges, dfa) =
           if (!StateSetSet.mem(dst, input_dfa.finals)
-              && count_parents(dst, input_dfa) == 1
               && count_children(dst, input_dfa) == 1
               && (
                 RangeSetListSet.cardinal(ranges) == 1
@@ -224,12 +223,8 @@ let merge_branches: t => t =
                   | exception Not_found => ranges
                   | ranges' =>
                     let length = List.length(RangeSetListSet.choose(ranges));
-                    let ranges' =
-                      switch (RangeSetListSet.cardinal(ranges')) {
-                      | 1 => RangeSetListSet.choose(ranges')
-                      | _ => raise(Bug("Expected exactly one element"))
-                      };
-                    let length' = List.length(ranges');
+                    let length' =
+                      List.length(RangeSetListSet.choose(ranges'));
                     if (length' == length) {
                       ();
                     } else {
@@ -242,7 +237,7 @@ let merge_branches: t => t =
                         ),
                       );
                     };
-                    RangeSetListSet.add(ranges', ranges);
+                    RangeSetListSet.union(ranges', ranges);
                   };
                 let dst_map = StateSetMap.add(dst, ranges', dst_map);
                 dst_map;

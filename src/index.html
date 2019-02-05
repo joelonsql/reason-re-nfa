@@ -34,7 +34,7 @@
             -->
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="([a-f](bc|de)f(gh|(ij|kl)(mn|op)q))*" />
+                    <td colspan="2"><input type="text" id="regexp-input" value="Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec" />
                     </td>
                 </tr>
                 <tr>
@@ -230,7 +230,20 @@
         </tr>
     </table>
     <hr />
-    <div>nfa<sub>6</sub> = dfa_to_nfa(dfa<sub>7</sub>)</div>
+    <div>dfa<sub>8</sub> = merge_branches(dfa<sub>7</sub>)</div>
+    <div style="display: none;"><textarea id="dfa8Dot"></textarea></div>
+    <table>
+        <tr>
+            <td>
+                <div><span id="dfa8Matrix" /></div>
+            </td>
+            <td>
+                <div id="dfa8Graph"></div>
+            </td>
+        </tr>
+    </table>
+    <hr />
+    <div>nfa<sub>6</sub> = dfa_to_nfa(dfa<sub>8</sub>)</div>
     <div style="display: none;"><textarea id="nfa6Dot"></textarea></div>
     <table>
         <tr>
