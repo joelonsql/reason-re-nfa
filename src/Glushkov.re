@@ -106,23 +106,8 @@ let compile: regex('c) => t =
              RangeSetSet.add(ranges, ranges_set),
            factors,
          );
-    print_endline(RangeSetSet.to_string(ranges_set));
-    let gcd = RangeSetSet.greatest_common_divisors(ranges_set);
-
-    print_endline("gcd: " ++ RangeSetSet.to_string(gcd));
 
     let factorize_map = RangeSetSet.build_factorize_map(ranges_set);
-
-    print_endline("factorize_map: ");
-    RangeSetMap.iter(
-      (ranges, ranges_set) =>
-        print_endline(
-          RangeSet.to_string(ranges)
-          ++ " : "
-          ++ RangeSetSet.to_string(ranges_set),
-        ),
-      factorize_map,
-    );
 
     let nfa =
       Nfa.singleton(StateSet.singleton(start))
