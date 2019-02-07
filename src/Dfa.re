@@ -109,7 +109,7 @@ let count_children: (state, t) => int =
     StateSetMap.fold(
       (src, ranges_map, count) =>
         if (StateSet.equal(src, state)) {
-          RangeSetListSetMap.cardinal(ranges_map) + count;
+          RangeSetListSetMap.count_strings(ranges_map) + count;
         } else {
           count;
         },
@@ -136,9 +136,10 @@ let merge_linear = (~max_length=8, ~max_cardinality=32, input_dfa) => {
             && (
               count_children(dst, input_dfa) == 1
               && count_parents(dst, input_dfa) == 1
-              || cardinality <= max_cardinality
+              || cardinality
+              * count_children(dst, input_dfa) <= max_cardinality
             )) {
-          (src, ranges, cardinality, dfa);
+          (src, ranges, cardinality * count_children(dst, input_dfa), dfa);
         } else {
           let dfa = add_transition((src, ranges, dst), dfa);
           (dst, RangeSetListSet.empty, count_children(dst, input_dfa), dfa);
@@ -148,7 +149,7 @@ let merge_linear = (~max_length=8, ~max_cardinality=32, input_dfa) => {
           merge_linear(
             src,
             RangeSetListSet.merge(ranges, ranges'),
-            cardinality * count_children(dst', input_dfa),
+            cardinality,
             dst',
             dfa,
             lengths,
@@ -328,117 +329,6 @@ let merge_ranges: t => t =
     )
     |> set_finals(input_dfa.finals);
   };
-
-/*
- let group_by_str_len:
-   transitions => StateSetMap.t(StrLenMap.t(RangeSetListSetMap.t(state))) =
-   transitions => {
-     let group_by_str_len:
-       RangeSetListSetMap.t(state) => StrLenMap.t(RangeSetListSetMap.t(state)) =
-       ranges_map =>
-         RangeSetListSetMap.fold(
-           (string, dst, str_len_map) => {
-             let str_len = Int32.of_int(List.length(string));
-             let ranges_map' =
-               try (StrLenMap.find(str_len, str_len_map)) {
-               | Not_found => RangeSetListSetMap.empty
-               };
-             let ranges_map' = RangeSetListSetMap.add(string, dst, ranges_map');
-             StrLenMap.add(str_len, ranges_map', str_len_map);
-           },
-           ranges_map,
-           StrLenMap.empty,
-         );
-
-     StateSetMap.fold(
-       (src, ranges_map, state_set_map) => {
-         let str_len_map = group_by_str_len(ranges_map);
-         StateSetMap.add(src, str_len_map, state_set_map);
-       },
-       transitions,
-       StateSetMap.empty,
-     );
-   };
-
- let group_by_str_len':
-   transitions => StateSetMap.t(StrLenMap.t(RangeSetListSetSetMap.t(state))) =
-   transitions => {
-     let fold_ranges_map: RangeSetListSetMap.t(state) => StateSetMap.t(RangeSetListSetSet.t) =
-       ranges_map =>
-         RangeSetListSetMap.fold(
-           (string, dst, dst_map) =>
-             StateSetMap.add(
-               dst,
-               switch (StateSetMap.find(dst, dst_map)) {
-               | exception Not_found => RangeSetListSetSet.singleton(string)
-               | string_set => RangeSetListSetSet.add(string, string_set)
-               },
-               dst_map,
-             ),
-           ranges_map,
-           StateSetMap.empty,
-         );
-
-     let group_by_str_len:
-       RangeSetListSetMap.t(state) => StrLenMap.t(RangeSetListSetMap.t(state)) =
-       ranges_map =>
-         RangeSetListSetMap.fold(
-           (string, dst, str_len_map) => {
-             let str_len = Int32.of_int(List.length(string));
-             let ranges_map' =
-               try (StrLenMap.find(str_len, str_len_map)) {
-               | Not_found => RangeSetListSetMap.empty
-               };
-             let ranges_map' = RangeSetListSetMap.add(string, dst, ranges_map');
-             StrLenMap.add(str_len, ranges_map', str_len_map);
-           },
-           ranges_map,
-           StrLenMap.empty,
-         );
-
-     StateSetMap.fold(
-       (src, ranges_map, acc) =>
-         StrLenMap.fold(
-           (str_len, ranges_map, acc) =>
-             StateSetMap.fold(
-               (dst, string_set, acc) =>
-                 StateSetMap.add(
-                   src,
-                   switch (StateSetMap.find(src, acc)) {
-                   | exception Not_found =>
-                     StrLenMap.singleton(
-                       str_len,
-                       RangeSetListSetSetMap.singleton(string_set, dst),
-                     )
-                   | str_len_map =>
-                     switch (StrLenMap.find(str_len, str_len_map)) {
-                     | exception Not_found =>
-                       StrLenMap.add(
-                         str_len,
-                         RangeSetListSetSetMap.singleton(string_set, dst),
-                         str_len_map,
-                       )
-                     | string_set_map =>
-                       StrLenMap.add(
-                         str_len,
-                         RangeSetListSetSetMap.add(string_set, dst, string_set_map),
-                         str_len_map,
-                       )
-                     }
-                   },
-                   acc,
-                 ),
-               fold_ranges_map(ranges_map),
-               acc,
-             ),
-           group_by_str_len(ranges_map),
-           acc,
-         ),
-       transitions,
-       StateSetMap.empty,
-     );
-   };
- */
 
 let to_dot: t => string =
   dfa =>

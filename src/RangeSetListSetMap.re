@@ -16,6 +16,14 @@ let union =
   merge(f);
 };
 
+let count_strings = range_set_list_set_map =>
+  fold(
+    (range_set_list_set, _, c) =>
+      RangeSetListSet.count_strings(range_set_list_set) + c,
+    range_set_list_set_map,
+    0,
+  );
+
 let choose_strict = ranges_map =>
   switch (cardinal(ranges_map)) {
   | 1 => choose(ranges_map)

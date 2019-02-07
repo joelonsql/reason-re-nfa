@@ -16,6 +16,40 @@ let to_string: t => string =
       },
     );
 
+let to_char_list: t => list(char) =
+  r => {
+    let rec aux = (r, char_list) => {
+      let from_char_code = Char.code(r.from_char);
+      let to_char_code = Char.code(r.to_char);
+      assert(from_char_code <= to_char_code);
+      let char_list = [r.to_char, ...char_list];
+      if (from_char_code == to_char_code) {
+        char_list;
+      } else {
+        let to_char = Char.chr(pred(to_char_code));
+        aux({...r, to_char}, char_list);
+      };
+    };
+    aux(r, []);
+  };
+
+let count_chars: t => int =
+  r => {
+    let rec aux = (r, c) => {
+      let from_char_code = Char.code(r.from_char);
+      let to_char_code = Char.code(r.to_char);
+      assert(from_char_code <= to_char_code);
+      let c = succ(c);
+      if (from_char_code == to_char_code) {
+        c;
+      } else {
+        let to_char = Char.chr(pred(to_char_code));
+        aux({...r, to_char}, c);
+      };
+    };
+    aux(r, 0);
+  };
+
 let to_char_set: t => CharSet.t =
   r => {
     let rec aux = (r, char_set) => {
@@ -41,7 +75,8 @@ let singleton = (~allow_overlap=false, from_char, to_char) =>
   };
 
 /** overlaps iif "not (end1 < start2 or end2 < start1)"
-    taken from http://wiki.c2.com/?TestIfDateRangesOverlap */
+    taken from wiki.c2.com/?TestIfDateRangesOverlap */
+
 let compare = (range1, range2) =>
   switch (
     Char.compare(range1.to_char, range2.from_char),
@@ -81,4 +116,8 @@ let test = () => {
   assert(compare(ac, ac) == 0);
   assert(compare(ac, eg) < 0);
   assert(compare(eg, ac) > 0);
+  assert(
+    String.concat("", List.map(c => String.make(1, c), to_char_list(ac)))
+    == "abc",
+  );
 };

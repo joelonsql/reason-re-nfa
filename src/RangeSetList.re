@@ -9,6 +9,35 @@ let to_string: t => string =
     String.concat("", List.map(RangeSet.to_string, range_set_list));
   };
 
+let generate_strings: t => list(string) =
+  range_set_list => {
+    List.fold_right(
+      (range_set, strings) =>
+        List.fold_right(
+          (string, strings) =>
+            List.fold_right(
+              (char, strings) =>
+                [string ++ String.make(1, char), ...strings],
+              RangeSet.to_char_list(range_set),
+              strings,
+            ),
+          strings,
+          [],
+        ),
+      List.rev(range_set_list),
+      [""],
+    );
+  };
+
+let count_strings: t => int =
+  range_set_list => {
+    List.fold_right(
+      (range_set, c) => RangeSet.count_chars(range_set) * c,
+      range_set_list,
+      1,
+    );
+  };
+
 let compare = (l, r) => {
   let rec cmp = (l, r) => {
     switch (l, r) {
@@ -47,6 +76,7 @@ let test = () => {
   let r1 = of_string("abc");
   let r2 = of_string("ab");
   let r2 = r2 @ [RangeSet.singleton(Range.singleton('b', 'd'))];
-  print_endline(to_string(r1));
-  print_endline(to_string(r2));
+  assert(to_string(r1) == "abc");
+  assert(to_string(r2) == "ab[b-d]");
+  assert(String.concat("", generate_strings(r2)) == "abbabcabd");
 };

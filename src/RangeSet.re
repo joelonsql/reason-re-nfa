@@ -1,7 +1,7 @@
 include Set.Make(Range);
 
 /** range_extract and string_of_range taken from
-    https://www.rosettacode.org/wiki/Range_extraction#OCaml */
+    www.rosettacode.org/wiki/Range_extraction#OCaml */
 let range_extract = (~allow_overlap=false) =>
   fun
   | [] => []
@@ -52,6 +52,22 @@ let to_char_set: t => CharSet.t =
         CharSet.union(Range.to_char_set(range), char_set),
       elements(range_set),
       CharSet.empty,
+    );
+
+let to_char_list: t => list(char) =
+  range_set =>
+    List.fold_right(
+      (range, char_list) => Range.to_char_list(range) @ char_list,
+      elements(range_set),
+      [],
+    );
+
+let count_chars: t => int =
+  range_set =>
+    List.fold_right(
+      (range, c) => Range.count_chars(range) + c,
+      elements(range_set),
+      0,
     );
 
 let diff = (r1, r2) => {

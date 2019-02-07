@@ -55,6 +55,25 @@ let merge = (s1, s2) => {
   };
 };
 
+let generate_strings: t => list(string) =
+  range_set_list_set => {
+    List.fold_right(
+      (range_set_list, strings) =>
+        RangeSetList.generate_strings(range_set_list) @ strings,
+      elements(range_set_list_set),
+      [],
+    );
+  };
+
+let count_strings: t => int =
+  range_set_list_set => {
+    List.fold_right(
+      (range_set_list, c) => RangeSetList.count_strings(range_set_list) + c,
+      elements(range_set_list_set),
+      0,
+    );
+  };
+
 let test = () => {
   assert(
     to_string(singleton([RangeSet.singleton(Range.singleton('a', 'a'))]))
@@ -93,4 +112,21 @@ let test = () => {
     to_string(m)
     == "([a-c][0-2][g-i][5-6]|[a-c][0-2][j-l][7-8]|[d-f][3-4][g-i][5-6]|[d-f][3-4][j-l][7-8])",
   );
+
+  let ab01cd23 =
+    union(
+      singleton([
+        RangeSet.singleton(Range.singleton('a', 'b')),
+        RangeSet.singleton(Range.singleton('0', '1')),
+      ]),
+      singleton([
+        RangeSet.singleton(Range.singleton('c', 'd')),
+        RangeSet.singleton(Range.singleton('2', '3')),
+      ]),
+    );
+
+  assert(
+    String.concat("", generate_strings(ab01cd23)) == "a0a1b0b1c2c3d2d3",
+  );
+  assert(count_strings(ab01cd23) == 8);
 };

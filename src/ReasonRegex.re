@@ -10,7 +10,7 @@ let analyze = regexp => {
   let nfa5 = Brzozowski.reverse(nfa4);
   let dfa3 = RabinScott.determinize(nfa5);
   let dfa4 = Dfa.merge_ranges(dfa3);
-  let dfa5 = Dfa.merge_linear(dfa4);
+  let dfa5 = Dfa.merge_linear(~max_length=8, ~max_cardinality=32, dfa4);
   let dfa6 = Dfa.merge_branches(dfa5);
   let nfa6 = Brzozowski.dfa_to_nfa(dfa6);
   (
