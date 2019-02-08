@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded',
           algoPos += 2;
         }
         //        document.getElementById("LLVMIR").innerHTML = re[algoPos];
-        let js_code = re[algoPos + 1];
+        let js_code = js_beautify(re[algoPos + 1], { indent_size: 2, "max-preserve-newlines": 1 });
         document.getElementById("JS").innerHTML = js_code;
         document.getElementById("match_dfa").value = js_code;
         last_text_input = ''; // force update

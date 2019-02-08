@@ -533,7 +533,7 @@ br label %detect_end_of_string
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
 
-let js_switch = (src_state, str_len, cases) => {
+let js_switch = (str_len, cases) => {
   let exp =
     switch (str_len) {
     | 1 => "s.charCodeAt(i)"
@@ -541,14 +541,20 @@ let js_switch = (src_state, str_len, cases) => {
     | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
     };
   {j|
-        state$src_state:
-        while (true) {
         switch ($exp) {
           $cases
           default:
             state = -1;
             break loop_switch;
         }
+  |j};
+};
+
+let js_labeled_block = (src_state, code) => {
+  {j|
+        state$src_state:
+        while (true) {
+        $code
         }
   |j};
 };
@@ -569,9 +575,16 @@ $src_state.$i.try_next:
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
 
-let js_switch_case_value = (ival, string_escaped) => {j|
+let js_switch_case_value = (ival, string_escaped) =>
+  if (String.length(string_escaped) > 0) {
+    {j|
           case $ival: /* $string_escaped */
     |j};
+  } else {
+    {j|
+          case $ival:
+    |j};
+  };
 
 let js_switch_case_code =
     (str_len, src_state, dst_state, set_match, inline_or_branch) => {j|
@@ -753,11 +766,13 @@ let to_js = (inline, dfa) => {
               let cases_to_same_dst =
                 List.fold_right(
                   (string, acc) => {
-                    let ival =
+                    let (ival, string_escaped) =
                       str_len == 1 ?
-                        string_of_int(Char.code(string.[0])) :
-                        {j|"$string"|j};
-                    let string_escaped = Common.escape_string(string);
+                        (
+                          string_of_int(Char.code(string.[0])),
+                          Common.escape_string(string),
+                        ) :
+                        ({j|"$string"|j}, "");
                     [js_switch_case_value(ival, string_escaped), ...acc];
                   },
                   List.rev(RangeSetListSet.generate_strings(string_set)),
@@ -822,7 +837,14 @@ let to_js = (inline, dfa) => {
             ([], todo),
           );
         (
-          js_switch(src_state, str_len, String.concat("", List.rev(cases))),
+          if (count_parents(src, dfa) > 1 || StateSet.equal(src, dfa.start)) {
+            js_labeled_block(
+              src_state,
+              js_switch(str_len, String.concat("", List.rev(cases))),
+            );
+          } else {
+            js_switch(str_len, String.concat("", List.rev(cases)));
+          },
           todo,
         );
       };
