@@ -26,6 +26,8 @@ function renderGraph(id) {
 
 let last_regexp_input = '';
 let last_text_input = '';
+let last_max_length = 0;
+let last_max_cardinality = 0;
 
 document.addEventListener('DOMContentLoaded',
   function (event) {
@@ -82,11 +84,17 @@ document.addEventListener('DOMContentLoaded',
 
     let visualize = function (event) {
       let regex_input = document.getElementById("regexp-input").value;
-      if (regex_input == last_regexp_input) {
+      let max_length = document.getElementById("max_length").valueAsNumber;
+      let max_cardinality = document.getElementById("max_cardinality").valueAsNumber;
+      document.getElementById("max_length_label").innerHTML = max_length + " Max length";
+      document.getElementById("max_cardinality_label").innerHTML = max_cardinality + " Max cardinality";
+      if (regex_input == last_regexp_input && max_length == last_max_length && max_cardinality == last_max_cardinality) {
         // unchanged
         return;
       }
       last_regexp_input = regex_input;
+      last_max_length = max_length;
+      last_max_cardinality = max_cardinality;
       let algoSteps = ["nfa", "dfa", "nfa2", "nfa3", "dfa2", "nfa4", "nfa5", "dfa3", "dfa4", "dfa5", "dfa6", "nfa6"];
       if (regex_input.length == 0) {
         document.getElementById("annotated").innerHTML = "";
@@ -104,7 +112,7 @@ document.addEventListener('DOMContentLoaded',
         return;
       }
       try {
-        let re = ReasonRegex.analyze(regex_input);
+        let re = ReasonRegex.analyze(max_length, max_cardinality, regex_input);
         document.getElementById("regexp-input").style.backgroundColor = "";
         let glushkovPos = 0;
         document.getElementById("nullability").innerHTML = re[glushkovPos] ? "true" : "false";
@@ -167,6 +175,8 @@ document.addEventListener('DOMContentLoaded',
     };
     document.getElementById("regexp-input").addEventListener("keyup", visualize);
     document.getElementById("text-input").addEventListener("keyup", tester);
+    document.getElementById("max_length").addEventListener("change", visualize);
+    document.getElementById("max_cardinality").addEventListener("change", visualize);
     visualize();
     tester();
   });
