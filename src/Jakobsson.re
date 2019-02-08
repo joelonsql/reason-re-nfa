@@ -1,187 +1,229 @@
-/*
- let fold_linear_character_sequences: Nfa.t => Nfa.t =
-   input_nfa => {
-     let rec fold_linear_character_sequences:
-       (Nfa.state, string, Nfa.state) => (Nfa.state, string, Nfa.state) =
-       (src, string, dst) =>
-         if (Nfa.count_parents(dst, input_nfa) == 1
-             && Nfa.count_children(dst, input_nfa) == 1
-             && !StateSet.mem(dst, input_nfa.finals)) {
-           let (next_string, next_dst) =
-             StringMap.choose(StateMap.find(dst, input_nfa.transitions));
-           fold_linear_character_sequences(
-             src,
-             string ++ next_string,
-             StateSet.choose_strict(next_dst),
-           );
-         } else {
-           (src, string, dst);
-         };
+let merge_linear =
+    (~max_length: int=8, ~max_cardinality: int=32, input_dfa: Dfa.t) => {
+  let rec merge_linear = (src, ranges, cardinality, dst, dfa, seen, lengths) =>
+    if (List.length(RangeSetListSet.choose(ranges)) > 0
+        && Dfa.exists_transition((src, ranges, dst), seen)) {
+      (dfa, seen);
+    } else {
+      let seen = Dfa.add_transition((src, ranges, dst), seen);
+      let (src, ranges, cardinality, dfa) =
+        if (!StateSetSet.mem(dst, input_dfa.finals)
+            && List.length(RangeSetListSet.choose(ranges))
+            < (
+                switch (StateSetMap.find(src, lengths)) {
+                | exception Not_found => max_length
+                | length => min(length, max_length)
+                }
+              )
+            && (
+              Dfa.count_children(dst, input_dfa) == 1
+              && Dfa.count_parents(dst, input_dfa) == 1
+              || cardinality
+              * Dfa.count_children(dst, input_dfa) <= max_cardinality
+            )) {
+          (
+            src,
+            ranges,
+            cardinality * Dfa.count_children(dst, input_dfa),
+            dfa,
+          );
+        } else {
+          let dfa = Dfa.add_transition((src, ranges, dst), dfa);
+          (
+            dst,
+            RangeSetListSet.empty,
+            Dfa.count_children(dst, input_dfa),
+            dfa,
+          );
+        };
+      RangeSetListSetMap.fold(
+        (ranges', dst', (dfa, seen)) =>
+          merge_linear(
+            src,
+            RangeSetListSet.merge(ranges, ranges'),
+            cardinality,
+            dst',
+            dfa,
+            seen,
+            lengths,
+          ),
+        try (StateSetMap.find(dst, input_dfa.transitions)) {
+        | Not_found => RangeSetListSetMap.empty
+        },
+        (dfa, seen),
+      );
+    };
 
-     let output_nfa =
-       Nfa.singleton(input_nfa.start)
-       |> StateMap.fold(
-            (src, ranges_map, nfa) =>
-              if (Nfa.count_parents(src, input_nfa) == 1
-                  && Nfa.count_children(src, input_nfa) == 1
-                  && !StateSet.mem(src, input_nfa.finals)) {
-                nfa;
-              } else {
-                StringMap.fold(
-                  (string, dsts, nfa) =>
-                    StateSet.fold(
-                      (dst, nfa) =>
-                        Nfa.add_transition(
-                          fold_linear_character_sequences(src, string, dst),
-                          nfa,
-                        ),
-                      dsts,
-                      nfa,
-                    ),
-                  ranges_map,
-                  nfa,
-                );
+  let length_dfa = {
+    let (dfa, _) =
+      RangeSetListSetMap.fold(
+        (ranges, dst, (dfa, seen)) =>
+          merge_linear(
+            input_dfa.start,
+            ranges,
+            Dfa.count_children(input_dfa.start, input_dfa),
+            dst,
+            dfa,
+            seen,
+            StateSetMap.empty,
+          ),
+        StateSetMap.find(input_dfa.start, input_dfa.transitions),
+        (Dfa.singleton(input_dfa.start), Dfa.singleton(input_dfa.start)),
+      );
+    Dfa.set_finals(input_dfa.finals, dfa);
+  };
+
+  let length_map =
+    StateSetMap.fold(
+      (src, ranges, length_map) =>
+        RangeSetListSetMap.fold(
+          (ranges, _, length_map) => {
+            let length = List.length(RangeSetListSet.choose(ranges));
+            let cur_length =
+              try (StateSetMap.find(src, length_map)) {
+              | Not_found => length
+              };
+            StateSetMap.add(src, min(length, cur_length), length_map);
+          },
+          ranges,
+          length_map,
+        ),
+      length_dfa.transitions,
+      StateSetMap.empty,
+    );
+
+  let (dfa, _) =
+    RangeSetListSetMap.fold(
+      (ranges, dst, (dfa, seen)) =>
+        merge_linear(
+          input_dfa.start,
+          ranges,
+          Dfa.count_children(input_dfa.start, input_dfa),
+          dst,
+          dfa,
+          seen,
+          length_map,
+        ),
+      StateSetMap.find(input_dfa.start, input_dfa.transitions),
+      (Dfa.singleton(input_dfa.start), Dfa.singleton(input_dfa.start)),
+    );
+  Dfa.set_finals(input_dfa.finals, dfa);
+};
+
+let merge_branches: Dfa.t => Dfa.t =
+  input_dfa => {
+    let group_by: Dfa.transitions => Dfa.transitions =
+      transitions => {
+        let fold_ranges_map:
+          RangeSetListSetMap.t(Dfa.state) => StateSetMap.t(RangeSetListSet.t) =
+          ranges_map =>
+            RangeSetListSetMap.fold(
+              (ranges, dst, dst_map) => {
+                let ranges' =
+                  switch (StateSetMap.find(dst, dst_map)) {
+                  | exception Not_found => ranges
+                  | ranges' => RangeSetListSet.union(ranges', ranges)
+                  };
+                let dst_map = StateSetMap.add(dst, ranges', dst_map);
+                dst_map;
               },
-            input_nfa.transitions,
-          )
-       |> Nfa.set_finals(input_nfa.finals);
+              ranges_map,
+              StateSetMap.empty,
+            );
 
-     output_nfa;
-   };
+        StateSetMap.fold(
+          (src, ranges_map, acc) =>
+            StateSetMap.fold(
+              (dst, ranges, acc) =>
+                StateSetMap.add(
+                  src,
+                  switch (StateSetMap.find(src, acc)) {
+                  | exception Not_found =>
+                    RangeSetListSetMap.singleton(ranges, dst)
+                  | ranges_map =>
+                    RangeSetListSetMap.add(ranges, dst, ranges_map)
+                  },
+                  acc,
+                ),
+              fold_ranges_map(ranges_map),
+              acc,
+            ),
+          transitions,
+          StateSetMap.empty,
+        );
+      };
 
- let align_strings: Nfa.t => Nfa.t =
-   input_nfa => {
-     let output_nfa =
-       Nfa.singleton(input_nfa.start)
-       |> StateMap.fold(
-            (src, ranges_map, nfa) => {
-              let min_width =
-                StringMap.fold(
-                  (string, _, min_width) =>
-                    if (String.length(string) < min_width || min_width == 0) {
-                      String.length(string);
-                    } else {
-                      min_width;
-                    },
-                  ranges_map,
-                  0,
-                );
-              StringMap.fold(
-                (string, dsts, nfa) =>
-                  StateSet.fold(
-                    (dst, nfa) => {
-                      let string_length = String.length(string);
-                      if (string_length == min_width) {
-                        Nfa.add_transition((src, string, dst), nfa);
-                      } else {
-                        let new_state =
-                          Int32.succ(
-                            StateSet.max_elt(
-                              StateSet.union(
-                                nfa.Nfa.states,
-                                input_nfa.Nfa.states,
-                              ),
-                            ),
-                          );
-                        nfa
-                        |> Nfa.add_transition((
-                             src,
-                             String.sub(string, 0, min_width),
-                             new_state,
-                           ))
-                        |> Nfa.add_transition((
-                             new_state,
-                             String.sub(
-                               string,
-                               min_width,
-                               string_length - min_width,
-                             ),
-                             dst,
-                           ));
-                      };
-                    },
-                    dsts,
-                    nfa,
-                  ),
-                ranges_map,
-                nfa,
-              );
-            },
-            input_nfa.transitions,
-          )
-       |> Nfa.set_finals(input_nfa.finals);
+    StateSetMap.fold(
+      (src, ranges_map, dfa) =>
+        RangeSetListSetMap.fold(
+          (ranges, dst, dfa) => Dfa.add_transition((src, ranges, dst), dfa),
+          ranges_map,
+          dfa,
+        ),
+      group_by(input_dfa.transitions),
+      Dfa.singleton(input_dfa.start),
+    )
+    |> Dfa.set_finals(input_dfa.finals);
+  };
 
-     output_nfa;
-   };
+let merge_ranges: Dfa.t => Dfa.t =
+  input_dfa => {
+    let group_by: Dfa.transitions => Dfa.transitions =
+      transitions => {
+        let fold_ranges_map:
+          RangeSetListSetMap.t(Dfa.state) => StateSetMap.t(RangeSetListSet.t) =
+          ranges_map =>
+            RangeSetListSetMap.fold(
+              (ranges, dst, dst_map) =>
+                StateSetMap.add(
+                  dst,
+                  switch (StateSetMap.find(dst, dst_map)) {
+                  | exception Not_found => ranges
+                  | ranges' =>
+                    RangeSetListSet.singleton([
+                      RangeSet.union(
+                        RangeSetListSet.choose_strict(ranges),
+                        RangeSetListSet.choose_strict(ranges'),
+                      ),
+                    ])
+                  },
+                  dst_map,
+                ),
+              ranges_map,
+              StateSetMap.empty,
+            );
 
- let inline: Nfa.t => Nfa.t =
-   input_nfa => {
-     let rec fold_linear_character_sequences:
-       (Nfa.state, string, Nfa.state, list(Nfa.state), string, Nfa.t) => Nfa.t =
-       (src, string, dst, srcs, strings, nfa) =>
-         if (!List.mem(dst, srcs) && !StateSet.mem(dst, input_nfa.finals)) {
-           print_endline(
-             "if src "
-             ++ Int32.to_string(src)
-             ++ " dst "
-             ++ Int32.to_string(dst)
-             ++ " srcs "
-             ++ String.concat(",", List.map(s => Int32.to_string(s), srcs)),
-           );
-           StringMap.fold(
-             (string', dsts, nfa) => {
-               let dst' = StateSet.choose_strict(dsts);
-               fold_linear_character_sequences(
-                 src,
-                 strings ++ string ++ string',
-                 dst',
-                 [dst, ...srcs],
-                 "",
-                 nfa,
-               );
-             },
-             StateMap.find(dst, input_nfa.transitions), /* find will succeed since we know dst is not a final state */
-             nfa,
-           );
-         } else {
-           print_endline(
-             "else src "
-             ++ Int32.to_string(src)
-             ++ " dst "
-             ++ Int32.to_string(dst),
-           );
-           let nfa = Nfa.add_transition((src, strings ++ string, dst), nfa);
-           let src = dst;
-           StringMap.fold(
-             (string, dsts, nfa) =>
-               fold_linear_character_sequences(
-                 src,
-                 string,
-                 StateSet.choose_strict(dsts),
-                 [src],
-                 "",
-                 nfa,
-               ),
-             try (StateMap.find(src, input_nfa.transitions)) {
-             | Not_found => StringMap.empty
-             },
-             nfa,
-           );
-         };
+        StateSetMap.fold(
+          (src, ranges_map, acc) =>
+            StateSetMap.fold(
+              (dst, ranges, acc) =>
+                StateSetMap.add(
+                  src,
+                  switch (StateSetMap.find(src, acc)) {
+                  | exception Not_found =>
+                    RangeSetListSetMap.singleton(ranges, dst)
+                  | ranges_map =>
+                    RangeSetListSetMap.add(ranges, dst, ranges_map)
+                  },
+                  acc,
+                ),
+              fold_ranges_map(ranges_map),
+              acc,
+            ),
+          transitions,
+          StateSetMap.empty,
+        );
+      };
 
-     let src = StateSet.choose_strict(input_nfa.start);
-     StringMap.fold(
-       (string, dsts, nfa) =>
-         fold_linear_character_sequences(
-           src,
-           string,
-           StateSet.choose_strict(dsts),
-           [src],
-           "",
-           nfa,
-         ),
-       StateMap.find(src, input_nfa.transitions),
-       Nfa.singleton(input_nfa.start),
-     );
-   };
-   */
+    StateSetMap.fold(
+      (src, ranges_map, dfa) =>
+        RangeSetListSetMap.fold(
+          (ranges, dst, dfa) => Dfa.add_transition((src, ranges, dst), dfa),
+          ranges_map,
+          dfa,
+        ),
+      group_by(input_dfa.transitions),
+      Dfa.singleton(input_dfa.start),
+    )
+    |> Dfa.set_finals(input_dfa.finals);
+  };
