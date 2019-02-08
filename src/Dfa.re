@@ -119,11 +119,12 @@ let count_children: (state, t) => int =
   };
 
 let merge_linear = (~max_length=8, ~max_cardinality=32, input_dfa) => {
-  let rec merge_linear = (src, ranges, cardinality, dst, dfa, lengths) =>
+  let rec merge_linear = (src, ranges, cardinality, dst, dfa, seen, lengths) =>
     if (List.length(RangeSetListSet.choose(ranges)) > 0
-        && exists_transition((src, ranges, dst), dfa)) {
-      dfa;
+        && exists_transition((src, ranges, dst), seen)) {
+      (dfa, seen);
     } else {
+      let seen = add_transition((src, ranges, dst), seen);
       let (src, ranges, cardinality, dfa) =
         if (!StateSetSet.mem(dst, input_dfa.finals)
             && List.length(RangeSetListSet.choose(ranges))
@@ -145,37 +146,41 @@ let merge_linear = (~max_length=8, ~max_cardinality=32, input_dfa) => {
           (dst, RangeSetListSet.empty, count_children(dst, input_dfa), dfa);
         };
       RangeSetListSetMap.fold(
-        (ranges', dst', dfa) =>
+        (ranges', dst', (dfa, seen)) =>
           merge_linear(
             src,
             RangeSetListSet.merge(ranges, ranges'),
             cardinality,
             dst',
             dfa,
+            seen,
             lengths,
           ),
         try (StateSetMap.find(dst, input_dfa.transitions)) {
         | Not_found => RangeSetListSetMap.empty
         },
-        dfa,
+        (dfa, seen),
       );
     };
 
-  let length_dfa =
-    RangeSetListSetMap.fold(
-      (ranges, dst, dfa) =>
-        merge_linear(
-          input_dfa.start,
-          ranges,
-          count_children(input_dfa.start, input_dfa),
-          dst,
-          dfa,
-          StateSetMap.empty,
-        ),
-      StateSetMap.find(input_dfa.start, input_dfa.transitions),
-      singleton(input_dfa.start),
-    )
-    |> set_finals(input_dfa.finals);
+  let length_dfa = {
+    let (dfa, _) =
+      RangeSetListSetMap.fold(
+        (ranges, dst, (dfa, seen)) =>
+          merge_linear(
+            input_dfa.start,
+            ranges,
+            count_children(input_dfa.start, input_dfa),
+            dst,
+            dfa,
+            seen,
+            StateSetMap.empty,
+          ),
+        StateSetMap.find(input_dfa.start, input_dfa.transitions),
+        (singleton(input_dfa.start), singleton(input_dfa.start)),
+      );
+    set_finals(input_dfa.finals, dfa);
+  };
 
   let length_map =
     StateSetMap.fold(
@@ -196,20 +201,22 @@ let merge_linear = (~max_length=8, ~max_cardinality=32, input_dfa) => {
       StateSetMap.empty,
     );
 
-  RangeSetListSetMap.fold(
-    (ranges, dst, dfa) =>
-      merge_linear(
-        input_dfa.start,
-        ranges,
-        count_children(input_dfa.start, input_dfa),
-        dst,
-        dfa,
-        length_map,
-      ),
-    StateSetMap.find(input_dfa.start, input_dfa.transitions),
-    singleton(input_dfa.start),
-  )
-  |> set_finals(input_dfa.finals);
+  let (dfa, _) =
+    RangeSetListSetMap.fold(
+      (ranges, dst, (dfa, seen)) =>
+        merge_linear(
+          input_dfa.start,
+          ranges,
+          count_children(input_dfa.start, input_dfa),
+          dst,
+          dfa,
+          seen,
+          length_map,
+        ),
+      StateSetMap.find(input_dfa.start, input_dfa.transitions),
+      (singleton(input_dfa.start), singleton(input_dfa.start)),
+    );
+  set_finals(input_dfa.finals, dfa);
 };
 
 let merge_branches: t => t =
@@ -718,163 +725,158 @@ let state_goto_handlers = goto_dsts => {
 
  */
 
-/*
-
- let to_js = (inline, dfa) => {
-   let transitions = group_by_str_len'(dfa.transitions);
-   let rec build_state:
-     (state, StateSetSet.t, option(bool), list(state)) =>
-     (string, StateSetSet.t) =
-     (src, todo, cur_in_accepting_state, srcs) => {
-       let src_state = Int32.to_string(StateSet.choose_strict(src));
-       if (!StateSetMap.mem(src, transitions)) {
-         (
-           {j|
+let to_js = (inline, dfa) => {
+  let rec build_state:
+    (state, StateSetSet.t, option(bool), list(state)) =>
+    (string, StateSetSet.t) =
+    (src, todo, cur_in_accepting_state, srcs) => {
+      let src_state = Int32.to_string(StateSet.choose_strict(src));
+      if (!StateSetMap.mem(src, dfa.transitions)) {
+        (
+          {j|
               state = -1;
               break loop_switch;
               |j},
-           todo,
-         );
-       } else {
-         let (str_len, string_set_map) =
-           StrLenMap.choose_strict(StateSetMap.find(src, transitions));
-         let str_len = Int32.to_int(str_len);
-         let (cases, todo) =
-           RangeSetListSetSetMap.fold(
-             (string_set, dst, (cases, todo)) => {
-               RangeSetListSetSet.iter(
-                 string => assert(List.length(string) == str_len),
-                 string_set,
-               );
-               let cases_to_same_dst =
-                 RangeSetListSetSet.fold(
-                   (string, acc) => {
-                     let ival =
-                       str_len == 1 ?
-                         string_of_int(Char.code(string.[0])) :
-                         {j|"$string"|j};
-                     let string_escaped = Common.escape_string(string);
-                     [js_switch_case_value(ival, string_escaped), ...acc];
-                   },
-                   string_set,
-                   [],
-                 );
+          todo,
+        );
+      } else {
+        let string_map = StateSetMap.find(src, dfa.transitions);
+        let (strings, _) = RangeSetListSetMap.choose(string_map);
+        let str_len = List.length(RangeSetListSet.choose(strings));
+        let (cases, todo) =
+          RangeSetListSetMap.fold(
+            (string_set, dst, (cases, todo)) => {
+              RangeSetListSet.iter(
+                string => assert(List.length(string) == str_len),
+                string_set,
+              );
+              let cases_to_same_dst =
+                List.fold_right(
+                  (string, acc) => {
+                    let ival =
+                      str_len == 1 ?
+                        string_of_int(Char.code(string.[0])) :
+                        {j|"$string"|j};
+                    let string_escaped = Common.escape_string(string);
+                    [js_switch_case_value(ival, string_escaped), ...acc];
+                  },
+                  List.rev(RangeSetListSet.generate_strings(string_set)),
+                  [],
+                );
 
-               let dst_state = Int32.to_string(StateSet.choose_strict(dst));
-               let in_accepting_state = StateSetSet.mem(dst, dfa.finals);
-               let single_entry = count_parents(dst, dfa) == 1;
-               let branch_to_previous = List.mem(dst, srcs);
-               let (inline_or_branch, todo) =
-                 switch (branch_to_previous, inline, single_entry) {
-                 /*** (A) Branching back to previous state */
-                 | (true, _, _) => (js_continue(dst_state), todo)
+              let dst_state = Int32.to_string(StateSet.choose_strict(dst));
+              let in_accepting_state = StateSetSet.mem(dst, dfa.finals);
+              let single_entry = count_parents(dst, dfa) == 1;
+              let branch_to_previous = List.mem(dst, srcs);
+              let (inline_or_branch, todo) =
+                switch (branch_to_previous, inline, single_entry) {
+                /*** (A) Branching back to previous state */
+                | (true, _, _) => (js_continue(dst_state), todo)
 
-                 /*** (B) Inline state if single-entry
-                      or if we always want to inline
-                      to reduce jumps instead of
-                      reducing code size */
-                 | (false, SingleEntry, true)
-                 | (false, Always, _) =>
-                   build_state(
-                     dst,
-                     todo,
-                     Some(in_accepting_state),
-                     [dst, ...srcs],
-                   )
+                /*** (B) Inline state if single-entry
+                     or if we always want to inline
+                     to reduce jumps instead of
+                     reducing code size */
+                | (false, SingleEntry, true)
+                | (false, Always, _) =>
+                  build_state(
+                    dst,
+                    todo,
+                    Some(in_accepting_state),
+                    [dst, ...srcs],
+                  )
 
-                 /*** (C) Simulate goto if we never want to inline
-                      or if we allow inlining single-entry states
-                      but this state is a multi-entry state.
-                       */
-                 | (false, Never, _)
-                 | (false, SingleEntry, false) => (
-                     js_goto_irreducible_state(dst_state),
-                     StateSetSet.add(dst, todo),
-                   )
-                 };
+                /*** (C) Simulate goto if we never want to inline
+                     or if we allow inlining single-entry states
+                     but this state is a multi-entry state.
+                      */
+                | (false, Never, _)
+                | (false, SingleEntry, false) => (
+                    js_goto_irreducible_state(dst_state),
+                    StateSetSet.add(dst, todo),
+                  )
+                };
 
-               let set_match =
-                 switch (cur_in_accepting_state) {
-                 | Some(m) when m == in_accepting_state => "" /* match variable already has correct value from previous state */
-                 | _ => in_accepting_state ? "match = true;" : "match = false;"
-                 };
+              let set_match =
+                switch (cur_in_accepting_state) {
+                | Some(m) when m == in_accepting_state => "" /* match variable already has correct value from previous state */
+                | _ => in_accepting_state ? "match = true;" : "match = false;"
+                };
 
-               (
-                 [
-                   String.concat("", List.rev(cases_to_same_dst))
-                   ++ js_switch_case_code(
-                        str_len,
-                        src_state,
-                        dst_state,
-                        set_match,
-                        inline_or_branch,
-                      ),
-                   ...cases,
-                 ],
-                 todo,
-               );
-             },
-             string_set_map,
-             ([], todo),
-           );
-         (
-           js_switch(src_state, str_len, String.concat("", List.rev(cases))),
-           todo,
-         );
-       };
-     };
-   let rec work:
-     (StateSetSet.t, StateSetMap.t(string)) =>
-     (StateSetSet.t, StateSetMap.t(string)) =
-     (todo, states) =>
-       if (StateSetSet.is_empty(todo)) {
-         (todo, states);
-       } else {
-         StateSetSet.fold(
-           (src, (todo, states)) =>
-             if (StateSetMap.mem(src, states)) {
-               (todo, states);
-             } else {
-               let (code, todo') =
-                 build_state(src, StateSetSet.empty, None, [src]);
-               let src_state = Int32.to_string(StateSet.choose_strict(src));
-               let states =
-                 StateSetMap.add(
-                   src,
-                   js_switch_case_state(src_state, code),
-                   states,
-                 );
-               let processed =
-                 StateSetSet.of_list(
-                   List.map(
-                     ((state, _)) => state,
-                     StateSetMap.bindings(states),
-                   ),
-                 );
-               let todo =
-                 StateSetSet.diff(StateSetSet.union(todo, todo'), processed);
-               work(todo, states);
-             },
-           todo,
-           (StateSetSet.empty, states),
-         );
-       };
-   let (_, states) =
-     work(StateSetSet.singleton(dfa.start), StateSetMap.empty);
+              (
+                [
+                  String.concat("", List.rev(cases_to_same_dst))
+                  ++ js_switch_case_code(
+                       str_len,
+                       src_state,
+                       dst_state,
+                       set_match,
+                       inline_or_branch,
+                     ),
+                  ...cases,
+                ],
+                todo,
+              );
+            },
+            string_map,
+            ([], todo),
+          );
+        (
+          js_switch(src_state, str_len, String.concat("", List.rev(cases))),
+          todo,
+        );
+      };
+    };
+  let rec work:
+    (StateSetSet.t, StateSetMap.t(string)) =>
+    (StateSetSet.t, StateSetMap.t(string)) =
+    (todo, states) =>
+      if (StateSetSet.is_empty(todo)) {
+        (todo, states);
+      } else {
+        StateSetSet.fold(
+          (src, (todo, states)) =>
+            if (StateSetMap.mem(src, states)) {
+              (todo, states);
+            } else {
+              let (code, todo') =
+                build_state(src, StateSetSet.empty, None, [src]);
+              let src_state = Int32.to_string(StateSet.choose_strict(src));
+              let states =
+                StateSetMap.add(
+                  src,
+                  js_switch_case_state(src_state, code),
+                  states,
+                );
+              let processed =
+                StateSetSet.of_list(
+                  List.map(
+                    ((state, _)) => state,
+                    StateSetMap.bindings(states),
+                  ),
+                );
+              let todo =
+                StateSetSet.diff(StateSetSet.union(todo, todo'), processed);
+              work(todo, states);
+            },
+          todo,
+          (StateSetSet.empty, states),
+        );
+      };
+  let (_, states) =
+    work(StateSetSet.singleton(dfa.start), StateSetMap.empty);
 
-   let states =
-     String.concat(
-       "",
-       List.map(((_, code)) => code, StateSetMap.bindings(states)),
-     );
-   let accept_empty =
-     StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false";
-   let start_state = Int32.to_string(StateSet.choose_strict(dfa.start));
+  let states =
+    String.concat(
+      "",
+      List.map(((_, code)) => code, StateSetMap.bindings(states)),
+    );
+  let accept_empty =
+    StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false";
+  let start_state = Int32.to_string(StateSet.choose_strict(dfa.start));
 
-   js_match_dfa(accept_empty, start_state, states);
- };
-
- */
+  js_match_dfa(accept_empty, start_state, states);
+};
 
 let accept: (t, string) => bool =
   (dfa, input) => {
