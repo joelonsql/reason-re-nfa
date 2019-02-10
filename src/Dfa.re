@@ -213,72 +213,11 @@ let to_matrix: t => array(array(string)) =
     matrix;
   };
 
-let ll_match_dfa = (accept_empty, start_state, states) => {j|
-define zeroext i1 @match_dfa(i8*) {
-  %s = alloca i8*, align 8
-  %match = alloca i8, align 1
-  store i8* %0, i8** %s, align 8
-  store i8 $accept_empty, i8* %match, align 1
-  br label %$start_state
-
-$states
-
-detect_end_of_string:
-  %s_ptr = load i8*, i8** %s, align 8
-  %chr = load i8, i8* %s_ptr, align 1
-  %chr_is_zero = icmp eq i8 %chr, 0
-  br i1 %chr_is_zero, label %done, label %miss
-
-miss:
-  store i8 0, i8* %match, align 1
-  br label %done
-
-done:
-  %match_val = load i8, i8* %match, align 1
-  %ret = trunc i8 %match_val to i1
-  ret i1 %ret
-}
-
-define i32 @main(i32, i8** nocapture readonly) {
-  %argv = getelementptr inbounds i8*, i8** %1, i64 1
-  %input_string = load i8*, i8** %argv, align 8
-  %matched = tail call zeroext i1 @match_dfa(i8* %input_string)
-  %ret = zext i1 %matched to i32
-  ret i32 %ret
-}
-|j};
-
-let js_match_dfa = (accept_empty, start_state, states) => {j|
-  let i = 0;
-  let state = $start_state;
-  let match = $accept_empty;
-  let length = s.length;
-  while (true) {
-    loop_switch:
-    switch (state) {
-      case -1:
-        if (i == length) {
-          /* end of string reached */
-          return match;
-        } else {
-          /* string did not match */
-          return false;
-        }
-$states
-    }
-  }
-|j};
-
 let ll_states = (src_state, switch_state, goto_dsts) => {j|
 $src_state:
   %$src_state.s_ptr = load i8*, i8** %s, align 8
   $switch_state
   $goto_dsts
-|j};
-
-let js_states = (src_state, switch_state) => {j|
-case $src_state:
-$switch_state
 |j};
 
 let ll_load = (str_len, itype, src_state) =>
@@ -300,46 +239,6 @@ let ll_load = (str_len, itype, src_state) =>
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
 
-let ll_switch = (str_len, cases, itype, src_state) =>
-  switch (str_len) {
-  | n when n >= 1 && n <= 8 => {j|
-  switch $itype %$src_state.chr, label %detect_end_of_string [
-    $cases
-  ]
-    |j}
-  | n when n > 8 => {j|
-$cases
-br label %detect_end_of_string
-    |j}
-  | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
-  };
-
-let js_switch = (str_len, cases) => {
-  let exp =
-    switch (str_len) {
-    | 1 => "s.charCodeAt(i)"
-    | n when n > 1 => {j|s.substring(i, i + $str_len)|j}
-    | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
-    };
-  {j|
-        switch ($exp) {
-          $cases
-          default:
-            state = -1;
-            break loop_switch;
-        }
-  |j};
-};
-
-let js_labeled_block = (src_state, code) => {
-  {j|
-        state$src_state:
-        while (true) {
-        $code
-        }
-  |j};
-};
-
 let ll_switch_case =
     (i, str_len, itype, ival, src_state, dst_state, string_escaped, bits) =>
   switch (str_len) {
@@ -355,55 +254,6 @@ $src_state.$i.try_next:
     |j}
   | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
   };
-
-let js_switch_case_value = (ival, string_escaped) =>
-  if (String.length(string_escaped) > 0) {
-    {j|
-          case $ival: /* $string_escaped */
-    |j};
-  } else {
-    {j|
-          case $ival:
-    |j};
-  };
-
-let js_switch_case_code =
-    (str_len, src_state, dst_state, set_match, inline_or_branch) => {j|
-            /* $src_state -> $dst_state */
-            $set_match
-            i += $str_len;
-            $inline_or_branch
-    |j};
-
-let js_switch_case =
-    (
-      str_len,
-      ival,
-      src_state,
-      dst_state,
-      string_escaped,
-      in_accepting_state,
-      inline_or_branch,
-    ) => {j|
-          case $ival:
-            /* $src_state -($string_escaped)-> $dst_state */
-            match = $in_accepting_state;
-            i += $str_len;
-            $inline_or_branch
-    |j};
-
-let js_switch_case_state = (src_state, code) => {j|
-      case $src_state: $code
-|j};
-
-let js_goto_irreducible_state = dst_state => {j|
-            state = $dst_state;
-            break loop_switch;
-|j};
-
-let js_continue = dst_state => {j|
-            continue state$dst_state;
-|j};
 
 let ll_goto_state = (src_state, dst_state, in_accepting_state) => {j|
 $src_state.goto.$dst_state:
@@ -526,13 +376,7 @@ let to_js = (inline, dfa) => {
     (src, todo, cur_in_accepting_state, srcs) => {
       let src_state = Int32.to_string(StateSet.choose_strict(src));
       if (!StateSetMap.mem(src, dfa.transitions)) {
-        (
-          {j|
-              state = -1;
-              break loop_switch;
-              |j},
-          todo,
-        );
+        (CodeGen.JavaScript.break_loop_switch, todo);
       } else {
         let string_map = StateSetMap.find(src, dfa.transitions);
         let (strings, _) = RangeSetListSetMap.choose(string_map);
@@ -554,7 +398,13 @@ let to_js = (inline, dfa) => {
                           Common.escape_string(string),
                         ) :
                         ({j|"$string"|j}, "");
-                    [js_switch_case_value(ival, string_escaped), ...acc];
+                    [
+                      CodeGen.JavaScript.switch_case_value(
+                        ival,
+                        string_escaped,
+                      ),
+                      ...acc,
+                    ];
                   },
                   List.rev(RangeSetListSet.generate_strings(string_set)),
                   [],
@@ -567,7 +417,10 @@ let to_js = (inline, dfa) => {
               let (inline_or_branch, todo) =
                 switch (branch_to_previous, inline, single_entry) {
                 /*** (A) Branching back to previous state */
-                | (true, _, _) => (js_continue(dst_state), todo)
+                | (true, _, _) => (
+                    CodeGen.JavaScript.continue(dst_state),
+                    todo,
+                  )
 
                 /*** (B) Inline state if single-entry
                      or if we always want to inline
@@ -588,7 +441,7 @@ let to_js = (inline, dfa) => {
                       */
                 | (false, Never, _)
                 | (false, SingleEntry, false) => (
-                    js_goto_irreducible_state(dst_state),
+                    CodeGen.JavaScript.goto_irreducible_state(dst_state),
                     StateSetSet.add(dst, todo),
                   )
                 };
@@ -602,7 +455,7 @@ let to_js = (inline, dfa) => {
               (
                 [
                   String.concat("", List.rev(cases_to_same_dst))
-                  ++ js_switch_case_code(
+                  ++ CodeGen.JavaScript.switch_case_code(
                        str_len,
                        src_state,
                        dst_state,
@@ -619,12 +472,20 @@ let to_js = (inline, dfa) => {
           );
         (
           if (count_parents(src, dfa) > 1 || StateSet.equal(src, dfa.start)) {
-            js_labeled_block(
+            CodeGen.JavaScript.labeled_block(
               src_state,
-              js_switch(str_len, String.concat("", List.rev(cases))),
+              CodeGen.JavaScript.make_switch(
+                src_state,
+                str_len,
+                String.concat("", List.rev(cases)),
+              ),
             );
           } else {
-            js_switch(str_len, String.concat("", List.rev(cases)));
+            CodeGen.JavaScript.make_switch(
+              src_state,
+              str_len,
+              String.concat("", List.rev(cases)),
+            );
           },
           todo,
         );
@@ -648,7 +509,7 @@ let to_js = (inline, dfa) => {
               let states =
                 StateSetMap.add(
                   src,
-                  js_switch_case_state(src_state, code),
+                  CodeGen.JavaScript.switch_case_state(src_state, code),
                   states,
                 );
               let processed =
@@ -678,7 +539,7 @@ let to_js = (inline, dfa) => {
     StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false";
   let start_state = Int32.to_string(StateSet.choose_strict(dfa.start));
 
-  js_match_dfa(accept_empty, start_state, states);
+  CodeGen.JavaScript.match_dfa(accept_empty, start_state, states);
 };
 
 let accept: (t, string) => bool =

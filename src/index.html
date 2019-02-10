@@ -31,13 +31,14 @@
             <table class="variables">
                 <tr>
                     <td>input</td>
-                    <td colspan="2"><input type="text" id="text-input" value="abkl" />
+                    <td colspan="2"><input type="text" id="text-input" value="aabcdefghijmnqr" />
                         <span id="regexp-result" />
                     </td>
                 </tr>
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input" value="abc*kl|defgh(|ijkl)" />
+                    <td colspan="2"><input type="text" id="regexp-input"
+                            value="[ab](ab|ba)(cd|dc)efgh(ij|kl)(mn|op)qr" />
                     </td>
                 </tr>
                 <tr>
@@ -198,9 +199,9 @@
     </table>
     <hr />
     <div>dfa<sub>5</sub> = merge_linear(dfa<sub>4</sub>)</div>
-    <input type="range" id="max_length" name="max_length" min="1" max="32" value="32" />
+    <input type="range" id="max_length" name="max_length" min="1" max="32" value="1" />
     <label id="max_length_label" for="max_length">Max length</label>
-    <input type="range" id="max_cardinality" name="max_cardinality" min="1" max="128" value="128" />
+    <input type="range" id="max_cardinality" name="max_cardinality" min="1" max="128" value="1" />
     <label id="max_cardinality_label" for="max_cardinality">Max cardinality</label>
     <div style="display: none;"><textarea id="dfa5Dot"></textarea></div>
     <table>
