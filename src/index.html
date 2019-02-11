@@ -38,7 +38,7 @@
                 <tr>
                     <td>r </td>
                     <td colspan="2"><input type="text" id="regexp-input"
-                            value="[ab](ab|ba)(cd|dc)efgh(ij|kl)(mn|op)qr" />
+                            value="(aab|aba|bab|bba)(cd|dc)efgh(ij|kl)(mn|op)qr" />
                     </td>
                 </tr>
                 <tr>
@@ -240,8 +240,21 @@
             </td>
         </tr>
     </table>
-    <pre id="LLVMIR" class="code"></pre>
-    <pre id="JS" class="code"></pre>
+    <hr />
+    <table>
+        <tr>
+            <td><b>LLVMIR</b></td>
+            <td><b>JavaScript</b></td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top">
+                <pre id="LLVMIR" class="code"></pre>
+            </td>
+            <td style="vertical-align: top">
+                <pre id="JS" class="code"></pre>
+            </td>
+        </tr>
+    </table>
     <div style="display: none;"><textarea id="match_dfa"></textarea></div>
 </body>
 

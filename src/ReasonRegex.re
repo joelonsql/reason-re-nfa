@@ -44,11 +44,7 @@ let analyze = (~max_length: int=8, ~max_cardinality: int=1024, regexp: string) =
     Dfa.to_matrix(dfa6),
     Nfa.to_dot(nfa6),
     Nfa.to_matrix(nfa6),
-    "",
+    Dfa.to_llvm_ir(Dfa.SingleEntry, RabinScott.determinize(nfa6)),
     Dfa.to_js(Dfa.SingleEntry, RabinScott.determinize(nfa6)),
-    /*
-     Dfa.to_llvm_ir(dfa5),
-     Dfa.to_js(Dfa.SingleEntry, dfa5),
-     */
   );
 };

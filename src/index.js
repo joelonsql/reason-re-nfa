@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        //        document.getElementById("LLVMIR").innerHTML = re[algoPos];
+        document.getElementById("LLVMIR").innerHTML = re[algoPos].replace(/\n(\s*\n)+/g, '\n').replace(/^\n+/, '');
         let js_code = js_beautify(re[algoPos + 1], { indent_size: 2, "max-preserve-newlines": 1 });
         document.getElementById("JS").innerHTML = js_code;
         document.getElementById("match_dfa").value = js_code;

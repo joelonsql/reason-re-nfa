@@ -213,170 +213,14 @@ let to_matrix: t => array(array(string)) =
     matrix;
   };
 
-let ll_states = (src_state, switch_state, goto_dsts) => {j|
-$src_state:
-  %$src_state.s_ptr = load i8*, i8** %s, align 8
-  $switch_state
-  $goto_dsts
-|j};
-
-let ll_load = (str_len, itype, src_state) =>
-  switch (str_len) {
-  | 1 => {j|
-  %$src_state.chr = load i8, i8* %$src_state.s_ptr, align 1
-  %$src_state.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
-    |j}
-  | n when n > 1 && n <= 8 => {j|
-  %$src_state.chr_ptr = bitcast i8* %$src_state.s_ptr to $itype*
-  %$src_state.chr = load $itype, $itype* %$src_state.chr_ptr, align 1
-  %$src_state.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
-    |j}
-  | n when n > 8 => {j|
-  %$src_state.vptr = bitcast i8* %$src_state.s_ptr to $itype*
-  %$src_state.rhs = load $itype, $itype* %$src_state.vptr, align 1
-  %$src_state.next_ptr = getelementptr inbounds i8, i8* %$src_state.s_ptr, i32 $str_len
-    |j}
-  | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
-  };
-
-let ll_switch_case =
-    (i, str_len, itype, ival, src_state, dst_state, string_escaped, bits) =>
-  switch (str_len) {
-  | n when n >= 1 && n <= 8 => {j|
-    $itype $ival, label %$src_state.goto.$dst_state ; $string_escaped
-    |j}
-  | n when n > 8 => {j|
-  %$src_state.$i.cmp_mask = icmp eq $itype %$src_state.rhs, $ival ; $string_escaped
-  %$src_state.$i.cmp_int = bitcast <$str_len x i1> %$src_state.$i.cmp_mask to i$str_len
-  %$src_state.$i.is_equal = icmp eq i$str_len %$src_state.$i.cmp_int, -1 ; 0b$bits
-  br i1 %$src_state.$i.is_equal, label %$src_state.goto.$dst_state, label %$src_state.$i.try_next
-$src_state.$i.try_next:
-    |j}
-  | _ => raise(Bug("Unexpected str_len: " ++ string_of_int(str_len)))
-  };
-
-let ll_goto_state = (src_state, dst_state, in_accepting_state) => {j|
-$src_state.goto.$dst_state:
-  store i8* %$src_state.next_ptr, i8** %s, align 8
-  store i8 $in_accepting_state, i8* %match, align 1
-  br label %$dst_state
-    |j};
-
-let state_goto_handlers = goto_dsts => {
-  String.concat(
-    "",
-    List.map(((_, llvmir)) => llvmir, StateSetMap.bindings(goto_dsts)),
-  );
-};
-
-/*
-
-  let to_llvm_ir: t => string =
-    dfa => {
-      let transitions = group_by_str_len(dfa.transitions);
-      let accept_empty = StateSetSet.mem(dfa.start, dfa.finals) ? "1" : "0";
-      let start_state = StateSet.to_identifier(dfa.start);
-      let match_dfa_body =
-        String.concat(
-          "",
-          List.map(
-            src => {
-              let src_state = StateSet.to_identifier(src);
-              let (switch_states, list_goto_dsts) =
-                StrLenMap.fold(
-                  (str_len, ranges_map, (switch_states, list_goto_dsts)) => {
-                    let str_len = Int32.to_int(str_len);
-                    let itype =
-                      if (str_len > 8) {
-                        "<" ++ string_of_int(str_len) ++ " x i8>";
-                      } else {
-                        "i" ++ string_of_int(str_len * 8);
-                      };
-                    let (_, cases, goto_dsts) =
-                      RangeSetListSetMap.fold(
-                        (string, dst, (i, acc, goto_dsts)) => {
-                          assert(List.length(string) == str_len);
-                          let dst_state = StateSet.to_identifier(dst);
-                          let ival =
-                            Common.encode_string_as_int_or_vector(string);
-                          let string_escaped = Common.escape_string(string);
-                          let bits = String.make(str_len, '1');
-                          (
-                            i + 1,
-                            [
-                              ll_switch_case(
-                                string_of_int(i),
-                                str_len,
-                                itype,
-                                ival,
-                                src_state,
-                                dst_state,
-                                string_escaped,
-                                bits,
-                              ),
-                              ...acc,
-                            ],
-                            if (StateSetMap.mem(dst, goto_dsts)) {
-                              goto_dsts;
-                            } else {
-                              let in_accepting_state =
-                                StateSetSet.mem(dst, dfa.finals) ? "1" : "0";
-                              StateSetMap.add(
-                                dst,
-                                ll_goto_state(
-                                  src_state,
-                                  dst_state,
-                                  in_accepting_state,
-                                ),
-                                goto_dsts,
-                              );
-                            },
-                          );
-                        },
-                        ranges_map,
-                        (0, [], StateSetMap.empty),
-                      );
-                    (
-                      [
-                        ll_load(str_len, itype, src_state)
-                        ++ ll_switch(
-                             str_len,
-                             String.concat("", List.rev(cases)),
-                             itype,
-                             src_state,
-                           ),
-                        ...switch_states,
-                      ],
-                      [state_goto_handlers(goto_dsts), ...list_goto_dsts],
-                    );
-                  },
-                  try (StateSetMap.find(src, transitions)) {
-                  | Not_found => StrLenMap.empty
-                  },
-                  ([], []),
-                );
-              ll_states(
-                src_state,
-                String.concat("", switch_states),
-                String.concat("", list_goto_dsts),
-              );
-            },
-            StateSetSet.elements(dfa.states),
-          ),
-        );
-      ll_match_dfa(accept_empty, start_state, match_dfa_body);
-    };
-
- */
-
-let to_js = (inline, dfa) => {
+let code_gen = (target_language, inline, dfa) => {
   let rec build_state:
     (state, StateSetSet.t, option(bool), list(state)) =>
     (string, StateSetSet.t) =
     (src, todo, cur_in_accepting_state, srcs) => {
       let src_state = Int32.to_string(StateSet.choose_strict(src));
       if (!StateSetMap.mem(src, dfa.transitions)) {
-        (CodeGen.JavaScript.break_loop_switch, todo);
+        (CodeGen.break_loop_switch(target_language), todo);
       } else {
         let string_map = StateSetMap.find(src, dfa.transitions);
         let (strings, _) = RangeSetListSetMap.choose(string_map);
@@ -384,33 +228,34 @@ let to_js = (inline, dfa) => {
         let (cases, todo) =
           RangeSetListSetMap.fold(
             (string_set, dst, (cases, todo)) => {
+              let dst_state = Int32.to_string(StateSet.choose_strict(dst));
               RangeSetListSet.iter(
                 string => assert(List.length(string) == str_len),
                 string_set,
               );
-              let cases_to_same_dst =
+              let (_, cases_to_same_dst) =
                 List.fold_right(
-                  (string, acc) => {
-                    let (ival, string_escaped) =
-                      str_len == 1 ?
-                        (
-                          string_of_int(Char.code(string.[0])),
-                          Common.escape_string(string),
-                        ) :
-                        ({j|"$string"|j}, "");
-                    [
-                      CodeGen.JavaScript.switch_case_value(
-                        ival,
-                        string_escaped,
-                      ),
-                      ...acc,
-                    ];
+                  (string, (i, acc)) => {
+                    assert(String.length(string) == str_len);
+                    (
+                      succ(i),
+                      [
+                        CodeGen.switch_case_value(
+                          target_language,
+                          string_of_int(i),
+                          str_len,
+                          string,
+                          src_state,
+                          dst_state,
+                        ),
+                        ...acc,
+                      ],
+                    );
                   },
                   List.rev(RangeSetListSet.generate_strings(string_set)),
-                  [],
+                  (0, []),
                 );
 
-              let dst_state = Int32.to_string(StateSet.choose_strict(dst));
               let in_accepting_state = StateSetSet.mem(dst, dfa.finals);
               let single_entry = count_parents(dst, dfa) == 1;
               let branch_to_previous = List.mem(dst, srcs);
@@ -418,7 +263,7 @@ let to_js = (inline, dfa) => {
                 switch (branch_to_previous, inline, single_entry) {
                 /*** (A) Branching back to previous state */
                 | (true, _, _) => (
-                    CodeGen.JavaScript.continue(dst_state),
+                    CodeGen.continue(target_language, dst_state),
                     todo,
                   )
 
@@ -428,12 +273,21 @@ let to_js = (inline, dfa) => {
                      reducing code size */
                 | (false, SingleEntry, true)
                 | (false, Always, _) =>
-                  build_state(
-                    dst,
-                    todo,
-                    Some(in_accepting_state),
-                    [dst, ...srcs],
-                  )
+                  let (code, todo) =
+                    build_state(
+                      dst,
+                      todo,
+                      Some(in_accepting_state),
+                      [dst, ...srcs],
+                    );
+                  if (count_parents(dst, dfa) > 1) {
+                    (
+                      CodeGen.labeled_block(target_language, dst_state, code),
+                      todo,
+                    );
+                  } else {
+                    (code, todo);
+                  };
 
                 /*** (C) Simulate goto if we never want to inline
                      or if we allow inlining single-entry states
@@ -441,27 +295,28 @@ let to_js = (inline, dfa) => {
                       */
                 | (false, Never, _)
                 | (false, SingleEntry, false) => (
-                    CodeGen.JavaScript.goto_irreducible_state(dst_state),
+                    CodeGen.goto_irreducible_state(
+                      target_language,
+                      dst_state,
+                    ),
                     StateSetSet.add(dst, todo),
                   )
                 };
 
-              let set_match =
-                switch (cur_in_accepting_state) {
-                | Some(m) when m == in_accepting_state => "" /* match variable already has correct value from previous state */
-                | _ => in_accepting_state ? "match = true;" : "match = false;"
-                };
-
               (
                 [
-                  String.concat("", List.rev(cases_to_same_dst))
-                  ++ CodeGen.JavaScript.switch_case_code(
-                       str_len,
-                       src_state,
-                       dst_state,
-                       set_match,
-                       inline_or_branch,
-                     ),
+                  (
+                    String.concat("", List.rev(cases_to_same_dst)),
+                    CodeGen.switch_case_code(
+                      target_language,
+                      str_len,
+                      src_state,
+                      dst_state,
+                      cur_in_accepting_state,
+                      in_accepting_state,
+                      inline_or_branch,
+                    ),
+                  ),
                   ...cases,
                 ],
                 todo,
@@ -471,22 +326,12 @@ let to_js = (inline, dfa) => {
             ([], todo),
           );
         (
-          if (count_parents(src, dfa) > 1 || StateSet.equal(src, dfa.start)) {
-            CodeGen.JavaScript.labeled_block(
-              src_state,
-              CodeGen.JavaScript.make_switch(
-                src_state,
-                str_len,
-                String.concat("", List.rev(cases)),
-              ),
-            );
-          } else {
-            CodeGen.JavaScript.make_switch(
-              src_state,
-              str_len,
-              String.concat("", List.rev(cases)),
-            );
-          },
+          CodeGen.make_switch(
+            target_language,
+            src_state,
+            str_len,
+            List.rev(cases),
+          ),
           todo,
         );
       };
@@ -509,7 +354,7 @@ let to_js = (inline, dfa) => {
               let states =
                 StateSetMap.add(
                   src,
-                  CodeGen.JavaScript.switch_case_state(src_state, code),
+                  CodeGen.switch_case_state(target_language, src_state, code),
                   states,
                 );
               let processed =
@@ -535,11 +380,18 @@ let to_js = (inline, dfa) => {
       "",
       List.map(((_, code)) => code, StateSetMap.bindings(states)),
     );
-  let accept_empty =
-    StateSetSet.mem(dfa.start, dfa.finals) ? "true" : "false";
+  let accept_empty = StateSetSet.mem(dfa.start, dfa.finals);
   let start_state = Int32.to_string(StateSet.choose_strict(dfa.start));
 
-  CodeGen.JavaScript.match_dfa(accept_empty, start_state, states);
+  CodeGen.match_dfa(target_language, accept_empty, start_state, states);
+};
+
+let to_js = (inline, dfa) => {
+  code_gen(CodeGen.JavaScript, inline, dfa);
+};
+
+let to_llvm_ir = (inline, dfa) => {
+  code_gen(CodeGen.LLVMIR, inline, dfa);
 };
 
 let accept: (t, string) => bool =
