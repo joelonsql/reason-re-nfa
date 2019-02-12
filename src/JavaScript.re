@@ -25,7 +25,11 @@ let match_dfa = (accept_empty, start_state, states) => {
 };
 
 let switch_case_state = (src_state, code) => {j|
-    case $src_state: $code
+    case $src_state:
+    state$src_state:
+      while (true) {
+        $code
+      }
   |j};
 
 let labeled_block = (src_state, code) => {j|

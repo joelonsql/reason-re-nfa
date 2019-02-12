@@ -21,7 +21,7 @@
     <div>ReasonML port + WebUI: <a
             href="https://github.com/joelonsql/reason-re-nfa">https://github.com/joelonsql/reason-re-nfa</a>.</div>
     <br />
-    <div id="regexp-to-nfa" style="float: left;">
+    <div id="regexp-to-nfa">
         Convert <a href="https://en.wikipedia.org/wiki/Regular_expression">Regexp</a> to <a
             href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">NFA</a>
         to <a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">DFA</a> to <a
@@ -31,49 +31,52 @@
             <table class="variables">
                 <tr>
                     <td>input</td>
-                    <td colspan="2"><input type="text" id="text-input" value="aabcdefghijmnqr" />
+                    <td colspan="2"><input type="text" id="text-input" value="hen" />
                         <span id="regexp-result" />
                     </td>
                 </tr>
                 <tr>
                     <td>r </td>
-                    <td colspan="2"><input type="text" id="regexp-input"
-                            value="(aab|aba|bab|bba)(cd|dc)efgh(ij|kl)(mn|op)qr" />
+                    <td colspan="2"><input type="text" id="regexp-input" value="(han|hon|hen)*" />
                     </td>
-                </tr>
-                <tr>
-                    <td>r' </td>
-                    <td>annotated(r) </td>
-                    <td><span id="annotated" /> </td>
-                </tr>
-                <tr>
-                    <td>Λ(r')</td>
-                    <td>{ε} ∩ L(r') </td>
-                    <td><span id="nullability" /></td>
-                </tr>
-                <tr>
-                    <td>P(r')</td>
-                    <td>{c | ∃s.cs ∈ L(r') } </td>
-                    <td><span id="firsts" /> </td>
-                </tr>
-                <tr>
-                    <td>D(r')</td>
-                    <td>{c | ∃s.sc ∈ L(r') } </td>
-                    <td><span id="lasts" /> </td>
-                </tr>
-                <tr>
-                    <td>F(r')</td>
-                    <td>{c₁c₂ | ∃s₁s₂.s₁c₁c₂s₂ ∈ L(r')}</td>
-                    <td><span id="letterpairs" /></td>
                 </tr>
             </table>
         </form>
     </div>
+    <hr />
+    <div><a href="https://en.wikipedia.org/wiki/Parse_tree">Parse tree</a></div>
     <div class="chart" id="parseTree"></div>
-    <div style="clear: both;"><a href="https://en.wikipedia.org/wiki/State_transition_table">State transition table:</a>
-    </div>
+    <hr />
     <div><a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm
             (Regex to NFA)</a></div>
+    <table class="variables">
+        <tr>
+            <td>r' </td>
+            <td>annotated(r) </td>
+            <td><span id="annotated" /> </td>
+        </tr>
+        <tr>
+            <td>Λ(r')</td>
+            <td>{ε} ∩ L(r') </td>
+            <td><span id="nullability" /></td>
+        </tr>
+        <tr>
+            <td>P(r')</td>
+            <td>{c | ∃s.cs ∈ L(r') } </td>
+            <td><span id="firsts" /> </td>
+        </tr>
+        <tr>
+            <td>D(r')</td>
+            <td>{c | ∃s.sc ∈ L(r') } </td>
+            <td><span id="lasts" /> </td>
+        </tr>
+        <tr>
+            <td>F(r')</td>
+            <td>{c₁c₂ | ∃s₁s₂.s₁c₁c₂s₂ ∈ L(r')}</td>
+            <td><span id="letterpairs" /></td>
+        </tr>
+    </table>
+
     <div><a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">Nondeterministic finite automaton
             (NFA):</a></div>
     <div style="display: none;"><textarea id="nfaDot"></textarea></div>
