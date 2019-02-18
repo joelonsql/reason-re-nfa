@@ -10,3 +10,9 @@ a:visited{color:inherit}
 a:hover{color:inherit}
 div { margin: 5px; }
 .code { white-space: pre; }
+.toggle-content {
+	display: block;
+}
+.toggle-content.is-hidden {
+	display: none;
+}

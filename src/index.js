@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded',
           document.getElementById(algoStep + "Graph").innerHTML = "";
         }
         document.getElementById("LLVMIR").innerHTML = "";
+        document.getElementById("JS").innerHTML = "";
         return;
       }
       try {
@@ -179,6 +180,32 @@ document.addEventListener('DOMContentLoaded',
     document.getElementById("max_cardinality").addEventListener("change", visualize);
     visualize();
     tester();
+
+    // Show an element
+    let show = function (elem) {
+      elem.classList.remove('is-hidden');
+    };
+    // Hide an element
+    let hide = function (elem) {
+      elem.classList.add('is-hidden');
+    };
+    // Toggle element visibility
+    let toggle = function (elem) {
+      elem.classList.toggle('is-hidden');
+    };
+    // Listen for click events
+    document.addEventListener('click', function (event) {
+      // Make sure clicked element is our toggle
+      if (!event.target.classList.contains('toggle')) return;
+      // Prevent default link behavior
+      event.preventDefault();
+      // Get the content
+      var content = document.querySelector(event.target.hash);
+      if (!content) return;
+      // Toggle the content
+      toggle(content);
+    }, false);
+
   });
 
 export { }
