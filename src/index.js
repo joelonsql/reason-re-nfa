@@ -16,7 +16,6 @@ function matrix_to_table(matrix) {
 let renderGraphIntervalIds = {};
 
 function renderGraph(id) {
-  document.getElementById(id + "Graph").innerHTML = "";
   let dot = document.getElementById(id + "Dot").value;
   if (dot.length > 0) {
     d3.select("#" + id + "Graph").graphviz().zoom(false).renderDot(dot);
@@ -191,9 +190,6 @@ document.addEventListener('DOMContentLoaded',
 
         let algoPos = 6;
         for (let algoStep of algoSteps) {
-          document.getElementById(algoStep + "Matrix").innerHTML = "";
-          document.getElementById(algoStep + "Dot").innerHTML = "";
-          document.getElementById(algoStep + "Graph").innerHTML = "";
           let dot = re[algoPos];
           let matrix = re[algoPos + 1];
           document.getElementById(algoStep + "Dot").value = dot;
@@ -226,6 +222,32 @@ document.addEventListener('DOMContentLoaded',
     document.getElementById("max_cardinality").addEventListener("change", visualize);
     visualize();
     tester();
+
+    // Show an element
+    let show = function (elem) {
+      elem.classList.remove('is-hidden');
+    };
+    // Hide an element
+    let hide = function (elem) {
+      elem.classList.add('is-hidden');
+    };
+    // Toggle element visibility
+    let toggle = function (elem) {
+      elem.classList.toggle('is-hidden');
+    };
+    // Listen for click events
+    document.addEventListener('click', function (event) {
+      // Make sure clicked element is our toggle
+      if (!event.target.classList.contains('toggle')) return;
+      // Prevent default link behavior
+      event.preventDefault();
+      // Get the content
+      var content = document.querySelector(event.target.hash);
+      if (!content) return;
+      // Toggle the content
+      toggle(content);
+    }, false);
+
   });
 
 export { }

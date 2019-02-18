@@ -44,207 +44,244 @@
             </table>
         </form>
     </div>
-    <hr />
-    <div><a href="https://en.wikipedia.org/wiki/Parse_tree">Parse tree</a></div>
-    <div class="chart" id="parseTree"></div>
-    <hr />
-    <div><a href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction algorithm
-            (Regex to NFA)</a></div>
-    <table class="variables">
-        <tr>
-            <td>r' </td>
-            <td>annotated(r) </td>
-            <td><span id="annotated" /> </td>
-        </tr>
-        <tr>
-            <td>Λ(r')</td>
-            <td>{ε} ∩ L(r') </td>
-            <td><span id="nullability" /></td>
-        </tr>
-        <tr>
-            <td>P(r')</td>
-            <td>{c | ∃s.cs ∈ L(r') } </td>
-            <td><span id="firsts" /> </td>
-        </tr>
-        <tr>
-            <td>D(r')</td>
-            <td>{c | ∃s.sc ∈ L(r') } </td>
-            <td><span id="lasts" /> </td>
-        </tr>
-        <tr>
-            <td>F(r')</td>
-            <td>{c₁c₂ | ∃s₁s₂.s₁c₁c₂s₂ ∈ L(r')}</td>
-            <td><span id="letterpairs" /></td>
-        </tr>
-    </table>
-
-    <div><a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">Nondeterministic finite automaton
-            (NFA):</a></div>
-    <div style="display: none;"><textarea id="nfaDot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfaMatrix" /></div>
-            </td>
-            <td>
-                <div id="nfaGraph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div><a href="https://en.wikipedia.org/wiki/Powerset_construction">Rabin–Scott powerset construction (NFA to
-            DFA)</a></div>
-    <div><a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">Deterministic finite automaton
-            (DFA):</a></div>
-    <div style="display: none;"><textarea id="dfaDot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfaMatrix" /></div>
-            </td>
-            <td>
-                <div id="dfaGraph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div><a href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm
-            (DFA
-            minimization):</a></div>
-    <div>nfa<sub>2</sub> = dfa_to_nfa(dfa)</div>
-    <div style="display: none;"><textarea id="nfa2Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfa2Matrix" /></div>
-            </td>
-            <td>
-                <div id="nfa2Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>nfa<sub>3</sub> = reverse(nfa<sub>2</sub>)</div>
-    <div style="display: none;"><textarea id="nfa3Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfa3Matrix" /></div>
-            </td>
-            <td>
-                <div id="nfa3Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>dfa<sub>2</sub> = determinize(nfa<sub>3</sub>)</div>
-    <div style="display: none;"><textarea id="dfa2Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfa2Matrix" /></div>
-            </td>
-            <td>
-                <div id="dfa2Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>nfa<sub>4</sub> = dfa_to_nfa(dfa<sub>2</sub>)</div>
-    <div style="display: none;"><textarea id="nfa4Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfa4Matrix" /></div>
-            </td>
-            <td>
-                <div id="nfa4Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>nfa<sub>5</sub> = reverse(nfa<sub>4</sub>)</div>
-    <div style="display: none;"><textarea id="nfa5Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfa5Matrix" /></div>
-            </td>
-            <td>
-                <div id="nfa5Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>dfa<sub>3</sub> = determinize(nfa<sub>5</sub>)</div>
-    <div style="display: none;"><textarea id="dfa3Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfa3Matrix" /></div>
-            </td>
-            <td>
-                <div id="dfa3Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>dfa<sub>4</sub> = merge_ranges(dfa<sub>3</sub>)</div>
-    <div style="display: none;"><textarea id="dfa4Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfa4Matrix" /></div>
-            </td>
-            <td>
-                <div id="dfa4Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>dfa<sub>5</sub> = merge_linear(dfa<sub>4</sub>)</div>
-    <input type="range" id="max_length" name="max_length" min="1" max="32" value="1" />
-    <label id="max_length_label" for="max_length">Max length</label>
-    <input type="range" id="max_cardinality" name="max_cardinality" min="1" max="128" value="1" />
-    <label id="max_cardinality_label" for="max_cardinality">Max cardinality</label>
-    <div style="display: none;"><textarea id="dfa5Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfa5Matrix" /></div>
-            </td>
-            <td>
-                <div id="dfa5Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>dfa<sub>6</sub> = merge_branches(dfa<sub>5</sub>)</div>
-    <div style="display: none;"><textarea id="dfa6Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="dfa6Matrix" /></div>
-            </td>
-            <td>
-                <div id="dfa6Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
-    <div>nfa<sub>6</sub> = dfa_to_nfa(dfa<sub>6</sub>)</div>
-    <div style="display: none;"><textarea id="nfa6Dot"></textarea></div>
-    <table>
-        <tr>
-            <td>
-                <div><span id="nfa6Matrix" /></div>
-            </td>
-            <td>
-                <div id="nfa6Graph"></div>
-            </td>
-        </tr>
-    </table>
-    <hr />
+    <div><a class="toggle" href="#intermediateSteps">[+]</a> Intermediate steps</a>
+        <div class="toggle-content" id="intermediateSteps">
+            <div><a class="toggle" href="#parseTree">[+]</a> <a href="https://en.wikipedia.org/wiki/Parse_tree">Parse
+                    tree</a>
+            </div>
+            <div class="chart toggle-content" id="parseTree"></div>
+            <hr />
+            <div><a class="toggle" href="#Glushkov">[+]</a> <a
+                    href="https://en.wikipedia.org/wiki/Glushkov%27s_construction_algorithm">Glushkov's construction
+                    algorithm
+                    (Regex to NFA)</a></div>
+            <div class="toggle-content" id="Glushkov">
+                <table class="variables">
+                    <tr>
+                        <td>r' </td>
+                        <td>annotated(r) </td>
+                        <td><span id="annotated" /> </td>
+                    </tr>
+                    <tr>
+                        <td>Λ(r')</td>
+                        <td>{ε} ∩ L(r') </td>
+                        <td><span id="nullability" /></td>
+                    </tr>
+                    <tr>
+                        <td>P(r')</td>
+                        <td>{c | ∃s.cs ∈ L(r') } </td>
+                        <td><span id="firsts" /> </td>
+                    </tr>
+                    <tr>
+                        <td>D(r')</td>
+                        <td>{c | ∃s.sc ∈ L(r') } </td>
+                        <td><span id="lasts" /> </td>
+                    </tr>
+                    <tr>
+                        <td>F(r')</td>
+                        <td>{c₁c₂ | ∃s₁s₂.s₁c₁c₂s₂ ∈ L(r')}</td>
+                        <td><span id="letterpairs" /></td>
+                    </tr>
+                </table>
+                <div><a href="https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton">Nondeterministic finite
+                        automaton
+                        (NFA):</a></div>
+                <div style="display: none;"><textarea id="nfaDot"></textarea></div>
+                <table>
+                    <tr>
+                        <td>
+                            <div><span id="nfaMatrix" /></div>
+                        </td>
+                        <td>
+                            <div id="nfaGraph"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <hr />
+            <div><a class="toggle" href="#RabinScott">[+]</a> <a
+                    href="https://en.wikipedia.org/wiki/Powerset_construction">Rabin–Scott powerset construction (NFA to
+                    DFA)</a></div>
+            <div class="toggle-content" id="RabinScott">
+                <div><a href="https://en.wikipedia.org/wiki/Deterministic_finite_automaton">Deterministic finite
+                        automaton
+                        (DFA):</a></div>
+                <div style="display: none;"><textarea id="dfaDot"></textarea></div>
+                <table>
+                    <tr>
+                        <td>
+                            <div><span id="dfaMatrix" /></div>
+                        </td>
+                        <td>
+                            <div id="dfaGraph"></div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <hr />
+            <div><a class="toggle" href="#Brzozowski">[+]</a><a
+                    href="https://en.wikipedia.org/wiki/DFA_minimization#Brzozowski's_algorithm">Brzozowski's algorithm
+                    (DFA
+                    minimization):</a></div>
+            <div class="toggle-content" id="Brzozowski">
+                <div><a class="toggle" href="#nfa2">[+]</a>nfa<sub>2</sub> = dfa_to_nfa(dfa)</div>
+                <div class="toggle-content" id="nfa2">
+                    <div style="display: none;"><textarea id="nfa2Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="nfa2Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="nfa2Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#nfa3">[+]</a>nfa<sub>3</sub> = reverse(nfa<sub>2</sub>)</div>
+                <div class="toggle-content" id="nfa3">
+                    <div style="display: none;"><textarea id="nfa3Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="nfa3Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="nfa3Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#dfa2">[+]</a>dfa<sub>2</sub> = determinize(nfa<sub>3</sub>)</div>
+                <div class="toggle-content" id="dfa2">
+                    <div style="display: none;"><textarea id="dfa2Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="dfa2Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="dfa2Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#nfa4">[+]</a>nfa<sub>4</sub> = dfa_to_nfa(dfa<sub>2</sub>)</div>
+                <div class="toggle-content" id="nfa4">
+                    <div style="display: none;"><textarea id="nfa4Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="nfa4Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="nfa4Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#nfa5">[+]</a>nfa<sub>5</sub> = reverse(nfa<sub>4</sub>)</div>
+                <div class="toggle-content" id="nfa5">
+                    <div style="display: none;"><textarea id="nfa5Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="nfa5Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="nfa5Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#dfa3">[+]</a>dfa<sub>3</sub> = determinize(nfa<sub>5</sub>)</div>
+                <div class="toggle-content" id="dfa3">
+                    <div style="display: none;"><textarea id="dfa3Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="dfa3Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="dfa3Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+            </div>
+            <div><a class="toggle" href="#RangeSet">[+]</a>RangeSet minimization:</div>
+            <div class="toggle-content" id="RangeSet">
+                <div><a class="toggle" href="#dfa4">[+]</a>dfa<sub>4</sub> = merge_ranges(dfa<sub>3</sub>)</div>
+                <div class="toggle-content" id="dfa4">
+                    <div style="display: none;"><textarea id="dfa4Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="dfa4Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="dfa4Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#dfa5">[+]</a>dfa<sub>5</sub> = merge_linear(dfa<sub>4</sub>)</div>
+                <div class="toggle-content" id="dfa5">
+                    <input type="range" id="max_length" name="max_length" min="1" max="32" value="1" />
+                    <label id="max_length_label" for="max_length">Max length</label>
+                    <input type="range" id="max_cardinality" name="max_cardinality" min="1" max="128" value="1" />
+                    <label id="max_cardinality_label" for="max_cardinality">Max cardinality</label>
+                    <div style="display: none;"><textarea id="dfa5Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="dfa5Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="dfa5Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div><a class="toggle" href="#dfa6">[+]</a>dfa<sub>6</sub> = merge_branches(dfa<sub>5</sub>)</div>
+                <div class="toggle-content" id="dfa6">
+                    <div style="display: none;"><textarea id="dfa6Dot"></textarea></div>
+                    <table>
+                        <tr>
+                            <td>
+                                <div><span id="dfa6Matrix" /></div>
+                            </td>
+                            <td>
+                                <div id="dfa6Graph"></div>
+                            </td>
+                        </tr>
+                    </table>
+                    <hr />
+                </div>
+                <div>nfa<sub>6</sub> = dfa_to_nfa(dfa<sub>6</sub>)</div>
+            </div>
+        </div>
+        <div style="display: none;"><textarea id="nfa6Dot"></textarea></div>
+        <table>
+            <tr>
+                <td>
+                    <div><span id="nfa6Matrix" /></div>
+                </td>
+                <td>
+                    <div id="nfa6Graph"></div>
+                </td>
+            </tr>
+        </table>
+        <hr />
+    </div>
     <table>
         <tr>
             <td><b>LLVMIR</b></td>
