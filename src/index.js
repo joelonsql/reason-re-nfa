@@ -16,7 +16,6 @@ function matrix_to_table(matrix) {
 let renderGraphIntervalIds = {};
 
 function renderGraph(id) {
-  document.getElementById(id + "Graph").innerHTML = "";
   let dot = document.getElementById(id + "Dot").value;
   if (dot.length > 0) {
     d3.select("#" + id + "Graph").graphviz().zoom(false).renderDot(dot);
@@ -149,9 +148,6 @@ document.addEventListener('DOMContentLoaded',
 
         let algoPos = 6;
         for (let algoStep of algoSteps) {
-          document.getElementById(algoStep + "Matrix").innerHTML = "";
-          document.getElementById(algoStep + "Dot").innerHTML = "";
-          document.getElementById(algoStep + "Graph").innerHTML = "";
           let dot = re[algoPos];
           let matrix = re[algoPos + 1];
           document.getElementById(algoStep + "Dot").value = dot;
