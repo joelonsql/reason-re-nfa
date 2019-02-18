@@ -350,13 +350,7 @@ let code_gen = (target_language, inline, dfa) => {
             } else {
               let (code, todo') =
                 build_state(src, StateSetSet.empty, None, [src]);
-              let src_state = Int32.to_string(StateSet.choose_strict(src));
-              let states =
-                StateSetMap.add(
-                  src,
-                  CodeGen.switch_case_state(target_language, src_state, code),
-                  states,
-                );
+              let states = StateSetMap.add(src, code, states);
               let processed =
                 StateSetSet.of_list(
                   List.map(
@@ -375,11 +369,15 @@ let code_gen = (target_language, inline, dfa) => {
   let (_, states) =
     work(StateSetSet.singleton(dfa.start), StateSetMap.empty);
 
-  let states =
-    String.concat(
-      "",
-      List.map(((_, code)) => code, StateSetMap.bindings(states)),
+  let states_and_code =
+    List.map(
+      ((src, code)) => {
+        let state = Int32.to_int(StateSet.choose_strict(src));
+        (state, code);
+      },
+      StateSetMap.bindings(states),
     );
+  let states = CodeGen.switch_case_state(target_language, states_and_code);
   let accept_empty = StateSetSet.mem(dfa.start, dfa.finals);
   let start_state = Int32.to_string(StateSet.choose_strict(dfa.start));
 
@@ -392,6 +390,10 @@ let to_js = (inline, dfa) => {
 
 let to_llvm_ir = (inline, dfa) => {
   code_gen(CodeGen.LLVMIR, inline, dfa);
+};
+
+let to_wasm = (inline, dfa) => {
+  code_gen(CodeGen.WebAssembly, inline, dfa);
 };
 
 let accept: (t, string) => bool =

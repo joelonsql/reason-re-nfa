@@ -24,13 +24,23 @@ let match_dfa = (accept_empty, start_state, states) => {
   |j};
 };
 
-let switch_case_state = (src_state, code) => {j|
+let switch_case_state = states_and_code =>
+  String.concat(
+    "",
+    List.map(
+      ((state, code)) => {
+        let src_state = string_of_int(state);
+        {j|
     case $src_state:
     state$src_state:
       while (true) {
         $code
       }
   |j};
+      },
+      states_and_code,
+    ),
+  );
 
 let labeled_block = (src_state, code) => {j|
     state$src_state:

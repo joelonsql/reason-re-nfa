@@ -38,10 +38,20 @@ define i32 @main(i32, i8** nocapture readonly) {
 |j};
 };
 
-let switch_case_state = (src_state, code) => {j|
+let switch_case_state = states_and_code =>
+  String.concat(
+    "",
+    List.map(
+      ((state, code)) => {
+        let src_state = string_of_int(state);
+        {j|
   state$src_state:
 $code
-|j};
+  |j};
+      },
+      states_and_code,
+    ),
+  );
 
 let labeled_block = (src_state, code) => {j|
   br label state$src_state
@@ -107,36 +117,36 @@ $code
   );
 };
 
-let switch_case_value = (i, str_len, string, src_state, dst_state) => {
-  let encode_string_as_int_or_vector = s => {
-    let rec exp = (pos, i) =>
-      if (pos < 0) {
-        i;
-      } else {
-        exp(
-          pos - 1,
-          Int64.add(
-            i,
-            Int64.shift_left(Int64.of_int(Char.code(s.[pos])), 8 * pos),
-          ),
-        );
-      };
-    let length = String.length(s);
-    if (length <= 8) {
-      Int64.to_string(exp(String.length(s) - 1, Int64.zero));
+let encode_string_as_int_or_vector = s => {
+  let rec exp = (pos, i) =>
+    if (pos < 0) {
+      i;
     } else {
-      "<"
-      ++ String.concat(
-           ",",
-           List.map(
-             chr => " i8 " ++ string_of_int(Char.code(chr)),
-             Common.explode(s),
-           ),
-         )
-      ++ " >";
+      exp(
+        pos - 1,
+        Int64.add(
+          i,
+          Int64.shift_left(Int64.of_int(Char.code(s.[pos])), 8 * pos),
+        ),
+      );
     };
+  let length = String.length(s);
+  if (length <= 8) {
+    Int64.to_string(exp(String.length(s) - 1, Int64.zero));
+  } else {
+    "<"
+    ++ String.concat(
+         ",",
+         List.map(
+           chr => " i8 " ++ string_of_int(Char.code(chr)),
+           Common.explode(s),
+         ),
+       )
+    ++ " >";
   };
+};
 
+let switch_case_value = (i, str_len, string, src_state, dst_state) => {
   let ival = encode_string_as_int_or_vector(string);
   let string_escaped = Common.escape_string(string);
   let itype = make_itype(str_len);

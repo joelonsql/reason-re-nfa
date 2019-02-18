@@ -24,6 +24,10 @@ function renderGraph(id) {
   return;
 }
 
+function removeDupNewLines(str) {
+  return str.replace(/\n(\s*\n)+/g, '\n').replace(/^\n+/, '');
+}
+
 let last_regexp_input = '';
 let last_text_input = '';
 let last_max_length = 0;
@@ -39,7 +43,7 @@ document.addEventListener('DOMContentLoaded',
       }
       last_text_input = text_input;
       let regexp_result;
-      let js_code = document.getElementById("match_dfa").value
+      let js_code = document.getElementById("match_dfa_js").value
       if (js_code == "") {
         return;
       }
@@ -73,13 +77,50 @@ document.addEventListener('DOMContentLoaded',
       t0 = (new Date()).getTime();
       for (let i = 0; i < iters; i++) {
         if (match_dfa(text_input) != expect_match) {
-          throw ("Unexpected, r.test(text_input) " + r.test(text_input) + " r " + r + " text_input " + text_input + " expect_match " + expect_match);
+          throw ("Unexpected, match_dfa(text_input) " + match_dfa(text_input) + " text_input " + text_input + " expect_match " + expect_match);
         }
       }
       t = (new Date()).getTime();
-      regexp_result += ", Re0 " + (t - t0) + " ms";
+      regexp_result += ", Re0 JavaScript " + (t - t0) + " ms";
 
       document.getElementById("regexp-result").innerHTML = regexp_result;
+
+      let wat = document.getElementById("match_dfa_wasm").value
+      let wabt = WabtModule();
+      let features = {
+        exceptions: false,
+        multi_value: false,
+        mutable_globals: true,
+        sat_float_to_int: false,
+        sign_extension: false,
+        simd: false,
+        tail_call: false,
+        threads: false,
+      };
+      let module = wabt.parseWat('test.wast', wat, features);
+      module.resolveNames();
+      module.validate(features);
+      let binaryOutput = module.toBinary({ log: true, write_debug_names: true });
+      // document.getElementById("WebAssembly").innerHTML = module.toText({ foldExprs: false, inlineExport: false });
+      //      console.log(binaryOutput.log);
+      let binaryBuffer = binaryOutput.buffer;
+      let memory = new WebAssembly.Memory({ initial: 10, maximum: 100 });
+      let encodedString = new TextEncoder('utf-8').encode(text_input);
+      let s = new Uint8Array(memory.buffer);
+      s.set(encodedString);
+      WebAssembly.instantiate(binaryBuffer, { js: { mem: memory } })
+        .then(obj => {
+          let match_dfa_wasm = obj.instance.exports.match_dfa;
+          let t0 = (new Date()).getTime();
+          for (let i = 0; i < iters; i++) {
+            if (match_dfa_wasm(text_input) != expect_match) {
+              throw ("Unexpected, match_dfa_wasm(text_input) " + match_dfa_wasm(text_input) + " text_input " + text_input + " expect_match " + expect_match);
+            }
+          }
+          let t = (new Date()).getTime();
+          let regexp_result = ", Re0 WebAssembly " + (t - t0) + " ms";
+          document.getElementById("regexp-result").innerHTML += regexp_result;
+        });
     };
 
     let visualize = function (event) {
@@ -109,6 +150,8 @@ document.addEventListener('DOMContentLoaded',
           document.getElementById(algoStep + "Graph").innerHTML = "";
         }
         document.getElementById("LLVMIR").innerHTML = "";
+        document.getElementById("JS").innerHTML = "";
+        document.getElementById("WebAssembly").innerHTML = "";
         return;
       }
       try {
@@ -161,16 +204,20 @@ document.addEventListener('DOMContentLoaded',
           renderGraphIntervalIds[algoStep] = setTimeout(renderGraph, 50, algoStep);
           algoPos += 2;
         }
-        document.getElementById("LLVMIR").innerHTML = re[algoPos].replace(/\n(\s*\n)+/g, '\n').replace(/^\n+/, '');
+        document.getElementById("LLVMIR").innerHTML = removeDupNewLines(re[algoPos]);
         let js_code = js_beautify(re[algoPos + 1], { indent_size: 2, "max-preserve-newlines": 1 });
+        let wasm_code = re[algoPos + 2];
         document.getElementById("JS").innerHTML = js_code;
-        document.getElementById("match_dfa").value = js_code;
+        document.getElementById("WebAssembly").innerHTML = removeDupNewLines(wasm_code);
+        document.getElementById("match_dfa_js").value = js_code;
+        document.getElementById("match_dfa_wasm").value = wasm_code;
         last_text_input = ''; // force update
         tester();
       } catch (e) {
         console.log(e);
         document.getElementById("regexp-input").style.backgroundColor = "#ffaaaa";
-        document.getElementById("match_dfa").value = "";
+        document.getElementById("match_dfa_js").value = "";
+        document.getElementById("match_dfa_wasm").value = "";
       }
     };
     document.getElementById("regexp-input").addEventListener("keyup", visualize);

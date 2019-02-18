@@ -9,6 +9,7 @@
     <script src="../node_modules/d3/dist/d3.js"></script>
     <script src="../node_modules/viz.js/viz.js" type="javascript/worker"></script>
     <script src="../node_modules/d3-graphviz/build/d3-graphviz.min.js"></script>
+    <script src="../node_modules/wabt/index.js"></script>
     <script src="../treant-js-master/vendor/raphael.js"></script>
     <script src="../treant-js-master/Treant.js"></script>
     <script src="../treant-js-master/vendor/jquery.min.js"></script>
@@ -248,6 +249,7 @@
         <tr>
             <td><b>LLVMIR</b></td>
             <td><b>JavaScript</b></td>
+            <td><b>WebAssembly</b></td>
         </tr>
         <tr>
             <td style="vertical-align: top">
@@ -256,9 +258,13 @@
             <td style="vertical-align: top">
                 <pre id="JS" class="code"></pre>
             </td>
+            <td style="vertical-align: top">
+                <pre id="WebAssembly" class="code"></pre>
+            </td>
         </tr>
     </table>
-    <div style="display: none;"><textarea id="match_dfa"></textarea></div>
+    <div style="display: none;"><textarea id="match_dfa_js"></textarea></div>
+    <div style="display: none;"><textarea id="match_dfa_wasm"></textarea></div>
 </body>
 
 </html>
