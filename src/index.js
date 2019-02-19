@@ -35,7 +35,8 @@ let last_max_cardinality = 0;
 document.addEventListener('DOMContentLoaded',
   function (event) {
     let tester = function (event) {
-      let text_input = document.getElementById("text-input").value;
+      let repeat_input = parseInt(document.getElementById("repeat-input").value);
+      let text_input = document.getElementById("text-input").value.repeat(repeat_input);
       if (text_input == last_text_input) {
         // unchanged
         return;
@@ -64,7 +65,7 @@ document.addEventListener('DOMContentLoaded',
       }
 
       let t0 = (new Date()).getTime();
-      let iters = 1000000;
+      let iters = 1000000 / repeat_input;
       for (let i = 0; i < iters; i++) {
         if (r.test(text_input) != expect_match) {
           throw ("Unexpected, r.test(text_input) " + r.test(text_input) + " r " + r + " text_input " + text_input + " expect_match " + expect_match);
@@ -218,6 +219,7 @@ document.addEventListener('DOMContentLoaded',
     };
     document.getElementById("regexp-input").addEventListener("keyup", visualize);
     document.getElementById("text-input").addEventListener("keyup", tester);
+    document.getElementById("repeat-input").addEventListener("keyup", tester);
     document.getElementById("max_length").addEventListener("change", visualize);
     document.getElementById("max_cardinality").addEventListener("change", visualize);
     visualize();

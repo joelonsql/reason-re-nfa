@@ -62,7 +62,9 @@ let switch_case_state = states_and_code => {
 (block \$state$state
 $innerBlocks
 )
+(loop \$state$state
 $code
+)
 |j};
       };
 
@@ -86,7 +88,7 @@ let break_loop_switch = {j|
 (br \$detect_end_of_string)
 |j};
 
-let make_switch = (src_state, str_len, cases_and_code) => {
+let make_switch = (_, _, cases_and_code) => {
   let cases =
     String.concat(
       "",
@@ -111,20 +113,20 @@ $cases
 |j};
 };
 
-let switch_case_value = (i, str_len, string, src_state, dst_state) => {
+let switch_case_value = (_, str_len, string, _, _) => {
   let ival = LLVMIR.encode_string_as_int_or_vector(string);
   let string_escaped = Common.escape_string(string);
-  let load_op =
-    switch (str_len) {
-    | 1 => "i32.load8_u"
-    | 2 => "i32.load16_u"
-    | 4 => "i32.load32_u"
-    | _ => "???"
-    };
+
+  /* FIXME: The below only works for str_len 1,2,4 since there
+     are only i64.load8_u, i64.load16_u, i64.load32_u.
+     For other lengths, one would have to load multiple
+     values and add them together. Or, make sure no other
+     lengths than the supported ones are generated in the DFA. */
+  let load_op = "i64.load" ++ string_of_int(str_len * 8) ++ "_u";
   {j|
-(i32.const $ival) ;; $string_escaped
+(i64.const $ival) ;; $string_escaped
 ($load_op (get_local \$i))
-(i32.eq)
+(i64.eq)
 (br_if \$match)
 |j};
 };
