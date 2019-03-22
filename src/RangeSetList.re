@@ -54,7 +54,7 @@ let compare = (l, r) => {
   cmp(l, r);
 };
 
-let of_string = (~allow_overlap=false, s) => {
+let of_string = (~allow_overlap=true, s) => {
   List.map(
     c => RangeSet.singleton(Range.singleton(~allow_overlap, c, c)),
     Common.explode(s),

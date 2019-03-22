@@ -1,7 +1,7 @@
 include Set.Make(Char);
 
 /** range_extract and string_of_range taken from
-    https://www.rosettacode.org/wiki/Range_extraction#OCaml */
+    www.rosettacode.org/wiki/Range_extraction#OCaml */
 
 let range_extract =
   fun

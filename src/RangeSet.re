@@ -2,7 +2,7 @@ include Set.Make(Range);
 
 /** range_extract and string_of_range taken from
     www.rosettacode.org/wiki/Range_extraction#OCaml */
-let range_extract = (~allow_overlap=false) =>
+let range_extract = (~allow_overlap=true) =>
   fun
   | [] => []
   | [x, ...xs] => {
@@ -35,10 +35,10 @@ let string_of_range = rng => {
   String.concat("", List.map(str, rng));
 };
 
-let of_char = (~allow_overlap=false, char) =>
+let of_char = (~allow_overlap=true, char) =>
   singleton(Range.singleton(~allow_overlap, char, char));
 
-let of_char_set = (~allow_overlap=false, char_set) =>
+let of_char_set = (~allow_overlap=true, char_set) =>
   List.fold_right(
     (range, range_set) => add(range, range_set),
     range_extract(~allow_overlap, CharSet.elements(char_set)),

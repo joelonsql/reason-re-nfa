@@ -5,6 +5,14 @@ let to_string = ranges_set =>
   ++ String.concat(" ", List.map(RangeSet.to_string, elements(ranges_set)))
   ++ "}";
 
+let to_char_list: t => list(char) =
+  range_set_set =>
+    List.fold_right(
+      (range_set, char_list) => RangeSet.to_char_list(range_set) @ char_list,
+      elements(range_set_set),
+      [],
+    );
+
 let greatest_common_divisors: t => t =
   input => {
     let aux: (RangeSet.t, t) => t =
@@ -32,6 +40,18 @@ let greatest_common_divisors: t => t =
       };
     fold((l, acc) => aux(l, acc), input, empty);
   };
+
+/*
+ // Uncomment this to demonstrate state explosion without ranges
+ let greatest_common_divisors: t => t =
+   input => {
+     List.fold_right(
+       (char, acc) => add(RangeSet.of_char(char), acc),
+       to_char_list(input),
+       empty,
+     );
+   };
+ */
 
 let factorize: (RangeSet.t, t) => t =
   (ranges, factors) => {
